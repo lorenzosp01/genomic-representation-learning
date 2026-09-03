@@ -1,0 +1,782 @@
+    INFO: 2026-02-23 23:42:23,940:               log.py:   20: Logging to /home/lorenzo/Documenti/Uni/genomic-dataset-reduction/vae/mdpdf.log
+   DEBUG: 2026-02-23 23:42:23,940:               cli.py:  103: REPORT_GRIGLIA_ESPERIMENTI.md
+    INFO: 2026-02-23 23:42:23,940:         converter.py:   14: REPORT_GRIGLIA_ESPERIMENTI.md
+   DEBUG: 2026-02-23 23:42:23,946:      pdf_renderer.py:  470: printSegment: VMGP Grid Search - Report Esperimenti
+   DEBUG: 2026-02-23 23:42:23,948:      pdf_renderer.py:  470: printSegment: Data:
+   DEBUG: 2026-02-23 23:42:23,949:      pdf_renderer.py:  470: printSegment:  23 Febbraio 2026
+   DEBUG: 2026-02-23 23:42:23,950:      pdf_renderer.py:  470: printSegment: 1. Obiettivo
+   DEBUG: 2026-02-23 23:42:23,953:      pdf_renderer.py:  470: printSegment: Esplorazione sistematica dello spazio degli iperparametri del modello VMGP (Variational Auto-Encoder Multi-task
+   DEBUG: 2026-02-23 23:42:23,954:      pdf_renderer.py:  470: printSegment: Genomic Prediction) tramite una griglia completa di 
+   DEBUG: 2026-02-23 23:42:23,954:      pdf_renderer.py:  470: printSegment: 20 combinazioni
+   DEBUG: 2026-02-23 23:42:23,954:      pdf_renderer.py:  470: printSegment: :
+   DEBUG: 2026-02-23 23:42:23,955:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:23,955:      pdf_renderer.py:  470: printSegment: Min Samples per Razza:
+   DEBUG: 2026-02-23 23:42:23,956:      pdf_renderer.py:  470: printSegment:  30, 40, 50, 60, 70 (solo campioni reali, NO SMOTE)
+   DEBUG: 2026-02-23 23:42:23,956:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:23,957:      pdf_renderer.py:  470: printSegment: Dimensione Latent Space:
+   DEBUG: 2026-02-23 23:42:23,957:      pdf_renderer.py:  470: printSegment:  32, 64, 96, 128
+   DEBUG: 2026-02-23 23:42:23,957:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:23,958:      pdf_renderer.py:  470: printSegment: Task:
+   DEBUG: 2026-02-23 23:42:23,958:      pdf_renderer.py:  470: printSegment:  Solo classificazione breed
+   DEBUG: 2026-02-23 23:42:23,958:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:23,959:      pdf_renderer.py:  470: printSegment: Validazione:
+   DEBUG: 2026-02-23 23:42:23,959:      pdf_renderer.py:  470: printSegment:  3-Fold Cross Validation per ogni esperimento
+   DEBUG: 2026-02-23 23:42:23,960:      pdf_renderer.py:  470: printSegment: Differenze rispetto agli esperimenti precedenti
+   DEBUG: 2026-02-23 23:42:23,960:      pdf_renderer.py:  470: printSegment: | Aspetto | Esperimenti Precedenti (Feb 5) | Griglia Attuale (Feb 23) |
+   DEBUG: 2026-02-23 23:42:23,960:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,961:      pdf_renderer.py:  470: printSegment: |---|---|---|
+   DEBUG: 2026-02-23 23:42:23,961:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,961:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:23,962:      pdf_renderer.py:  470: printSegment: Combinazioni
+   DEBUG: 2026-02-23 23:42:23,962:      pdf_renderer.py:  470: printSegment:  | ~10 esperimenti
+   DEBUG: 2026-02-23 23:42:23,962:      pdf_renderer.py:  470: printSegment: mirati | 
+   DEBUG: 2026-02-23 23:42:23,963:      pdf_renderer.py:  470: printSegment: 20 combinazioni
+   DEBUG: 2026-02-23 23:42:23,963:      pdf_renderer.py:  470: printSegment:  (griglia completa) |
+   DEBUG: 2026-02-23 23:42:23,963:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,964:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:23,964:      pdf_renderer.py:  470: printSegment: Latent Dims
+   DEBUG: 2026-02-23 23:42:23,964:      pdf_renderer.py:  470: printSegment:  | 32, 64, 96 | 32, 64, 
+   DEBUG: 2026-02-23 23:42:23,965:      pdf_renderer.py:  470: printSegment: 96, 128
+   DEBUG: 2026-02-23 23:42:23,965:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:23,965:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,965:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:23,966:      pdf_renderer.py:  470: printSegment: Min Samples
+   DEBUG: 2026-02-23 23:42:23,966:      pdf_renderer.py:  470: printSegment:  | 20, 30,
+   DEBUG: 2026-02-23 23:42:23,967:      pdf_renderer.py:  470: printSegment: 40, 50 | 30, 40, 50, 
+   DEBUG: 2026-02-23 23:42:23,967:      pdf_renderer.py:  470: printSegment: 60, 70
+   DEBUG: 2026-02-23 23:42:23,967:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:23,968:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,968:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:23,968:      pdf_renderer.py:  470: printSegment: SMOTE
+   DEBUG: 2026-02-23 23:42:23,969:      pdf_renderer.py:  470: printSegment:  | Testato SÌ/NO | Solo dati reali (NO SMOTE) |
+   DEBUG: 2026-02-23 23:42:23,969:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,969:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:23,969:      pdf_renderer.py:  470: printSegment: Multi-task
+   DEBUG: 2026-02-23 23:42:23,970:      pdf_renderer.py:  470: printSegment:  | Breed +
+   DEBUG: 2026-02-23 23:42:23,970:      pdf_renderer.py:  470: printSegment: Continente | Solo Breed |
+   DEBUG: 2026-02-23 23:42:23,971:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,971:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:23,971:      pdf_renderer.py:  470: printSegment: Metrica chiave
+   DEBUG: 2026-02-23 23:42:23,972:      pdf_renderer.py:  470: printSegment:  | Accuracy + Silhouette | 
+   DEBUG: 2026-02-23 23:42:23,972:      pdf_renderer.py:  470: printSegment: Cohen
+   DEBUG: 2026-02-23 23:42:23,972:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:23,973:      pdf_renderer.py:  470: printSegment: s Kappa
+   DEBUG: 2026-02-23 23:42:23,973:      pdf_renderer.py:  470: printSegment:  (chance-adjusted) |
+   DEBUG: 2026-02-23 23:42:23,973:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,974:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:23,974:      pdf_renderer.py:  470: printSegment: K-Fold
+   DEBUG: 2026-02-23 23:42:23,974:      pdf_renderer.py:  470: printSegment: CV
+   DEBUG: 2026-02-23 23:42:23,975:      pdf_renderer.py:  470: printSegment:  | 3-Fold | 3-Fold |
+   DEBUG: 2026-02-23 23:42:23,975:      pdf_renderer.py:  470: printSegment: Glossario metriche
+   DEBUG: 2026-02-23 23:42:23,975:      pdf_renderer.py:  470: printSegment: | Metrica | Descrizione | Obiettivo |
+   DEBUG: 2026-02-23 23:42:23,976:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,976:      pdf_renderer.py:  470: printSegment: |---|---|---|
+   DEBUG: 2026-02-23 23:42:23,976:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:23,977:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:23,977:      pdf_renderer.py:  470: printSegment: Breed Accuracy
+   DEBUG: 2026-02-23 23:42:23,978:      pdf_renderer.py:  470: printSegment:  | Accuratezza raw del classificatore KNN sui dati
+   DEBUG: 2026-02-23 23:42:23,978:      pdf_renderer.py:  470: printSegment: compressi. 
+   DEBUG: 2026-02-23 23:42:23,978:      pdf_renderer.py:  470: printSegment: Non direttamente comparabile
+   DEBUG: 2026-02-23 23:42:23,980:      pdf_renderer.py:  470: printSegment:  tra soglie diverse (classificare 10 razze è più facile che classificarne 34). |
+   DEBUG: 2026-02-23 23:42:23,980:      pdf_renderer.py:  470: printSegment: 📈 Alto |
+   DEBUG: 2026-02-23 23:42:24,071:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,072:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,072:      pdf_renderer.py:  470: printSegment: Cohen
+   DEBUG: 2026-02-23 23:42:24,072:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,073:      pdf_renderer.py:  470: printSegment: s Kappa
+   DEBUG: 2026-02-23 23:42:24,073:      pdf_renderer.py:  470: printSegment:  | Accuratezza 
+   DEBUG: 2026-02-23 23:42:24,073:      pdf_renderer.py:  470: printSegment: chance-adjusted
+   DEBUG: 2026-02-23 23:42:24,074:      pdf_renderer.py:  470: printSegment: : tiene conto del numero di classi e del bilanciamento. 
+   DEBUG: 2026-02-23 23:42:24,074:      pdf_renderer.py:  470: printSegment: Metrica
+   DEBUG: 2026-02-23 23:42:24,075:      pdf_renderer.py:  470: printSegment: preferita
+   DEBUG: 2026-02-23 23:42:24,075:      pdf_renderer.py:  470: printSegment:  per confronti equi tra soglie diverse. | 📈 Alto |
+   DEBUG: 2026-02-23 23:42:24,076:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,076:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,076:      pdf_renderer.py:  470: printSegment: Generalization (GE)
+   DEBUG: 2026-02-23 23:42:24,079:      pdf_renderer.py:  470: printSegment:  | Accuratezza su animali mai visti
+   DEBUG: 2026-02-23 23:42:24,079:      pdf_renderer.py:  470: printSegment: (Validation Set). Misura la capacità di generalizzazione. | 📈 Alto |
+   DEBUG: 2026-02-23 23:42:24,080:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,080:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,080:      pdf_renderer.py:  470: printSegment: Silhouette Score
+   DEBUG: 2026-02-23 23:42:24,082:      pdf_renderer.py:  470: printSegment:  | Quanto sono ben separati i cluster
+   DEBUG: 2026-02-23 23:42:24,082:      pdf_renderer.py:  470: printSegment: (razze) nello spazio latente. >0.7: Ottimo. 
+   DEBUG: 2026-02-23 23:42:24,083:      pdf_renderer.py:  470: printSegment: <
+   DEBUG: 2026-02-23 23:42:24,083:      pdf_renderer.py:  470: printSegment: 0.5: Scarso. | 📈 Alto |
+   DEBUG: 2026-02-23 23:42:24,083:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,084:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,084:      pdf_renderer.py:  470: printSegment: Davies-Bouldin
+   DEBUG: 2026-02-23 23:42:24,087:      pdf_renderer.py:  470: printSegment:  | Rapporto tra dispersione
+   DEBUG: 2026-02-23 23:42:24,088:      pdf_renderer.py:  470: printSegment: intra-cluster e distanza inter-cluster. Più basso = cluster più compatti e separati. | 📉 Basso |
+   DEBUG: 2026-02-23 23:42:24,174:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,175:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,175:      pdf_renderer.py:  470: printSegment: Reconstruction MSE
+   DEBUG: 2026-02-23 23:42:24,177:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:24,177:      pdf_renderer.py:  470: printSegment: Errore medio di ricostruzione del genotipo dopo compressione. | 📉 Basso |
+   DEBUG: 2026-02-23 23:42:24,178:      pdf_renderer.py:  470: printSegment: 2. Miglior Modello
+   DEBUG: 2026-02-23 23:42:24,179:      pdf_renderer.py:  470: printSegment: Samples_30_LatDim_96
+   DEBUG: 2026-02-23 23:42:24,180:      pdf_renderer.py:  470: printSegment:  (per Cohen
+   DEBUG: 2026-02-23 23:42:24,180:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,181:      pdf_renderer.py:  470: printSegment: s Kappa — confronto equo)
+   DEBUG: 2026-02-23 23:42:24,187:      pdf_renderer.py:  470: printSegment: Performance (media ± std su 3 fold):
+   DEBUG: 2026-02-23 23:42:24,187:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,188:      pdf_renderer.py:  470: printSegment: Cohen
+   DEBUG: 2026-02-23 23:42:24,188:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,189:      pdf_renderer.py:  470: printSegment: s Kappa:
+   DEBUG: 2026-02-23 23:42:24,189:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,189:      pdf_renderer.py:  470: printSegment: 0.9714
+   DEBUG: 2026-02-23 23:42:24,190:      pdf_renderer.py:  470: printSegment:  — Il più alto di tutta la griglia
+   DEBUG: 2026-02-23 23:42:24,190:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,191:      pdf_renderer.py:  470: printSegment: Breed Accuracy:
+   DEBUG: 2026-02-23 23:42:24,191:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,191:      pdf_renderer.py:  470: printSegment: 0.9731
+   DEBUG: 2026-02-23 23:42:24,192:      pdf_renderer.py:  470: printSegment:  (97.31%)
+   DEBUG: 2026-02-23 23:42:24,192:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,193:      pdf_renderer.py:  470: printSegment: Generalization (GE):
+   DEBUG: 2026-02-23 23:42:24,193:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,193:      pdf_renderer.py:  470: printSegment: 0.9724
+   DEBUG: 2026-02-23 23:42:24,194:      pdf_renderer.py:  470: printSegment:  (97.24%)
+   DEBUG: 2026-02-23 23:42:24,194:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,195:      pdf_renderer.py:  470: printSegment: Silhouette Score:
+   DEBUG: 2026-02-23 23:42:24,195:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,195:      pdf_renderer.py:  470: printSegment: 0.7210
+   DEBUG: 2026-02-23 23:42:24,196:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,196:      pdf_renderer.py:  470: printSegment: Davies-Bouldin:
+   DEBUG: 2026-02-23 23:42:24,196:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,197:      pdf_renderer.py:  470: printSegment: 0.5737
+   DEBUG: 2026-02-23 23:42:24,197:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,198:      pdf_renderer.py:  470: printSegment: Reconstruction MSE:
+   DEBUG: 2026-02-23 23:42:24,198:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,198:      pdf_renderer.py:  470: printSegment: 0.4018
+   DEBUG: 2026-02-23 23:42:24,199:      pdf_renderer.py:  470: printSegment: Configurazione:
+   DEBUG: 2026-02-23 23:42:24,199:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,200:      pdf_renderer.py:  470: printSegment: Latent Dimension:
+   DEBUG: 2026-02-23 23:42:24,200:      pdf_renderer.py:  470: printSegment:  96
+   DEBUG: 2026-02-23 23:42:24,200:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,201:      pdf_renderer.py:  470: printSegment: Min Samples per Class:
+   DEBUG: 2026-02-23 23:42:24,201:      pdf_renderer.py:  470: printSegment:  30
+   DEBUG: 2026-02-23 23:42:24,202:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,202:      pdf_renderer.py:  470: printSegment: Numero Razze:
+   DEBUG: 2026-02-23 23:42:24,203:      pdf_renderer.py:  470: printSegment:  34 (il massimo testato)
+   DEBUG: 2026-02-23 23:42:24,203:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,203:      pdf_renderer.py:  470: printSegment: Numero SNPs:
+   DEBUG: 2026-02-23 23:42:24,204:      pdf_renderer.py:  470: printSegment:  49,586
+   DEBUG: 2026-02-23 23:42:24,204:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,205:      pdf_renderer.py:  470: printSegment: Balancing:
+   DEBUG: 2026-02-23 23:42:24,205:      pdf_renderer.py:  470: printSegment:  Solo downsampling (cap a 30), NO SMOTE
+   DEBUG: 2026-02-23 23:42:24,206:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,206:      pdf_renderer.py:  470: printSegment: Task:
+   DEBUG: 2026-02-23 23:42:24,207:      pdf_renderer.py:  470: printSegment:  Solo classificazione breed
+   DEBUG: 2026-02-23 23:42:24,207:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,207:      pdf_renderer.py:  470: printSegment: K-Fold CV:
+   DEBUG: 2026-02-23 23:42:24,207:      pdf_renderer.py:  470: printSegment:  3 fold
+   DEBUG: 2026-02-23 23:42:24,208:      pdf_renderer.py:  470: printSegment: Perché questo modello?
+   DEBUG: 2026-02-23 23:42:24,208:      pdf_renderer.py:  470: printSegment:  Pur non avendo l
+   DEBUG: 2026-02-23 23:42:24,208:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,210:      pdf_renderer.py:  470: printSegment: Accuracy raw più alta (che spetta a soglie con meno razze,
+   DEBUG: 2026-02-23 23:42:24,210:      pdf_renderer.py:  470: printSegment: quindi task più facili), ha il 
+   DEBUG: 2026-02-23 23:42:24,211:      pdf_renderer.py:  470: printSegment: Kappa più alto
+   DEBUG: 2026-02-23 23:42:24,211:      pdf_renderer.py:  470: printSegment: , dimostrando che riesce a distinguere 
+   DEBUG: 2026-02-23 23:42:24,212:      pdf_renderer.py:  470: printSegment: 34 razze
+   DEBUG: 2026-02-23 23:42:24,214:      pdf_renderer.py:  470: printSegment:  con
+   DEBUG: 2026-02-23 23:42:24,214:      pdf_renderer.py:  470: printSegment: precisione superiore rispetto a modelli con meno classi — una volta corretta per il caso.
+   DEBUG: 2026-02-23 23:42:24,215:      pdf_renderer.py:  470: printSegment: 3. Classifica Top 5 Modelli (per Cohen
+   DEBUG: 2026-02-23 23:42:24,215:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,216:      pdf_renderer.py:  470: printSegment: s Kappa)
+   DEBUG: 2026-02-23 23:42:24,216:      pdf_renderer.py:  470: printSegment: | Rank | Experiment | Razze | Kappa | Accuracy | GE | Silhouette |
+   DEBUG: 2026-02-23 23:42:24,217:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,217:      pdf_renderer.py:  470: printSegment: |---|---|---|---|---|---|---|
+   DEBUG: 2026-02-23 23:42:24,217:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,217:      pdf_renderer.py:  470: printSegment: | 🥇 | 
+   DEBUG: 2026-02-23 23:42:24,303:      pdf_renderer.py:  470: printSegment: Samples
+   DEBUG: 2026-02-23 23:42:24,304:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,304:      pdf_renderer.py:  470: printSegment: 30
+   DEBUG: 2026-02-23 23:42:24,304:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,305:      pdf_renderer.py:  470: printSegment: LatDim
+   DEBUG: 2026-02-23 23:42:24,305:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,305:      pdf_renderer.py:  470: printSegment: 96
+   DEBUG: 2026-02-23 23:42:24,305:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:24,306:      pdf_renderer.py:  470: printSegment: 
+   DEBUG: 2026-02-23 23:42:24,306:      pdf_renderer.py:  470: printSegment: 34
+   DEBUG: 2026-02-23 23:42:24,306:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,306:      pdf_renderer.py:  470: printSegment: 0.9714
+   DEBUG: 2026-02-23 23:42:24,307:      pdf_renderer.py:  470: printSegment:  | 0.9731 | 0.9724 | 0.7210 |
+   DEBUG: 2026-02-23 23:42:24,307:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,307:      pdf_renderer.py:  470: printSegment: | 🥈 | Samples
+   DEBUG: 2026-02-23 23:42:24,397:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,397:      pdf_renderer.py:  470: printSegment: 40
+   DEBUG: 2026-02-23 23:42:24,398:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,398:      pdf_renderer.py:  470: printSegment: LatDim
+   DEBUG: 2026-02-23 23:42:24,398:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,399:      pdf_renderer.py:  470: printSegment: 128 | 26 | 0.9710 | 0.9731 | 0.9742 | 0.7053 |
+   DEBUG: 2026-02-23 23:42:24,399:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,399:      pdf_renderer.py:  470: printSegment: | 🥉 |
+   DEBUG: 2026-02-23 23:42:24,487:      pdf_renderer.py:  470: printSegment: Samples
+   DEBUG: 2026-02-23 23:42:24,487:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,488:      pdf_renderer.py:  470: printSegment: 40
+   DEBUG: 2026-02-23 23:42:24,488:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,488:      pdf_renderer.py:  470: printSegment: LatDim
+   DEBUG: 2026-02-23 23:42:24,489:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,489:      pdf_renderer.py:  470: printSegment: 96 | 26 | 0.9710 | 0.9731 | 0.9742 | 0.7083 |
+   DEBUG: 2026-02-23 23:42:24,489:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,490:      pdf_renderer.py:  470: printSegment: | 4 | Samples
+   DEBUG: 2026-02-23 23:42:24,490:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,490:      pdf_renderer.py:  470: printSegment: 40
+   DEBUG: 2026-02-23 23:42:24,490:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,491:      pdf_renderer.py:  470: printSegment: LatDim
+   DEBUG: 2026-02-23 23:42:24,491:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,492:      pdf_renderer.py:  470: printSegment: 32 | 26 | 0.9710 | 0.9731
+   DEBUG: 2026-02-23 23:42:24,492:      pdf_renderer.py:  470: printSegment: | 0.9742 | 0.7388 |
+   DEBUG: 2026-02-23 23:42:24,492:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,493:      pdf_renderer.py:  470: printSegment: | 5 | Samples
+   DEBUG: 2026-02-23 23:42:24,493:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,493:      pdf_renderer.py:  470: printSegment: 50
+   DEBUG: 2026-02-23 23:42:24,494:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,494:      pdf_renderer.py:  470: printSegment: LatDim
+   DEBUG: 2026-02-23 23:42:24,494:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,495:      pdf_renderer.py:  470: printSegment: 128 | 16 | 0.9708 | 0.9737 | 0.9741 | 0.6990 |
+   DEBUG: 2026-02-23 23:42:24,495:      pdf_renderer.py:  470: printSegment: Nota:
+   DEBUG: 2026-02-23 23:42:24,495:      pdf_renderer.py:  470: printSegment:  La soglia 
+   DEBUG: 2026-02-23 23:42:24,496:      pdf_renderer.py:  470: printSegment: min
+   DEBUG: 2026-02-23 23:42:24,496:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,496:      pdf_renderer.py:  470: printSegment: samples=40
+   DEBUG: 2026-02-23 23:42:24,500:      pdf_renderer.py:  470: printSegment:  domina le posizioni 2-4 con tre diverse dimensioni latenti che
+   DEBUG: 2026-02-23 23:42:24,500:      pdf_renderer.py:  470: printSegment: raggiungono tutte Kappa=0.9710. Questo suggerisce che a 40 campioni il modello è 
+   DEBUG: 2026-02-23 23:42:24,501:      pdf_renderer.py:  470: printSegment: robusto
+   DEBUG: 2026-02-23 23:42:24,501:      pdf_renderer.py:  470: printSegment: rispetto alla dimensione latente
+   DEBUG: 2026-02-23 23:42:24,502:      pdf_renderer.py:  470: printSegment: .
+   DEBUG: 2026-02-23 23:42:24,503:      pdf_renderer.py:  470: printSegment: 4. Tabella Completa: Tutti i 20 Esperimenti
+   DEBUG: 2026-02-23 23:42:24,503:      pdf_renderer.py:  470: printSegment: Min Samples = 30 (34 razze, 49,586 SNPs)
+   DEBUG: 2026-02-23 23:42:24,504:      pdf_renderer.py:  470: printSegment: | Latent Dim | Accuracy | Kappa | GE | Silhouette | Davies-Bouldin | MSE |
+   DEBUG: 2026-02-23 23:42:24,504:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,504:      pdf_renderer.py:  470: printSegment: |---|---|---|---|---|---|---|
+   DEBUG: 2026-02-23 23:42:24,505:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,505:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,505:      pdf_renderer.py:  470: printSegment: 96
+   DEBUG: 2026-02-23 23:42:24,506:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,506:      pdf_renderer.py:  470: printSegment: 0.9731
+   DEBUG: 2026-02-23 23:42:24,506:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,507:      pdf_renderer.py:  470: printSegment: 0.9714
+   DEBUG: 2026-02-23 23:42:24,507:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,507:      pdf_renderer.py:  470: printSegment: 0.9724
+   DEBUG: 2026-02-23 23:42:24,508:      pdf_renderer.py:  470: printSegment:  | 0.7210 | 0.5737 | 0.4018 |
+   DEBUG: 2026-02-23 23:42:24,508:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,508:      pdf_renderer.py:  470: printSegment: | 32 | 0.9711 | 0.9692 | 0.9711 | 
+   DEBUG: 2026-02-23 23:42:24,509:      pdf_renderer.py:  470: printSegment: 0.7357
+   DEBUG: 2026-02-23 23:42:24,509:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,510:      pdf_renderer.py:  470: printSegment: 0.5625
+   DEBUG: 2026-02-23 23:42:24,510:      pdf_renderer.py:  470: printSegment:  | 0.4029 |
+   DEBUG: 2026-02-23 23:42:24,511:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,512:      pdf_renderer.py:  470: printSegment: | 64 | 0.9708 |
+   DEBUG: 2026-02-23 23:42:24,512:      pdf_renderer.py:  470: printSegment: 0.9689 | 0.9721 | 0.7225 | 0.5853 | 0.4019 |
+   DEBUG: 2026-02-23 23:42:24,513:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,513:      pdf_renderer.py:  470: printSegment: | 128 | 0.9688 | 0.9667 | 0.9681 | 0.7157 | 0.6099 | 0.4025 |
+   DEBUG: 2026-02-23 23:42:24,514:      pdf_renderer.py:  470: printSegment: Min Samples = 40 (26 razze, 49,640 SNPs)
+   DEBUG: 2026-02-23 23:42:24,514:      pdf_renderer.py:  470: printSegment: | Latent Dim | Accuracy | Kappa | GE | Silhouette | Davies-Bouldin | MSE |
+   DEBUG: 2026-02-23 23:42:24,515:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,515:      pdf_renderer.py:  470: printSegment: |---|---|---|---|---|---|---|
+   DEBUG: 2026-02-23 23:42:24,516:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,516:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,516:      pdf_renderer.py:  470: printSegment: 32
+   DEBUG: 2026-02-23 23:42:24,517:      pdf_renderer.py:  470: printSegment:  | 0.9731 | 
+   DEBUG: 2026-02-23 23:42:24,517:      pdf_renderer.py:  470: printSegment: 0.9710
+   DEBUG: 2026-02-23 23:42:24,517:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,518:      pdf_renderer.py:  470: printSegment: 0.9742
+   DEBUG: 2026-02-23 23:42:24,518:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,518:      pdf_renderer.py:  470: printSegment: 0.7388
+   DEBUG: 2026-02-23 23:42:24,519:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,519:      pdf_renderer.py:  470: printSegment: 0.5004
+   DEBUG: 2026-02-23 23:42:24,519:      pdf_renderer.py:  470: printSegment:  | 0.4012 |
+   DEBUG: 2026-02-23 23:42:24,520:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,520:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,520:      pdf_renderer.py:  470: printSegment: 96
+   DEBUG: 2026-02-23 23:42:24,521:      pdf_renderer.py:  470: printSegment:  | 0.9731 | 
+   DEBUG: 2026-02-23 23:42:24,521:      pdf_renderer.py:  470: printSegment: 0.9710
+   DEBUG: 2026-02-23 23:42:24,522:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,522:      pdf_renderer.py:  470: printSegment: 0.9742
+   DEBUG: 2026-02-23 23:42:24,522:      pdf_renderer.py:  470: printSegment:  | 0.7083 | 0.5397 | 0.3992 |
+   DEBUG: 2026-02-23 23:42:24,523:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,523:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,523:      pdf_renderer.py:  470: printSegment: 128
+   DEBUG: 2026-02-23 23:42:24,524:      pdf_renderer.py:  470: printSegment:  | 0.9731 | 
+   DEBUG: 2026-02-23 23:42:24,524:      pdf_renderer.py:  470: printSegment: 0.9710
+   DEBUG: 2026-02-23 23:42:24,524:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,525:      pdf_renderer.py:  470: printSegment: 0.9742
+   DEBUG: 2026-02-23 23:42:24,525:      pdf_renderer.py:  470: printSegment:  | 0.7053 | 0.5380 | 
+   DEBUG: 2026-02-23 23:42:24,526:      pdf_renderer.py:  470: printSegment: 0.3991
+   DEBUG: 2026-02-23 23:42:24,526:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:24,526:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,527:      pdf_renderer.py:  470: printSegment: | 64 | 0.9716 | 0.9694 | 0.9734 | 0.7199 | 0.5345 | 0.3994 |
+   DEBUG: 2026-02-23 23:42:24,528:      pdf_renderer.py:  470: printSegment: Min Samples = 50 (16 razze, 49,359 SNPs)
+   DEBUG: 2026-02-23 23:42:24,528:      pdf_renderer.py:  470: printSegment: | Latent Dim | Accuracy | Kappa | GE | Silhouette | Davies-Bouldin | MSE |
+   DEBUG: 2026-02-23 23:42:24,529:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,529:      pdf_renderer.py:  470: printSegment: |---|---|---|---|---|---|---|
+   DEBUG: 2026-02-23 23:42:24,529:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,530:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,530:      pdf_renderer.py:  470: printSegment: 128
+   DEBUG: 2026-02-23 23:42:24,531:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,531:      pdf_renderer.py:  470: printSegment: 0.9737
+   DEBUG: 2026-02-23 23:42:24,531:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,532:      pdf_renderer.py:  470: printSegment: 0.9708
+   DEBUG: 2026-02-23 23:42:24,532:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,532:      pdf_renderer.py:  470: printSegment: 0.9741
+   DEBUG: 2026-02-23 23:42:24,533:      pdf_renderer.py:  470: printSegment:  | 0.6990 | 0.5192 | 0.4013 |
+   DEBUG: 2026-02-23 23:42:24,533:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,534:      pdf_renderer.py:  470: printSegment: | 32 | 0.9732 | 0.9703 | 0.9728 | 
+   DEBUG: 2026-02-23 23:42:24,534:      pdf_renderer.py:  470: printSegment: 0.7405
+   DEBUG: 2026-02-23 23:42:24,534:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,535:      pdf_renderer.py:  470: printSegment: 0.4569
+   DEBUG: 2026-02-23 23:42:24,535:      pdf_renderer.py:  470: printSegment:  | 0.4019 |
+   DEBUG: 2026-02-23 23:42:24,536:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,537:      pdf_renderer.py:  470: printSegment: | 96 | 0.9715 |
+   DEBUG: 2026-02-23 23:42:24,538:      pdf_renderer.py:  470: printSegment: 0.9684 | 0.9723 | 0.7055 | 0.5087 | 0.4009 |
+   DEBUG: 2026-02-23 23:42:24,538:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,538:      pdf_renderer.py:  470: printSegment: | 64 | 0.9706 | 0.9674 | 0.9706 | 0.7131 | 0.5053 | 0.4010 |
+   DEBUG: 2026-02-23 23:42:24,539:      pdf_renderer.py:  470: printSegment: Min Samples = 60 (12 razze, 49,250 SNPs)
+   DEBUG: 2026-02-23 23:42:24,540:      pdf_renderer.py:  470: printSegment: | Latent Dim | Accuracy | Kappa | GE | Silhouette | Davies-Bouldin | MSE |
+   DEBUG: 2026-02-23 23:42:24,540:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,541:      pdf_renderer.py:  470: printSegment: |---|---|---|---|---|---|---|
+   DEBUG: 2026-02-23 23:42:24,541:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,541:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,542:      pdf_renderer.py:  470: printSegment: 64
+   DEBUG: 2026-02-23 23:42:24,542:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,543:      pdf_renderer.py:  470: printSegment: 0.9738
+   DEBUG: 2026-02-23 23:42:24,543:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,543:      pdf_renderer.py:  470: printSegment: 0.9704
+   DEBUG: 2026-02-23 23:42:24,544:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,544:      pdf_renderer.py:  470: printSegment: 0.9743
+   DEBUG: 2026-02-23 23:42:24,545:      pdf_renderer.py:  470: printSegment:  | 0.7062 | 0.5221 | 0.4006 |
+   DEBUG: 2026-02-23 23:42:24,545:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,546:      pdf_renderer.py:  470: printSegment: | 96 | 0.9734 | 0.9698 | 0.9738 | 0.6939 | 0.5436 | 0.3996 |
+   DEBUG: 2026-02-23 23:42:24,546:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,547:      pdf_renderer.py:  470: printSegment: | 128 | 0.9729 |
+   DEBUG: 2026-02-23 23:42:24,548:      pdf_renderer.py:  470: printSegment: 0.9693 | 0.9738 | 0.6843 | 0.5433 | 0.4003 |
+   DEBUG: 2026-02-23 23:42:24,548:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,549:      pdf_renderer.py:  470: printSegment: | 32 | 0.9714 | 0.9676 | 0.9743 | 
+   DEBUG: 2026-02-23 23:42:24,549:      pdf_renderer.py:  470: printSegment: 0.7309
+   DEBUG: 2026-02-23 23:42:24,550:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,550:      pdf_renderer.py:  470: printSegment: 0.4857
+   DEBUG: 2026-02-23 23:42:24,551:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,551:      pdf_renderer.py:  470: printSegment: 0.3999
+   DEBUG: 2026-02-23 23:42:24,551:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:24,552:      pdf_renderer.py:  470: printSegment: Min Samples = 70 (10 razze, 49,023 SNPs)
+   DEBUG: 2026-02-23 23:42:24,553:      pdf_renderer.py:  470: printSegment: | Latent Dim | Accuracy | Kappa | GE | Silhouette | Davies-Bouldin | MSE |
+   DEBUG: 2026-02-23 23:42:24,553:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,554:      pdf_renderer.py:  470: printSegment: |---|---|---|---|---|---|---|
+   DEBUG: 2026-02-23 23:42:24,554:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,554:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,555:      pdf_renderer.py:  470: printSegment: 32
+   DEBUG: 2026-02-23 23:42:24,555:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,556:      pdf_renderer.py:  470: printSegment: 0.9742
+   DEBUG: 2026-02-23 23:42:24,556:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,557:      pdf_renderer.py:  470: printSegment: 0.9703
+   DEBUG: 2026-02-23 23:42:24,557:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,557:      pdf_renderer.py:  470: printSegment: 0.9737
+   DEBUG: 2026-02-23 23:42:24,558:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,558:      pdf_renderer.py:  470: printSegment: 0.7398
+   DEBUG: 2026-02-23 23:42:24,559:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,559:      pdf_renderer.py:  470: printSegment: 0.4807
+   DEBUG: 2026-02-23 23:42:24,560:      pdf_renderer.py:  470: printSegment:  | 0.3939 |
+   DEBUG: 2026-02-23 23:42:24,560:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,560:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,561:      pdf_renderer.py:  470: printSegment: 128
+   DEBUG: 2026-02-23 23:42:24,561:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,562:      pdf_renderer.py:  470: printSegment: 0.9742
+   DEBUG: 2026-02-23 23:42:24,562:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,563:      pdf_renderer.py:  470: printSegment: 0.9703
+   DEBUG: 2026-02-23 23:42:24,563:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,563:      pdf_renderer.py:  470: printSegment: 0.9737
+   DEBUG: 2026-02-23 23:42:24,564:      pdf_renderer.py:  470: printSegment:  | 0.6846 | 0.5691 | 0.3942 |
+   DEBUG: 2026-02-23 23:42:24,564:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,566:      pdf_renderer.py:  470: printSegment: | 64 | 0.9721 |
+   DEBUG: 2026-02-23 23:42:24,566:      pdf_renderer.py:  470: printSegment: 0.9679 | 0.9721 | 0.7055 | 0.5316 | 
+   DEBUG: 2026-02-23 23:42:24,567:      pdf_renderer.py:  470: printSegment: 0.3936
+   DEBUG: 2026-02-23 23:42:24,567:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:24,567:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,568:      pdf_renderer.py:  470: printSegment: | 96 | 0.9711 | 0.9668 | 0.9711 | 0.6974 | 0.5574 | 0.3945 |
+   DEBUG: 2026-02-23 23:42:24,569:      pdf_renderer.py:  470: printSegment: 5. Analisi: Effetto del Numero Minimo di Sample
+   DEBUG: 2026-02-23 23:42:24,570:      pdf_renderer.py:  470: printSegment: Statistiche medie su tutte e 4 le dimensioni latenti per ogni soglia:
+   DEBUG: 2026-02-23 23:42:24,571:      pdf_renderer.py:  470: printSegment: | Min Samples | Razze | SNPs | Kappa (media) | Accuracy (media) | GE (media) | Silhouette (media) |
+   DEBUG: 2026-02-23 23:42:24,571:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,571:      pdf_renderer.py:  470: printSegment: |---|---|---|---|---|---|---|
+   DEBUG: 2026-02-23 23:42:24,572:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,572:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,572:      pdf_renderer.py:  470: printSegment: 30
+   DEBUG: 2026-02-23 23:42:24,572:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,573:      pdf_renderer.py:  470: printSegment: 34
+   DEBUG: 2026-02-23 23:42:24,573:      pdf_renderer.py:  470: printSegment:  | 49,586 | 
+   DEBUG: 2026-02-23 23:42:24,573:      pdf_renderer.py:  470: printSegment: 0.9691
+   DEBUG: 2026-02-23 23:42:24,574:      pdf_renderer.py:  470: printSegment:  | 0.9709 | 0.9709 | 
+   DEBUG: 2026-02-23 23:42:24,574:      pdf_renderer.py:  470: printSegment: 0.7237
+   DEBUG: 2026-02-23 23:42:24,574:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:24,574:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,575:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,575:      pdf_renderer.py:  470: printSegment: 40
+   DEBUG: 2026-02-23 23:42:24,575:      pdf_renderer.py:  470: printSegment:  | 26 | 49,640 | 
+   DEBUG: 2026-02-23 23:42:24,575:      pdf_renderer.py:  470: printSegment: 0.9706
+   DEBUG: 2026-02-23 23:42:24,576:      pdf_renderer.py:  470: printSegment:  | 0.9727 | 
+   DEBUG: 2026-02-23 23:42:24,576:      pdf_renderer.py:  470: printSegment: 0.9740
+   DEBUG: 2026-02-23 23:42:24,576:      pdf_renderer.py:  470: printSegment:  | 0.7181 |
+   DEBUG: 2026-02-23 23:42:24,576:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,577:      pdf_renderer.py:  470: printSegment: | 50 | 16 | 49,359 | 0.9692 | 0.9722 | 0.9725 | 0.7145 |
+   DEBUG: 2026-02-23 23:42:24,577:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,578:      pdf_renderer.py:  470: printSegment: | 60 | 12 | 49,250 | 0.9693 | 0.9729 | 
+   DEBUG: 2026-02-23 23:42:24,578:      pdf_renderer.py:  470: printSegment: 0.9741
+   DEBUG: 2026-02-23 23:42:24,578:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:24,578:      pdf_renderer.py:  470: printSegment: 0.7038 |
+   DEBUG: 2026-02-23 23:42:24,579:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,579:      pdf_renderer.py:  470: printSegment: | 70 | 10 | 49,023 | 0.9688 | 
+   DEBUG: 2026-02-23 23:42:24,579:      pdf_renderer.py:  470: printSegment: 0.9729
+   DEBUG: 2026-02-23 23:42:24,580:      pdf_renderer.py:  470: printSegment:  | 0.9727 | 0.7068 |
+   DEBUG: 2026-02-23 23:42:24,580:      pdf_renderer.py:  470: printSegment: Osservazioni:
+   DEBUG: 2026-02-23 23:42:24,580:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-02-23 23:42:24,581:      pdf_renderer.py:  470: printSegment: Il Kappa è straordinariamente stabile
+   DEBUG: 2026-02-23 23:42:24,583:      pdf_renderer.py:  470: printSegment:  lungo tutte le soglie (range: 0.9688–0.9706). Questo significa
+   DEBUG: 2026-02-23 23:42:24,583:      pdf_renderer.py:  470: printSegment: che il modello VMGP mantiene una performance 
+   DEBUG: 2026-02-23 23:42:24,584:      pdf_renderer.py:  470: printSegment: chance-adjusted
+   DEBUG: 2026-02-23 23:42:24,585:      pdf_renderer.py:  470: printSegment:  quasi identica indipendentemente
+   DEBUG: 2026-02-23 23:42:24,586:      pdf_renderer.py:  470: printSegment: dal numero di razze incluse.
+   DEBUG: 2026-02-23 23:42:24,586:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-02-23 23:42:24,586:      pdf_renderer.py:  470: printSegment: L
+   DEBUG: 2026-02-23 23:42:24,587:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,587:      pdf_renderer.py:  470: printSegment: Accuracy raw cresce con meno razze
+   DEBUG: 2026-02-23 23:42:24,592:      pdf_renderer.py:  470: printSegment:  (0.9709 → 0.9729 da 30 a 70 campioni), ma questo è un
+   DEBUG: 2026-02-23 23:42:24,593:      pdf_renderer.py:  470: printSegment: artefatto: classificare 10 classi è intrinsecamente più facile che classificarne 34. Il Kappa corregge per
+   DEBUG: 2026-02-23 23:42:24,593:      pdf_renderer.py:  470: printSegment: questo.
+   DEBUG: 2026-02-23 23:42:24,593:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2026-02-23 23:42:24,594:      pdf_renderer.py:  470: printSegment: La soglia 40 ha il miglior Kappa medio
+   DEBUG: 2026-02-23 23:42:24,594:      pdf_renderer.py:  470: printSegment:  (0.9706), ma la differenza con 30 (0.9691) è minima.
+   DEBUG: 2026-02-23 23:42:24,595:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2026-02-23 23:42:24,595:      pdf_renderer.py:  470: printSegment: Il Silhouette decresce
+   DEBUG: 2026-02-23 23:42:24,595:      pdf_renderer.py:  470: printSegment:  al crescere dei campioni: con 30 campioni le 
+   DEBUG: 2026-02-23 23:42:24,596:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2026-02-23 23:42:24,596:      pdf_renderer.py:  470: printSegment: isole
+   DEBUG: 2026-02-23 23:42:24,596:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2026-02-23 23:42:24,601:      pdf_renderer.py:  470: printSegment:  sono più nette (0.7237),
+   DEBUG: 2026-02-23 23:42:24,604:      pdf_renderer.py:  470: printSegment: con 70 si sovrappongono leggermente di più (0.7068). Probabile effetto del ridotto numero di razze
+   DEBUG: 2026-02-23 23:42:24,604:      pdf_renderer.py:  470: printSegment: su come i cluster occupano lo spazio.
+   DEBUG: 2026-02-23 23:42:24,605:      pdf_renderer.py:  470: printSegment: Conclusione:
+   DEBUG: 2026-02-23 23:42:24,605:      pdf_renderer.py:  470: printSegment:  La soglia 
+   DEBUG: 2026-02-23 23:42:24,605:      pdf_renderer.py:  470: printSegment: min
+   DEBUG: 2026-02-23 23:42:24,606:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,606:      pdf_renderer.py:  470: printSegment: samples=30
+   DEBUG: 2026-02-23 23:42:24,606:      pdf_renderer.py:  470: printSegment:  offre il miglior trade-off: include il 
+   DEBUG: 2026-02-23 23:42:24,607:      pdf_renderer.py:  470: printSegment: massimo numero di
+   DEBUG: 2026-02-23 23:42:24,607:      pdf_renderer.py:  470: printSegment: razze (34)
+   DEBUG: 2026-02-23 23:42:24,609:      pdf_renderer.py:  470: printSegment:  con Kappa competitivo e il miglior clustering (Silhouette). Se si preferisce massimizzare
+   DEBUG: 2026-02-23 23:42:24,609:      pdf_renderer.py:  470: printSegment: GE e stabilità, 
+   DEBUG: 2026-02-23 23:42:24,609:      pdf_renderer.py:  470: printSegment: min
+   DEBUG: 2026-02-23 23:42:24,610:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,610:      pdf_renderer.py:  470: printSegment: samples=40
+   DEBUG: 2026-02-23 23:42:24,611:      pdf_renderer.py:  470: printSegment:  è l
+   DEBUG: 2026-02-23 23:42:24,611:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,611:      pdf_renderer.py:  470: printSegment: alternativa.
+   DEBUG: 2026-02-23 23:42:24,612:      pdf_renderer.py:  470: printSegment: 6. Analisi: Effetto della Dimensione Latente
+   DEBUG: 2026-02-23 23:42:24,613:      pdf_renderer.py:  470: printSegment: Statistiche medie su tutte e 5 le soglie per ogni dimensione latente:
+   DEBUG: 2026-02-23 23:42:24,613:      pdf_renderer.py:  470: printSegment: | Latent Dim | Kappa (media) | Accuracy (media) | GE (media) | Silhouette (media) |
+   DEBUG: 2026-02-23 23:42:24,614:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,614:      pdf_renderer.py:  470: printSegment: |---|---|---|---|---|
+   DEBUG: 2026-02-23 23:42:24,614:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,615:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,615:      pdf_renderer.py:  470: printSegment: 32
+   DEBUG: 2026-02-23 23:42:24,615:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,616:      pdf_renderer.py:  470: printSegment: 0.9697
+   DEBUG: 2026-02-23 23:42:24,616:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,616:      pdf_renderer.py:  470: printSegment: 0.9726
+   DEBUG: 2026-02-23 23:42:24,617:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,617:      pdf_renderer.py:  470: printSegment: 0.9732
+   DEBUG: 2026-02-23 23:42:24,617:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,618:      pdf_renderer.py:  470: printSegment: 0.7371
+   DEBUG: 2026-02-23 23:42:24,618:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:24,618:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,619:      pdf_renderer.py:  470: printSegment: | 64 | 0.9688 | 0.9718 | 0.9725 | 0.7134 |
+   DEBUG: 2026-02-23 23:42:24,619:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,620:      pdf_renderer.py:  470: printSegment: | 96 | 0.9695 | 0.9724 | 0.9728 | 0.7052 |
+   DEBUG: 2026-02-23 23:42:24,620:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,620:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,621:      pdf_renderer.py:  470: printSegment: 128
+   DEBUG: 2026-02-23 23:42:24,621:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,622:      pdf_renderer.py:  470: printSegment: 0.9696
+   DEBUG: 2026-02-23 23:42:24,622:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,622:      pdf_renderer.py:  470: printSegment: 0.9725
+   DEBUG: 2026-02-23 23:42:24,623:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,623:      pdf_renderer.py:  470: printSegment: 0.9728
+   DEBUG: 2026-02-23 23:42:24,623:      pdf_renderer.py:  470: printSegment:  | 0.6978 |
+   DEBUG: 2026-02-23 23:42:24,624:      pdf_renderer.py:  470: printSegment: Osservazioni:
+   DEBUG: 2026-02-23 23:42:24,624:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-02-23 23:42:24,625:      pdf_renderer.py:  470: printSegment: Le dimensioni latenti hanno un effetto trascurabile
+   DEBUG: 2026-02-23 23:42:24,627:      pdf_renderer.py:  470: printSegment:  sul Kappa (range: 0.9688–0.9697). Il modello
+   DEBUG: 2026-02-23 23:42:24,627:      pdf_renderer.py:  470: printSegment: performa quasi identicamente con 32 o 128 dimensioni.
+   DEBUG: 2026-02-23 23:42:24,628:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-02-23 23:42:24,628:      pdf_renderer.py:  470: printSegment: Silhouette favorisce dimensioni basse
+   DEBUG: 2026-02-23 23:42:24,629:      pdf_renderer.py:  470: printSegment:  (32: 0.7371 vs 128: 0.6978). Con meno dimensioni, i cluster
+   DEBUG: 2026-02-23 23:42:24,630:      pdf_renderer.py:  470: printSegment: sono geometricamente più compatti.
+   DEBUG: 2026-02-23 23:42:24,630:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2026-02-23 23:42:24,631:      pdf_renderer.py:  470: printSegment: La dimensione 32 è leggermente migliore su tutte le metriche
+   DEBUG: 2026-02-23 23:42:24,634:      pdf_renderer.py:  470: printSegment:  in media, suggerendo che il segnale
+   DEBUG: 2026-02-23 23:42:24,634:      pdf_renderer.py:  470: printSegment: genomico utile per la classificazione breed è comprimibile in uno spazio molto ridotto.
+   DEBUG: 2026-02-23 23:42:24,635:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2026-02-23 23:42:24,635:      pdf_renderer.py:  470: printSegment: La dimensione 64 è la peggiore
+   DEBUG: 2026-02-23 23:42:24,636:      pdf_renderer.py:  470: printSegment:  in media per Kappa (0.9688), forse in una zona intermedia non
+   DEBUG: 2026-02-23 23:42:24,637:      pdf_renderer.py:  470: printSegment: ottimale.
+   DEBUG: 2026-02-23 23:42:24,637:      pdf_renderer.py:  470: printSegment: Conclusione:
+   DEBUG: 2026-02-23 23:42:24,637:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,638:      pdf_renderer.py:  470: printSegment: Latent Dim = 32
+   DEBUG: 2026-02-23 23:42:24,649:      pdf_renderer.py:  470: printSegment:  è sufficiente e persino preferibile. Dimensioni maggiori non
+   DEBUG: 2026-02-23 23:42:24,656:      pdf_renderer.py:  470: printSegment: aggiungono informazione utile e peggiorano leggermente il clustering. Questo è un risultato
+   DEBUG: 2026-02-23 23:42:24,657:      pdf_renderer.py:  470: printSegment: importante per la riduzione dimensionale: il genoma discriminante per le razze caprine si comprime
+   DEBUG: 2026-02-23 23:42:24,658:      pdf_renderer.py:  470: printSegment: efficacemente in 
+   DEBUG: 2026-02-23 23:42:24,658:      pdf_renderer.py:  470: printSegment: 32 dimensioni
+   DEBUG: 2026-02-23 23:42:24,659:      pdf_renderer.py:  470: printSegment:  (da ~49,500 SNPs — compressione ~1,550×).
+   DEBUG: 2026-02-23 23:42:24,660:      pdf_renderer.py:  470: printSegment: 7. Miglior Configurazione per Soglia (Best Latent Dim per ogni Min
+   DEBUG: 2026-02-23 23:42:24,660:      pdf_renderer.py:  470: printSegment: Samples)
+   DEBUG: 2026-02-23 23:42:24,661:      pdf_renderer.py:  470: printSegment: | Min Samples | Razze | Best Latent Dim | Kappa | Accuracy | GE | Silhouette | MSE |
+   DEBUG: 2026-02-23 23:42:24,662:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,662:      pdf_renderer.py:  470: printSegment: |---|---|---|---|---|---|---|---|
+   DEBUG: 2026-02-23 23:42:24,662:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,662:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,663:      pdf_renderer.py:  470: printSegment: 30
+   DEBUG: 2026-02-23 23:42:24,663:      pdf_renderer.py:  470: printSegment:  |
+   DEBUG: 2026-02-23 23:42:24,663:      pdf_renderer.py:  470: printSegment: 34 | 
+   DEBUG: 2026-02-23 23:42:24,664:      pdf_renderer.py:  470: printSegment: 96
+   DEBUG: 2026-02-23 23:42:24,664:      pdf_renderer.py:  470: printSegment:  | 
+   DEBUG: 2026-02-23 23:42:24,664:      pdf_renderer.py:  470: printSegment: 0.9714
+   DEBUG: 2026-02-23 23:42:24,664:      pdf_renderer.py:  470: printSegment:  | 0.9731 | 0.9724 | 0.7210 | 0.4018 |
+   DEBUG: 2026-02-23 23:42:24,665:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,665:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,665:      pdf_renderer.py:  470: printSegment: 40
+   DEBUG: 2026-02-23 23:42:24,665:      pdf_renderer.py:  470: printSegment:  | 26 | 128
+   DEBUG: 2026-02-23 23:42:24,666:      pdf_renderer.py:  470: printSegment: *
+   DEBUG: 2026-02-23 23:42:24,666:      pdf_renderer.py:  470: printSegment:  | 0.9710 | 0.9731 | 0.9742 | 0.7053 | 0.3991 |
+   DEBUG: 2026-02-23 23:42:24,666:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,668:      pdf_renderer.py:  470: printSegment: | 50 |
+   DEBUG: 2026-02-23 23:42:24,668:      pdf_renderer.py:  470: printSegment: 16 | 128 | 0.9708 | 0.9737 | 0.9741 | 0.6990 | 0.4013 |
+   DEBUG: 2026-02-23 23:42:24,668:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,669:      pdf_renderer.py:  470: printSegment: | 60 | 12 | 64 | 0.9704 | 0.9738 | 0.9743 | 0.7062 | 0.4006 |
+   DEBUG: 2026-02-23 23:42:24,669:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,670:      pdf_renderer.py:  470: printSegment: | 70 |
+   DEBUG: 2026-02-23 23:42:24,671:      pdf_renderer.py:  470: printSegment: 10 | 32 | 0.9703 | 0.9742 | 0.9737 | 0.7398 | 0.3939 |
+   DEBUG: 2026-02-23 23:42:24,671:      pdf_renderer.py:  470: printSegment: *
+   DEBUG: 2026-02-23 23:42:24,671:      pdf_renderer.py:  470: printSegment:  Per min
+   DEBUG: 2026-02-23 23:42:24,672:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,672:      pdf_renderer.py:  470: printSegment: samples=40, le dimensioni 32, 96 e 128 hanno lo stesso Kappa (0.9710). La 32 ha il miglior Silhouette
+   DEBUG: 2026-02-23 23:42:24,673:      pdf_renderer.py:  470: printSegment: (0.7388).
+   DEBUG: 2026-02-23 23:42:24,673:      pdf_renderer.py:  470: printSegment: Pattern emergente:
+   DEBUG: 2026-02-23 23:42:24,679:      pdf_renderer.py:  470: printSegment:  Con più razze (30-50), dimensioni latenti più alte (96-128) sono leggermente
+   DEBUG: 2026-02-23 23:42:24,680:      pdf_renderer.py:  470: printSegment: favorite. Con poche razze (60-70), dimensioni basse (32-64) bastano. Questo è coerente: più classi
+   DEBUG: 2026-02-23 23:42:24,680:      pdf_renderer.py:  470: printSegment: richiedono più 
+   DEBUG: 2026-02-23 23:42:24,681:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2026-02-23 23:42:24,681:      pdf_renderer.py:  470: printSegment: spazio
+   DEBUG: 2026-02-23 23:42:24,681:      pdf_renderer.py:  470: printSegment: "
+   DEBUG: 2026-02-23 23:42:24,682:      pdf_renderer.py:  470: printSegment:  per essere rappresentate.
+   DEBUG: 2026-02-23 23:42:24,682:      pdf_renderer.py:  470: printSegment: 8. Confronto con Esperimenti Precedenti (5 Febbraio)
+   DEBUG: 2026-02-23 23:42:24,683:      pdf_renderer.py:  470: printSegment: | Aspetto | Miglior modello (5 Feb) | Miglior modello (23 Feb) |
+   DEBUG: 2026-02-23 23:42:24,683:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,684:      pdf_renderer.py:  470: printSegment: |---|---|---|
+   DEBUG: 2026-02-23 23:42:24,684:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,684:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,685:      pdf_renderer.py:  470: printSegment: Esperimento
+   DEBUG: 2026-02-23 23:42:24,685:      pdf_renderer.py:  470: printSegment:  | MinSamples
+   DEBUG: 2026-02-23 23:42:24,685:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,685:      pdf_renderer.py:  470: printSegment: 40
+   DEBUG: 2026-02-23 23:42:24,686:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,686:      pdf_renderer.py:  470: printSegment: NoSMOTE
+   DEBUG: 2026-02-23 23:42:24,686:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,687:      pdf_renderer.py:  470: printSegment: BreedOnly | Samples
+   DEBUG: 2026-02-23 23:42:24,687:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,687:      pdf_renderer.py:  470: printSegment: 30
+   DEBUG: 2026-02-23 23:42:24,687:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,688:      pdf_renderer.py:  470: printSegment: LatDim
+   DEBUG: 2026-02-23 23:42:24,688:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,688:      pdf_renderer.py:  470: printSegment: 96 |
+   DEBUG: 2026-02-23 23:42:24,689:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,689:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,689:      pdf_renderer.py:  470: printSegment: Accuracy
+   DEBUG: 2026-02-23 23:42:24,690:      pdf_renderer.py:  470: printSegment:  | 0.9902 | 0.9731 |
+   DEBUG: 2026-02-23 23:42:24,690:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,690:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,690:      pdf_renderer.py:  470: printSegment: GE
+   DEBUG: 2026-02-23 23:42:24,691:      pdf_renderer.py:  470: printSegment:  | 0.9877 | 0.9724 |
+   DEBUG: 2026-02-23 23:42:24,691:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,691:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,692:      pdf_renderer.py:  470: printSegment: Silhouette
+   DEBUG: 2026-02-23 23:42:24,692:      pdf_renderer.py:  470: printSegment:  | 0.8262 | 0.7210 |
+   DEBUG: 2026-02-23 23:42:24,692:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,693:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,693:      pdf_renderer.py:  470: printSegment: Latent Dim
+   DEBUG: 2026-02-23 23:42:24,693:      pdf_renderer.py:  470: printSegment:  | 96 | 96 |
+   DEBUG: 2026-02-23 23:42:24,694:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,694:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,694:      pdf_renderer.py:  470: printSegment: Razze
+   DEBUG: 2026-02-23 23:42:24,695:      pdf_renderer.py:  470: printSegment:  | 26 | 34 |
+   DEBUG: 2026-02-23 23:42:24,695:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,695:      pdf_renderer.py:  470: printSegment: | 
+   DEBUG: 2026-02-23 23:42:24,695:      pdf_renderer.py:  470: printSegment: Validazione
+   DEBUG: 2026-02-23 23:42:24,696:      pdf_renderer.py:  470: printSegment:  | 3-Fold CV | 3-Fold CV |
+   DEBUG: 2026-02-23 23:42:24,696:      pdf_renderer.py:  470: printSegment: Nota importante:
+   DEBUG: 2026-02-23 23:42:24,697:      pdf_renderer.py:  470: printSegment:  Le performance raw appaiono inferiori, ma il confronto diretto non è appropriato
+   DEBUG: 2026-02-23 23:42:24,697:      pdf_renderer.py:  470: printSegment: perché:
+   DEBUG: 2026-02-23 23:42:24,698:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-02-23 23:42:24,698:      pdf_renderer.py:  470: printSegment: La griglia attuale include 
+   DEBUG: 2026-02-23 23:42:24,699:      pdf_renderer.py:  470: printSegment: 34 razze
+   DEBUG: 2026-02-23 23:42:24,699:      pdf_renderer.py:  470: printSegment:  (vs 26) per la soglia 30, un task
+   DEBUG: 2026-02-23 23:42:24,700:      pdf_renderer.py:  470: printSegment: significativamente più difficile
+   DEBUG: 2026-02-23 23:42:24,700:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-02-23 23:42:24,701:      pdf_renderer.py:  470: printSegment: Il capping dei campioni a 
+   DEBUG: 2026-02-23 23:42:24,701:      pdf_renderer.py:  470: printSegment: min_samples
+   DEBUG: 2026-02-23 23:42:24,702:      pdf_renderer.py:  470: printSegment:  (e non a un fisso) cambia la
+   DEBUG: 2026-02-23 23:42:24,702:      pdf_renderer.py:  470: printSegment: composizione del training set
+   DEBUG: 2026-02-23 23:42:24,703:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2026-02-23 23:42:24,703:      pdf_renderer.py:  470: printSegment: La metrica chiave ora è Cohen
+   DEBUG: 2026-02-23 23:42:24,704:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,704:      pdf_renderer.py:  470: printSegment: s Kappa, che fornisce un confronto più equo
+   DEBUG: 2026-02-23 23:42:24,705:      pdf_renderer.py:  470: printSegment: 9. Guida alla Lettura dei Grafici
+   DEBUG: 2026-02-23 23:42:24,705:      pdf_renderer.py:  470: printSegment: A. Heatmap Griglia Esperimenti (
+   DEBUG: 2026-02-23 23:42:24,706:      pdf_renderer.py:  470: printSegment: grid_experiment_heatmaps.png
+   DEBUG: 2026-02-23 23:42:24,706:      pdf_renderer.py:  470: printSegment: )
+   DEBUG: 2026-02-23 23:42:24,706:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,707:      pdf_renderer.py:  470: printSegment: Righe:
+   DEBUG: 2026-02-23 23:42:24,707:      pdf_renderer.py:  470: printSegment:  Min Samples per Breed (30→70)
+   DEBUG: 2026-02-23 23:42:24,708:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,708:      pdf_renderer.py:  470: printSegment: Colonne:
+   DEBUG: 2026-02-23 23:42:24,709:      pdf_renderer.py:  470: printSegment:  Latent Dimension (32→128)
+   DEBUG: 2026-02-23 23:42:24,709:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,709:      pdf_renderer.py:  470: printSegment: Colore:
+   DEBUG: 2026-02-23 23:42:24,710:      pdf_renderer.py:  470: printSegment:  Verde = buono, Rosso = scarso
+   DEBUG: 2026-02-23 23:42:24,710:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,711:      pdf_renderer.py:  470: printSegment: Interpretazione:
+   DEBUG: 2026-02-23 23:42:24,712:      pdf_renderer.py:  470: printSegment:  4 heatmap separate per Accuracy, Kappa, Silhouette e GE. Cercare le celle più
+   DEBUG: 2026-02-23 23:42:24,713:      pdf_renderer.py:  470: printSegment: verdi per la configurazione ottimale.
+   DEBUG: 2026-02-23 23:42:24,713:      pdf_renderer.py:  470: printSegment: B. Trade-off Analysis (
+   DEBUG: 2026-02-23 23:42:24,714:      pdf_renderer.py:  470: printSegment: tradeoff_analysis.png
+   DEBUG: 2026-02-23 23:42:24,714:      pdf_renderer.py:  470: printSegment: )
+   DEBUG: 2026-02-23 23:42:24,715:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,715:      pdf_renderer.py:  470: printSegment: Pannello 1 (alto sx):
+   DEBUG: 2026-02-23 23:42:24,716:      pdf_renderer.py:  470: printSegment:  Barre con il numero di razze incluse per ogni soglia — mostra il costo in diversità.
+   DEBUG: 2026-02-23 23:42:24,716:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,717:      pdf_renderer.py:  470: printSegment: Pannello 2 (alto dx):
+   DEBUG: 2026-02-23 23:42:24,717:      pdf_renderer.py:  470: printSegment:  Accuracy raw per soglia — attenzione, non direttamente comparabile
+   DEBUG: 2026-02-23 23:42:24,718:      pdf_renderer.py:  470: printSegment: !
+   DEBUG: 2026-02-23 23:42:24,718:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,719:      pdf_renderer.py:  470: printSegment: Pannello 3 (basso sx):
+   DEBUG: 2026-02-23 23:42:24,719:      pdf_renderer.py:  470: printSegment:  Cohen
+   DEBUG: 2026-02-23 23:42:24,719:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,720:      pdf_renderer.py:  470: printSegment: s Kappa per soglia — il confronto equo.
+   DEBUG: 2026-02-23 23:42:24,720:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,721:      pdf_renderer.py:  470: printSegment: Pannello 4 (basso dx):
+   DEBUG: 2026-02-23 23:42:24,722:      pdf_renderer.py:  470: printSegment:  Kappa per dimensione latente — mostra la stabilità.
+   DEBUG: 2026-02-23 23:42:24,722:      pdf_renderer.py:  470: printSegment: C. Linee di Tendenza (
+   DEBUG: 2026-02-23 23:42:24,723:      pdf_renderer.py:  470: printSegment: trend_per_latent_dim.png
+   DEBUG: 2026-02-23 23:42:24,723:      pdf_renderer.py:  470: printSegment: )
+   DEBUG: 2026-02-23 23:42:24,723:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,724:      pdf_renderer.py:  470: printSegment: 4 grafici
+   DEBUG: 2026-02-23 23:42:24,724:      pdf_renderer.py:  470: printSegment:  (Kappa, Accuracy, GE, Silhouette) con una linea per ogni Latent Dim.
+   DEBUG: 2026-02-23 23:42:24,725:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,725:      pdf_renderer.py:  470: printSegment: Asse X:
+   DEBUG: 2026-02-23 23:42:24,726:      pdf_renderer.py:  470: printSegment:  Min Samples per Breed
+   DEBUG: 2026-02-23 23:42:24,726:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,727:      pdf_renderer.py:  470: printSegment: Linee sovrapposte:
+   DEBUG: 2026-02-23 23:42:24,727:      pdf_renderer.py:  470: printSegment:  Indicano che la Latent Dim ha poco impatto → si può comprimere di più.
+   DEBUG: 2026-02-23 23:42:24,728:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,728:      pdf_renderer.py:  470: printSegment: Linee divergenti:
+   DEBUG: 2026-02-23 23:42:24,729:      pdf_renderer.py:  470: printSegment:  Indicano interazione tra i due parametri.
+   DEBUG: 2026-02-23 23:42:24,729:      pdf_renderer.py:  470: printSegment: D. Confusion Matrix (
+   DEBUG: 2026-02-23 23:42:24,730:      pdf_renderer.py:  470: printSegment: results/confusion_matrices/
+   DEBUG: 2026-02-23 23:42:24,730:      pdf_renderer.py:  470: printSegment: )
+   DEBUG: 2026-02-23 23:42:24,731:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,731:      pdf_renderer.py:  470: printSegment: 1 figura per ogni soglia
+   DEBUG: 2026-02-23 23:42:24,731:      pdf_renderer.py:  470: printSegment:  min
+   DEBUG: 2026-02-23 23:42:24,732:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,732:      pdf_renderer.py:  470: printSegment: samples, con 4 subplot (1 per latent
+   DEBUG: 2026-02-23 23:42:24,732:      pdf_renderer.py:  470: printSegment: _
+   DEBUG: 2026-02-23 23:42:24,733:      pdf_renderer.py:  470: printSegment: dim)
+   DEBUG: 2026-02-23 23:42:24,733:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,733:      pdf_renderer.py:  470: printSegment: Normalizzate per riga:
+   DEBUG: 2026-02-23 23:42:24,734:      pdf_renderer.py:  470: printSegment:  ogni cella mostra la recall per classe
+   DEBUG: 2026-02-23 23:42:24,734:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,734:      pdf_renderer.py:  470: printSegment: Diagonale scura:
+   DEBUG: 2026-02-23 23:42:24,735:      pdf_renderer.py:  470: printSegment:  alta recall (classificazione corretta)
+   DEBUG: 2026-02-23 23:42:24,735:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,735:      pdf_renderer.py:  470: printSegment: File CSV disponibili
+   DEBUG: 2026-02-23 23:42:24,736:      pdf_renderer.py:  470: printSegment:  per ogni singola combinazione: 
+   DEBUG: 2026-02-23 23:42:24,736:      pdf_renderer.py:  470: printSegment: cm_Samples_X_LatDim_Y.csv
+   DEBUG: 2026-02-23 23:42:24,737:      pdf_renderer.py:  470: printSegment: 10. Conclusioni e Raccomandazioni
+   DEBUG: 2026-02-23 23:42:24,737:      pdf_renderer.py:  470: printSegment: Risultati chiave:
+   DEBUG: 2026-02-23 23:42:24,737:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-02-23 23:42:24,738:      pdf_renderer.py:  470: printSegment: Il modello VMGP è estremamente robusto
+   DEBUG: 2026-02-23 23:42:24,740:      pdf_renderer.py:  470: printSegment:  agli iperparametri testati: tutte le 20 combinazioni
+   DEBUG: 2026-02-23 23:42:24,740:      pdf_renderer.py:  470: printSegment: raggiungono Kappa > 0.966 e Accuracy > 0.968.
+   DEBUG: 2026-02-23 23:42:24,740:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-02-23 23:42:24,741:      pdf_renderer.py:  470: printSegment: Cohen
+   DEBUG: 2026-02-23 23:42:24,741:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,741:      pdf_renderer.py:  470: printSegment: s Kappa è stabile
+   DEBUG: 2026-02-23 23:42:24,742:      pdf_renderer.py:  470: printSegment:  (0.9667–0.9714) nonostante il numero di razze vari da 10 a 34 — il modello
+   DEBUG: 2026-02-23 23:42:24,743:      pdf_renderer.py:  470: printSegment: scala bene.
+   DEBUG: 2026-02-23 23:42:24,743:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2026-02-23 23:42:24,743:      pdf_renderer.py:  470: printSegment: La dimensione latente ha impatto trascurabile
+   DEBUG: 2026-02-23 23:42:24,744:      pdf_renderer.py:  470: printSegment:  sulla classificazione: 32 dimensioni sono
+   DEBUG: 2026-02-23 23:42:24,745:      pdf_renderer.py:  470: printSegment: sufficienti (compressione ~1,550×).
+   DEBUG: 2026-02-23 23:42:24,745:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2026-02-23 23:42:24,746:      pdf_renderer.py:  470: printSegment: La Silhouette favorisce dimensioni basse
+   DEBUG: 2026-02-23 23:42:24,746:      pdf_renderer.py:  470: printSegment:  (32) e pochi campioni (30) — cluster più netti.
+   DEBUG: 2026-02-23 23:42:24,746:      pdf_renderer.py:  470: printSegment:  5 
+   DEBUG: 2026-02-23 23:42:24,747:      pdf_renderer.py:  470: printSegment: SMOTE non è stato testato
+   DEBUG: 2026-02-23 23:42:24,748:      pdf_renderer.py:  470: printSegment:  in questa griglia, ma i risultati precedenti suggerivano che non era
+   DEBUG: 2026-02-23 23:42:24,748:      pdf_renderer.py:  470: printSegment: necessario con ≥40 campioni.
+   DEBUG: 2026-02-23 23:42:24,749:      pdf_renderer.py:  470: printSegment: Raccomandazioni:
+   DEBUG: 2026-02-23 23:42:24,749:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,750:      pdf_renderer.py:  470: printSegment: Per massima diversità (raccomandato):
+   DEBUG: 2026-02-23 23:42:24,750:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,750:      pdf_renderer.py:  470: printSegment: Samples_30_LatDim_96
+   DEBUG: 2026-02-23 23:42:24,751:      pdf_renderer.py:  470: printSegment:  → 34 razze, Kappa=0.9714
+   DEBUG: 2026-02-23 23:42:24,751:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,751:      pdf_renderer.py:  470: printSegment: Per massima stabilità:
+   DEBUG: 2026-02-23 23:42:24,752:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,752:      pdf_renderer.py:  470: printSegment: Samples_40_LatDim_32
+   DEBUG: 2026-02-23 23:42:24,753:      pdf_renderer.py:  470: printSegment:  → 26 razze, Kappa=0.9710, Silhouette=0.7388
+   DEBUG: 2026-02-23 23:42:24,753:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,753:      pdf_renderer.py:  470: printSegment: Per massima compressione:
+   DEBUG: 2026-02-23 23:42:24,754:      pdf_renderer.py:  470: printSegment:  
+   DEBUG: 2026-02-23 23:42:24,754:      pdf_renderer.py:  470: printSegment: Samples_70_LatDim_32
+   DEBUG: 2026-02-23 23:42:24,755:      pdf_renderer.py:  470: printSegment:  → 10 razze, Kappa=0.9703, MSE=0.3939
+   DEBUG: 2026-02-23 23:42:24,755:      pdf_renderer.py:  470: printSegment: (più basso)
+   DEBUG: 2026-02-23 23:42:24,755:      pdf_renderer.py:  470: printSegment: l
+   DEBUG: 2026-02-23 23:42:24,756:      pdf_renderer.py:  470: printSegment: Per deployment:
+   DEBUG: 2026-02-23 23:42:24,757:      pdf_renderer.py:  470: printSegment:  Latent Dim = 32 è sufficiente per qualsiasi soglia — riduce costi computazionali e
+   DEBUG: 2026-02-23 23:42:24,757:      pdf_renderer.py:  470: printSegment: storage
+   DEBUG: 2026-02-23 23:42:24,757:      pdf_renderer.py:  470: printSegment: Prossimi passi suggeriti:
+   DEBUG: 2026-02-23 23:42:24,758:      pdf_renderer.py:  470: printSegment:  1 
+   DEBUG: 2026-02-23 23:42:24,758:      pdf_renderer.py:  470: printSegment: Testare le migliori configurazioni su un test set hold-out separato
+   DEBUG: 2026-02-23 23:42:24,759:      pdf_renderer.py:  470: printSegment:  2 
+   DEBUG: 2026-02-23 23:42:24,759:      pdf_renderer.py:  470: printSegment: Valutare l
+   DEBUG: 2026-02-23 23:42:24,759:      pdf_renderer.py:  470: printSegment: '
+   DEBUG: 2026-02-23 23:42:24,760:      pdf_renderer.py:  470: printSegment: aggiunta di task secondari (continente, caseina) con le configurazioni ottimali
+   DEBUG: 2026-02-23 23:42:24,760:      pdf_renderer.py:  470: printSegment:  3 
+   DEBUG: 2026-02-23 23:42:24,761:      pdf_renderer.py:  470: printSegment: Analizzare quali razze vengono confuse più frequentemente nelle confusion matrix
+   DEBUG: 2026-02-23 23:42:24,761:      pdf_renderer.py:  470: printSegment:  4 
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:  470: printSegment: Testare dimensioni latenti ancora più basse (16, 8) per trovare il vero minimo
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 0, [1, 'VMGP Grid Search - Report Esperimenti', 1, 68.0]
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 1, [2, '1. Obiettivo', 1, 124.0]
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 2, [3, 'Differenze rispetto agli esperimenti precedenti', 1, 247.2]
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 3, [3, 'Glossario metriche', 1, 341.99999999999994]
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 4, [2, '2. Miglior Modello', 1, 485.19999999999993]
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 5, [3, None, 1, 518.3999999999999]
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 6, [2, '3. Classifica Top 5 Modelli (per Cohen', 2, 176.8]
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 7, [2, '4. Tabella Completa: Tutti i 20 Esperimenti', 2, 324.40000000000003]
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 8, [3, 'Min Samples = 30 (34 razze, 49,586 SNPs)', 2, 357.6]
+   DEBUG: 2026-02-23 23:42:24,762:      pdf_renderer.py:   53: 9, [3, 'Min Samples = 40 (26 razze, 49,640 SNPs)', 2, 428.4]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 10, [3, 'Min Samples = 50 (16 razze, 49,359 SNPs)', 2, 499.19999999999993]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 11, [3, 'Min Samples = 60 (12 razze, 49,250 SNPs)', 2, 569.9999999999999]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 12, [3, 'Min Samples = 70 (10 razze, 49,023 SNPs)', 2, 640.7999999999998]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 13, [2, '5. Analisi: Effetto del Numero Minimo di Sample', 3, 70.0]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 14, [2, '6. Analisi: Effetto della Dimensione Latente', 3, 385.6]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 15, [2, '7. Miglior Configurazione per Soglia (Best Latent Dim per ogni Min Samples)', 3, 694.0]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 16, [2, '8. Confronto con Esperimenti Precedenti (5 Febbraio)', 4, 230.8]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 17, [2, '9. Guida alla Lettura dei Grafici', 4, 426.40000000000003]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 18, [3, 'A. Heatmap Griglia Esperimenti (', 4, 459.6]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 19, [3, 'B. Trade-off Analysis (', 4, 560.4]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 20, [3, 'C. Linee di Tendenza (', 4, 649.1999999999999]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 21, [3, 'D. Confusion Matrix (', 5, 92.4]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 22, [2, '10. Conclusioni e Raccomandazioni', 5, 193.60000000000002]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 23, [3, 'Risultati chiave:', 5, 226.80000000000004]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 24, [3, 'Raccomandazioni:', 5, 375.6]
+   DEBUG: 2026-02-23 23:42:24,763:      pdf_renderer.py:   53: 25, [3, 'Prossimi passi suggeriti:', 5, 488.4]

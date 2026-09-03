@@ -1,1 +1,10 @@
 vae/checkpoints_vae/
+.python-version
+__pycache__/
+data/
+lightning_logs/
+*.png
+.log
+results/
+models/
+checkpoints/

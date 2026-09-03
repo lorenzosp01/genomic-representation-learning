@@ -30,7 +30,8 @@ class VMGP_LightningSystem(pl.LightningModule):
                  num_classes_attitudine=0,
                  alpha=0.5, lr=0.0001,
                  use_breed=True, use_continent=False, use_caseina=False, use_attitudine=False,
-                 weight_breed=1.0, weight_continent=1.0, weight_caseina=1.0, weight_attitudine=1.0):
+                 weight_breed=1.0, weight_continent=1.0, weight_caseina=1.0, weight_attitudine=1.0,
+                 latent_dim=96):
         super().__init__()
         self.save_hyperparameters()
         
@@ -43,7 +44,8 @@ class VMGP_LightningSystem(pl.LightningModule):
             use_breed=use_breed,
             use_continent=use_continent,
             use_caseina=use_caseina,
-            use_attitudine=use_attitudine
+            use_attitudine=use_attitudine,
+            latent_dim=latent_dim
         )
         
         self.alpha = alpha

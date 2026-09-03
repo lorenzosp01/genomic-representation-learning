@@ -1,0 +1,42 @@
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+High-density Single Nucleotide Polymorphism (SNP) arrays provide
+genome-wide information on genetic variation and have been
+successfully used for breed discrimination and assignment in
+livestock populations
+\cite{dimauro2013canonical, dimauro2015sheep,
+      sorbolini2016signatures}.
+However, their high dimensionality introduces substantial
+computational challenges and raises the question of whether the full
+marker set is necessary for reliable breed assignment.
+
+This work investigates machine learning and deep representation
+learning for livestock breed classification from high-dimensional
+genotype data. Particular attention is given to two practical
+questions: how breed-classification performance on unseen individuals
+changes as the number of training individuals per breed is reduced,
+and how many genomic markers are needed to retain most of the
+predictive information available in the original SNP array.
+
+Generative and contrastive representation-learning approaches are
+combined with feature-attribution techniques to derive global
+rankings of informative SNPs. The resulting reduced marker panels are
+compared with established population-genetics and machine-learning
+ranking strategies, including fixation-index-based ranking and Random
+Forest feature importance
+\cite{weir1984estimating, breiman2001random}.
+
+The experimental protocol evaluates breed-classification performance
+under progressively reduced training-set sizes and SNP-panel sizes.
+The primary analysis is conducted on ovine genomic data, and the same
+methodological protocol is subsequently applied to an independent
+caprine dataset to assess whether the observed computational behavior
+generalizes across livestock species.
+
+Overall, the study investigates whether compact genomic
+representations and reduced SNP panels can preserve reliable breed
+classification while decreasing data and marker requirements. The
+resulting framework is designed to quantify the trade-off between
+predictive performance, training sample size, and genomic panel
+dimensionality.

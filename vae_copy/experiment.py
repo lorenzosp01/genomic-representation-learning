@@ -12,7 +12,7 @@ import pandas as pd
 import torch
 import matplotlib.pyplot as plt
 from torch.utils.data import TensorDataset, DataLoader
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score, silhouette_score, davies_bouldin_score, mean_squared_error, confusion_matrix, cohen_kappa_score
 from sklearn.decomposition import PCA
 import pytorch_lightning as pl
@@ -173,25 +173,12 @@ def run_experiment(name: str, config: dict, balanced: bool = False,
     y_continent = dm.y_continent_processed
     y_caseina = dm.y_caseina_processed
     y_attitudine = dm.y_attitudine_processed
-
-    # --- HELD-OUT TEST SPLIT (mai visto durante training/validation) ---
-    test_split = config.get('test_split', 0.15)
-    (
-        X_trainval, X_test,
-        y_breed_trainval, y_breed_test,
-        y_continent_trainval, y_continent_test,
-        y_caseina_trainval, y_caseina_test,
-        y_attitudine_trainval, y_attitudine_test,
-    ) = train_test_split(
-        X, y_breed, y_continent, y_caseina, y_attitudine,
-        test_size=test_split, stratify=y_breed, random_state=42
-    )
-    print(f"🧪 Held-out test: {test_split*100:.0f}% ({len(y_breed_test)} campioni, mai usati in training/validation)")
     
     # 3. Balancing viene fatto DOPO lo split per evitare data leakage!
     # (spostato dentro il loop del fold)
     
-    # 4. K-Fold Cross Validation SOLO su train+val (il test è tenuto fuori)
+    # 4. K-Fold Cross Validation (TEMPORANEAMENTE DISABILITATO - Single Split)
+    # skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
     
     fold_metrics = {
         'Local Structure (L)': [],
@@ -217,21 +204,18 @@ def run_experiment(name: str, config: dict, balanced: bool = False,
     best_fold_acc = -1
     best_fold_emb_val = None
     best_fold_lbl_val = None
-    best_fold_emb_train = None
-    best_fold_lbl_train = None
-    best_model = None
     
-    # --- K-FOLD CROSS VALIDATION (solo su X_trainval) ---
+    # --- K-FOLD CROSS VALIDATION ---
     skf = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
     
-    for fold, (train_idx, val_idx) in enumerate(skf.split(X_trainval, y_breed_trainval)):
+    for fold, (train_idx, val_idx) in enumerate(skf.split(X, y_breed)):
         print(f"\n🔹 Fold {fold+1}/{k_folds}")
         
-        X_train, X_val = X_trainval[train_idx], X_trainval[val_idx]
-        y_breed_train, y_breed_val = y_breed_trainval[train_idx], y_breed_trainval[val_idx]
-        y_continent_train, y_continent_val = y_continent_trainval[train_idx], y_continent_trainval[val_idx]
-        y_caseina_train, y_caseina_val = y_caseina_trainval[train_idx], y_caseina_trainval[val_idx]
-        y_attitudine_train, y_attitudine_val = y_attitudine_trainval[train_idx], y_attitudine_trainval[val_idx]
+        X_train, X_val = X[train_idx], X[val_idx]
+        y_breed_train, y_breed_val = y_breed[train_idx], y_breed[val_idx]
+        y_continent_train, y_continent_val = y_continent[train_idx], y_continent[val_idx]
+        y_caseina_train, y_caseina_val = y_caseina[train_idx], y_caseina[val_idx]
+        y_attitudine_train, y_attitudine_val = y_attitudine[train_idx], y_attitudine[val_idx]
         
         # ⚠️ BALANCING SOLO SUI DATI DI TRAINING (per evitare data leakage)
         if cap_samples:
@@ -285,7 +269,9 @@ def run_experiment(name: str, config: dict, balanced: bool = False,
             weight_continent=config['weight_continent'],
             weight_caseina=config['weight_caseina'],
             weight_attitudine=config.get('weight_attitudine', 1.0),
-            latent_dim=config.get('latent_dim', 96)
+            latent_dim=config.get('latent_dim', 96),
+            center_loss_weight=config.get('center_loss_weight', 0.1),  # ← NUOVO
+            use_focal=config.get('use_focal', True),             # ← NUOVO
         )
         
         early_stop = EarlyStopping(monitor='val_loss', patience=15, mode='min', verbose=False)
@@ -440,18 +426,13 @@ def run_experiment(name: str, config: dict, balanced: bool = False,
             best_fold_idx = fold
             best_fold_emb_val = emb_val.copy()
             best_fold_lbl_val = lbl_val.copy()
-            best_fold_emb_train = emb_train.copy()
-            best_fold_lbl_train = lbl_train.copy()
-            best_model = model_fold
             if save_checkpoint_path:
                 os.makedirs(os.path.dirname(save_checkpoint_path), exist_ok=True)
                 trainer.save_checkpoint(save_checkpoint_path)
                 print(f"   💾 Checkpoint best fold salvato: {save_checkpoint_path}")
         
-        del trainer, train_loader, val_loader, train_ds, val_ds
+        del model_fold, trainer, train_loader, val_loader, train_ds, val_ds
         del snps_train, recon_val, snps_val, emb_train, lbl_train, emb_val, lbl_val
-        if model_fold is not best_model:
-            del model_fold
         torch.cuda.empty_cache()
         gc.collect()
     
@@ -462,107 +443,7 @@ def run_experiment(name: str, config: dict, balanced: bool = False,
             print(f"   {metric}: {np.mean(values):.4f} ± {np.std(values):.4f}")
     print(f"   Best Fold: {best_fold_idx + 1} (GE: {best_fold_acc:.4f})")
     print(f"{'='*80}\n")
-
-    # --- VALUTAZIONE FINALE SU HELD-OUT TEST SET ---
-    print(f"{'='*80}")
-    print(f"🧪 VALUTAZIONE FINALE SU HELD-OUT TEST SET ({len(y_breed_test)} campioni)")
-    print(f"{'='*80}")
-
-    test_results = {}
-
-    if best_model is not None:
-        test_ds = TensorDataset(
-            torch.FloatTensor(X_test),
-            torch.LongTensor(y_breed_test),
-            torch.LongTensor(y_continent_test),
-            torch.LongTensor(y_caseina_test),
-            torch.LongTensor(y_attitudine_test)
-        )
-        test_loader = DataLoader(test_ds, batch_size=config['batch_size'], num_workers=4, pin_memory=True)
-
-        best_model.eval()
-        best_model.freeze()
-
-        emb_test, lbl_test, snps_test, recon_test = [], [], [], []
-        preds_breed_test, true_breed_test = [], []
-        preds_continent_test, true_continent_test = [], []
-        preds_caseina_test, true_caseina_test = [], []
-        preds_attitudine_test, true_attitudine_test = [], []
-
-        with torch.no_grad():
-            for batch in test_loader:
-                x, yb, yc, ycas, yatt = batch
-                x = x.to(best_model.device)
-                outputs = best_model(x)
-
-                emb_test.append(outputs['mu'].cpu().numpy())
-                lbl_test.append(yb.cpu().numpy())
-                snps_test.append(x.cpu().numpy())
-                recon_test.append(outputs['x_recon'].cpu().numpy())
-
-                true_breed_test.append(yb.cpu().numpy())
-                true_continent_test.append(yc.cpu().numpy())
-                true_caseina_test.append(ycas.cpu().numpy())
-                true_attitudine_test.append(yatt.cpu().numpy())
-
-                if use_breed and 'logits_breed' in outputs:
-                    preds_breed_test.append(torch.argmax(outputs['logits_breed'], dim=1).cpu().numpy())
-                if use_continent and 'logits_continent' in outputs:
-                    preds_continent_test.append(torch.argmax(outputs['logits_continent'], dim=1).cpu().numpy())
-                if use_caseina and 'logits_caseina' in outputs:
-                    preds_caseina_test.append(torch.argmax(outputs['logits_caseina'], dim=1).cpu().numpy())
-                if use_attitudine and 'logits_attitudine' in outputs:
-                    preds_attitudine_test.append(torch.argmax(outputs['logits_attitudine'], dim=1).cpu().numpy())
-
-        emb_test = np.concatenate(emb_test)
-        lbl_test = np.concatenate(lbl_test)
-        snps_test = np.concatenate(snps_test)
-        recon_test = np.concatenate(recon_test)
-
-        test_results['Test GE'] = compute_generalization(best_fold_emb_train, best_fold_lbl_train, emb_test, lbl_test)
-        test_results['Test Local Structure'] = compute_local_structure(emb_test, lbl_test)
-        test_results['Test Silhouette'] = silhouette_score(emb_test, lbl_test) if len(np.unique(lbl_test)) > 1 else 0.0
-        test_results['Test Davies-Bouldin'] = davies_bouldin_score(emb_test, lbl_test) if len(np.unique(lbl_test)) > 1 else 0.0
-        test_results['Test Reconstruction MSE'] = mean_squared_error(snps_test, recon_test)
-        test_no = compute_neighbor_overlap(emb_test, snps_test, k_values=[3, 10, 30], max_samples=1000)
-        test_results['Test NO_k3'] = test_no['NO_k3']
-        test_results['Test NO_k10'] = test_no['NO_k10']
-        test_results['Test NO_k30'] = test_no['NO_k30']
-
-        if use_breed and preds_breed_test:
-            preds_b = np.concatenate(preds_breed_test)
-            true_b = np.concatenate(true_breed_test)
-            test_results['Test Acc Breed'] = accuracy_score(true_b, preds_b)
-
-        if use_continent and preds_continent_test:
-            preds_c = np.concatenate(preds_continent_test)
-            true_c = np.concatenate(true_continent_test)
-            valid_mask = true_c >= 0
-            if valid_mask.sum() > 0:
-                test_results['Test Acc Continent'] = accuracy_score(true_c[valid_mask], preds_c[valid_mask])
-
-        if use_caseina and preds_caseina_test:
-            preds_cas = np.concatenate(preds_caseina_test)
-            true_cas = np.concatenate(true_caseina_test)
-            valid_mask = true_cas >= 0
-            if valid_mask.sum() > 0:
-                test_results['Test Acc Caseina'] = accuracy_score(true_cas[valid_mask], preds_cas[valid_mask])
-
-        if use_attitudine and preds_attitudine_test:
-            preds_att = np.concatenate(preds_attitudine_test)
-            true_att = np.concatenate(true_attitudine_test)
-            valid_mask = true_att >= 0
-            if valid_mask.sum() > 0:
-                test_results['Test Acc Attitudine'] = accuracy_score(true_att[valid_mask], preds_att[valid_mask])
-
-        for k, v in test_results.items():
-            print(f"   {k}: {v:.4f}")
-
-        del test_loader, test_ds
-        torch.cuda.empty_cache()
-    else:
-        print("   ⚠️ Nessun modello disponibile per valutazione test.")
-
+    
     results = {
         'Experiment': name,
         'Best Fold': best_fold_idx + 1,
@@ -583,8 +464,6 @@ def run_experiment(name: str, config: dict, balanced: bool = False,
         if values:
             results[f'{metric} (mean)'] = np.mean(values)
             results[f'{metric} (std)'] = np.std(values)
-
-    results.update(test_results)
     
     # Visualizzazione PCA
     print(f"📈 Creating PCA visualization...")

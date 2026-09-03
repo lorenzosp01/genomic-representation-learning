@@ -1,0 +1,2 @@
+Experiment,Silhouette (mean),Silhouette (std),Davies-Bouldin (mean),Davies-Bouldin (std),3NN Accuracy (mean),3NN Accuracy (std),Best Fold,Best Fold Accuracy,Num Classes,Num SNPs,K Folds
+Original Unbalanced,0.18395661413669587,0.02180819906378362,2.2200759750838115,0.15225410168354397,0.8249723756906077,0.010566217094260252,2,0.8342541436464088,114,49874,5

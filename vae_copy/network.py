@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 
 class CenterLoss(nn.Module):
-    """Minimizza distanza intra-classe nel latent space."""
+    """Minimizza distanza intra-classe nel latent space (mu)."""
     def __init__(self, num_classes, latent_dim):
         super().__init__()
         self.centers = nn.Parameter(torch.randn(num_classes, latent_dim))
@@ -18,7 +18,7 @@ class CenterLoss(nn.Module):
 
 
 class FocalLoss(nn.Module):
-    """Down-pesa esempi facili, focus su razze difficili."""
+    """Down-pesa esempi facili, focus sulle razze difficili (gamma=2)."""
     def __init__(self, gamma=2.0):
         super().__init__()
         self.gamma = gamma
@@ -30,19 +30,24 @@ class FocalLoss(nn.Module):
 
 
 class VMGP_Network(nn.Module):
-    def __init__(self, num_snps, num_classes_breed=0, num_classes_continent=0,
+    """
+    VMGP Network — paper architecture invariata.
+    Modifiche per breed classification:
+    - Dropout(0.3) nel predictor_breed
+    - CenterLoss e FocalLoss come attributi
+    """
+    def __init__(self, num_snps,
+                 num_classes_breed=0, num_classes_continent=0,
                  num_classes_caseina=0, num_classes_attitudine=0,
                  d1=2048, d2=512, d3=128, latent_dim=96,
                  use_breed=True, use_continent=False,
-                 use_caseina=False, use_attitudine=False,
-                 beta=0.1):                          # ← NUOVO: β-VAE
+                 use_caseina=False, use_attitudine=False):
         super().__init__()
 
-        self.use_breed     = use_breed
-        self.use_continent = use_continent
-        self.use_caseina   = use_caseina
+        self.use_breed      = use_breed
+        self.use_continent  = use_continent
+        self.use_caseina    = use_caseina
         self.use_attitudine = use_attitudine
-        self.beta          = beta                    # ← NUOVO
 
         # --- Encoder (invariato) ---
         self.encoder = nn.Sequential(
@@ -70,25 +75,21 @@ class VMGP_Network(nn.Module):
             nn.Linear(d1, num_snps),
         )
 
-        # --- Predictor Breed — aggiunto Dropout per regolarizzazione ---
+        # --- Predictor Breed — aggiunto Dropout(0.3) ---
         if self.use_breed and num_classes_breed > 0:
             self.predictor_breed = nn.Sequential(
                 nn.Linear(latent_dim, d3),
                 nn.BatchNorm1d(d3),
                 nn.LeakyReLU(0.2),
-                nn.Dropout(0.3),                     # ← NUOVO
+                nn.Dropout(0.3),                      # ← NUOVO
                 nn.Linear(d3, num_classes_breed),
             )
+            self.center_loss_fn = CenterLoss(num_classes_breed, latent_dim)  # ← NUOVO
         else:
-            self.predictor_breed = None
+            self.predictor_breed  = None
+            self.center_loss_fn   = None
 
-        # Center Loss (istanziata qui, usata nel LightningModule)
-        if self.use_breed and num_classes_breed > 0:
-            self.center_loss = CenterLoss(num_classes_breed, latent_dim)  # ← NUOVO
-        else:
-            self.center_loss = None
-
-        self.focal_loss = FocalLoss(gamma=2.0)       # ← NUOVO
+        self.focal_loss_fn = FocalLoss(gamma=2.0)     # ← NUOVO
 
     def reparameterize(self, mu, logvar):
         if self.training:
@@ -106,6 +107,6 @@ class VMGP_Network(nn.Module):
         outputs = {'x_recon': x_recon, 'mu': mu, 'logvar': logvar}
 
         if self.predictor_breed is not None:
-            outputs['logits_breed'] = self.predictor_breed(mu)  # usa mu, non z
+            outputs['logits_breed'] = self.predictor_breed(mu)  # mu, non z
 
         return outputs
