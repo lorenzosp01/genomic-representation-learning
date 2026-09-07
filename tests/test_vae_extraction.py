@@ -4,6 +4,8 @@ These verify that the helpers extracted from ``vae/vae_training.ipynb`` preserve
 the original behaviour without running full model training.
 """
 
+from types import SimpleNamespace
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -110,16 +112,6 @@ def test_plot_trends_smoke(tmp_path):
 # ---------------------------------------------------------------------------
 # run_grid / run_single invocation semantics (monkeypatched, no training)
 # ---------------------------------------------------------------------------
-class FakeDataModule:
-    def __init__(self, **kwargs):
-        self.kwargs = kwargs
-        self.num_classes_breed = 34
-        self.num_snps = 100
-
-    def setup(self):
-        pass
-
-
 class FakeRunExperiment:
     def __init__(self, calls):
         self.calls = calls
@@ -129,19 +121,17 @@ class FakeRunExperiment:
         return {"name": kwargs["name"]}
 
 
+class FakeExperimentData:
+    class_names = [f"B{i}" for i in range(34)]
+
+    def __init__(self, n_folds=3):
+        self.split = SimpleNamespace(n_folds=n_folds)
+
+
 def make_config():
     return {
-        "bed_path": "data/x.bed",
         "metadata_path": "x.csv",
         "batch_size": 64,
-        "maf_thresh": 0.01,
-        "geno_thresh": 0.1,
-        "min_samples_per_class": 30,
-        "ld_pruning": True,
-        "ld_threshold": 0.2,
-        "ld_window": 50,
-        "val_split": 0.15,
-        "test_split": 0.15,
         "target_samples": 30,
         "alpha": 0.5,
         "lr": 0.0001,
@@ -150,7 +140,6 @@ def make_config():
         "weight_continent": 0.0,
         "weight_caseina": 0.0,
         "max_epochs": 100,
-        "k_folds": 3,
         "accelerator": "cpu",
         "devices": 1,
     }
@@ -158,52 +147,43 @@ def make_config():
 
 def test_run_grid_invocation_semantics(monkeypatch):
     calls = []
-    monkeypatch.setattr(vae_experiment, "GenomicDataModule", FakeDataModule)
+    fake_folds = [object(), object(), object()]
+    monkeypatch.setattr(vae_experiment, "_build_folds", lambda *a, **k: fake_folds)
     monkeypatch.setattr(vae_experiment, "run_experiment", FakeRunExperiment(calls))
     monkeypatch.setattr("vae.results_io.save_results_incrementally", lambda rl, path: None)
 
     config = make_config()
-    grid_results, all_results = vae_experiment.run_grid(config, [30, 40], [32, 64])
+    grid_results, all_results = vae_experiment.run_grid(FakeExperimentData(), config, [32, 64])
 
-    assert len(grid_results) == 4
-    assert len(all_results) == 4
-    assert {c["name"] for c in calls} == {
-        "Samples_30_LatDim_32", "Samples_30_LatDim_64",
-        "Samples_40_LatDim_32", "Samples_40_LatDim_64",
-    }
+    assert len(grid_results) == 2
+    assert len(all_results) == 2
+    assert {c["name"] for c in calls} == {"LatDim_32", "LatDim_64"}
     for call in calls:
         assert call["balanced"] is False
         assert call["cap_samples"] is True
-        assert call["coarse_mapping"] is None
         assert call["classifier_config"] == "breed_only"
         assert call["max_epochs"] == 100
-        assert call["k_folds"] == 3
-        ms = call["config"]["min_samples_per_class"]
-        ld = call["config"]["latent_dim"]
-        assert call["config"]["target_samples"] == ms
-        assert call["config"]["latent_dim"] == ld
-        assert call["name"] == f"Samples_{ms}_LatDim_{ld}"
+        assert call["folds"] is fake_folds
+        assert call["config"]["latent_dim"] in (32, 64)
+        assert call["name"] == f"LatDim_{call['config']['latent_dim']}"
 
 
 def test_run_single_invocation_semantics(monkeypatch):
     calls = []
-    monkeypatch.setattr(vae_experiment, "GenomicDataModule", FakeDataModule)
+    fake_folds = [object(), object(), object()]
+    monkeypatch.setattr(vae_experiment, "_build_folds", lambda *a, **k: fake_folds)
     monkeypatch.setattr(vae_experiment, "run_experiment", FakeRunExperiment(calls))
 
     config = make_config()
-    single_result, exp_name = vae_experiment.run_single(config, 30, 96)
+    single_result, exp_name = vae_experiment.run_single(FakeExperimentData(), config, 96)
 
-    assert exp_name == "Samples_30_LatDim_96"
-    assert single_result["Min_Samples"] == 30
+    assert exp_name == "LatDim_96"
     assert single_result["Latent_Dim"] == 96
     assert len(calls) == 1
 
     call = calls[0]
     assert call["balanced"] is False
     assert call["cap_samples"] is True
-    assert call["coarse_mapping"] is None
     assert call["classifier_config"] == "breed_only"
     assert call["config"]["latent_dim"] == 96
-    assert call["config"]["min_samples_per_class"] == 30
-    assert call["config"]["target_samples"] == 30
-    assert call["save_checkpoint_path"] == "checkpoints/Samples_30_LatDim_96.ckpt"
+    assert call["save_checkpoint_path"] == "checkpoints/LatDim_96.ckpt"
