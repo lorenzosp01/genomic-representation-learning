@@ -1,0 +1,44 @@
+# Splitting configuration for the thesis experimental framework.
+#
+# This file drives scripts/make_split.py. It must be edited explicitly to
+# regenerate a split; splits are never created or replaced silently during
+# DataModule setup.
+
+dataset_id: ADAPTmap_genotypeTOP_20160222_full
+
+# Path to the PLINK .fam manifest (FID = col 0, IID = col 1).
+fam_path: data/ADAPTmap_genotypeTOP_20160222_full.fam
+
+# Where the split CSV + metadata JSON are written.
+out_dir: splits
+
+# Independent seeds for the outer dev/test split and the inner K-fold.
+outer_split_seed: 42
+fold_seed: 42
+
+# Target fractions (must sum to 1.0).
+dev_frac: 0.85
+test_frac: 0.15
+
+# Number of stratified folds inside the development set.
+k_folds: 3
+
+# ---------------------------------------------------------------------------
+# Primary cohort inclusion rule (RQ1, RQ3, RQ4).
+#
+# A breed belongs to the primary cohort if it has at least this many eligible
+# animals in the original dataset. This is ONLY an a-priori eligibility rule
+# and is unrelated to the RQ2 training sample sizes.
+# ---------------------------------------------------------------------------
+cohort_min_breed_size: 30
+
+# ---------------------------------------------------------------------------
+# RQ2 (sample efficiency) — kept separate from the primary cohort rule.
+#
+# The RQ2 cohort is a pure breed filter over the SAME persisted primary split
+# (no second split, no reassignment): a primary-cohort breed belongs to the
+# RQ2 cohort iff every CV fold contains at least rq2_max_train_per_breed
+# training individuals for that breed.
+# ---------------------------------------------------------------------------
+rq2_train_sizes: [5, 10, 15, 20, 25, 30]
+rq2_max_train_per_breed: 30

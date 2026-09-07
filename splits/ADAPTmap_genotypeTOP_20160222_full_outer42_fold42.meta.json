@@ -1,0 +1,15 @@
+{
+  "cohort_min_breed_size": 30,
+  "dataset_id": "ADAPTmap_genotypeTOP_20160222_full",
+  "dev_frac": 0.85,
+  "fold_seed": 42,
+  "k_folds": 3,
+  "n_development": 2530,
+  "n_eligible": 2976,
+  "n_test": 446,
+  "n_total": 4653,
+  "outer_split_seed": 42,
+  "protocol_version": 1,
+  "source_manifest_sha256": "b270ff0a0f5665904afb4bf8a36db5ac9f35d83e40a493493c68cc4bda71f7cb",
+  "test_frac": 0.15
+}
