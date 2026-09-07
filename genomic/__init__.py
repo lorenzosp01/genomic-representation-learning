@@ -9,6 +9,12 @@ from genomic.splitting import (
 )
 from genomic.cohort import compute_individual_missingness, individual_qc_mask
 from genomic.preprocessing import GenomicPreprocessor, load_bim
+from genomic.labels import CanonicalLabelMapper
+from genomic.experiment_data import (
+    FoldData,
+    GenomicExperimentData,
+    load_genotype_matrix,
+)
 
 __all__ = [
     "PROTOCOL_VERSION",
@@ -20,4 +26,8 @@ __all__ = [
     "individual_qc_mask",
     "GenomicPreprocessor",
     "load_bim",
+    "CanonicalLabelMapper",
+    "GenomicExperimentData",
+    "FoldData",
+    "load_genotype_matrix",
 ]
