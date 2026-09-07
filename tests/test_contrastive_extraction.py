@@ -4,6 +4,8 @@ These verify that the classes/functions moved out of the contrastive notebooks
 preserve the exact notebook behaviour, without running full model training.
 """
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 import torch
@@ -140,11 +142,22 @@ def test_extract_embeddings():
 # ---------------------------------------------------------------------------
 # run_experiment invocation / config semantics (no training)
 # ---------------------------------------------------------------------------
-class FakeDataModule:
-    def __init__(self):
-        self.X_processed = np.random.RandomState(0).rand(9, 10).astype(np.float32)
-        self.y_processed = np.array([0, 0, 0, 1, 1, 1, 2, 2, 2])
-        self.num_snps = 10
+class FakeFoldData:
+    def __init__(self, n_train, n_val, n_markers, seed=0):
+        rng = np.random.RandomState(seed)
+        self.X_train = rng.randint(0, 3, size=(n_train, n_markers)).astype(np.float32)
+        self.y_train = np.array([0] * n_train)
+        self.X_val = rng.randint(0, 3, size=(n_val, n_markers)).astype(np.float32)
+        self.y_val = np.array([0] * n_val)
+
+
+class FakeExperimentData:
+    def __init__(self, fold_datas):
+        self._fds = fold_datas
+        self.split = SimpleNamespace(n_folds=len(fold_datas))
+
+    def fold_data(self, k):
+        return self._fds[k]
 
 
 class FakeModel:
@@ -190,12 +203,16 @@ def test_run_experiment_model_config_semantics(monkeypatch):
         "accelerator": "cpu",
         "devices": 1,
     }
-    dm = FakeDataModule()
-    result = contrastive_experiment.run_experiment("t", dm, config, max_epochs=2, k_folds=3)
+    # Fold-specific marker counts (folds may legitimately differ under the
+    # shared protocol-v2 train-only preprocessing).
+    fold_datas = [FakeFoldData(20, 8, n_markers) for n_markers in (10, 11, 12)]
+    experiment_data = FakeExperimentData(fold_datas)
+
+    result = contrastive_experiment.run_experiment("t", experiment_data, config, max_epochs=2)
 
     assert len(FakeModel.calls) == 3  # one per fold
-    for kw in FakeModel.calls:
-        assert kw["n_markers"] == dm.num_snps
+    for kw, fd in zip(FakeModel.calls, fold_datas):
+        assert kw["n_markers"] == fd.X_train.shape[1]  # fold-specific n_markers
         assert kw["embedding_dim"] == config["embedding_dim"]
         assert kw["flip_max"] == config["flip_max"]
         assert kw["mask_max"] == config["mask_max"]

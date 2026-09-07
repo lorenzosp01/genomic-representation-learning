@@ -1,59 +1,65 @@
-"""Experiment runner for the contrastive model (K-fold, full-batch bounded).
+"""Experiment runner for the contrastive model (protocol-v2 shared layer).
 
-Extracted verbatim from the contrastive notebooks.
+The K-fold loop is driven exclusively by the frozen protocol-v2 fold data from
+``genomic.experiment_data``. No independent splitting, cohort filtering or
+preprocessing happens here; each fold's model uses that fold's retained SNP
+count as ``n_markers`` (folds may legitimately differ).
 """
 
 import numpy as np
-import torch
 import pytorch_lightning as pl
-from torch.utils.data import TensorDataset, DataLoader
-from sklearn.model_selection import StratifiedKFold
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
 
+from .data import build_fold_dataloaders
 from .model import ContrastiveGeneticModel
 from .evaluation import extract_embeddings, compute_metrics
 
 
-def run_experiment(name: str, dm, config: dict,
-                   max_epochs: int = 5000, k_folds: int = 3) -> dict:
+def run_experiment(name: str, experiment_data, config: dict,
+                   max_epochs: int = 5000) -> dict:
+    """Run the 3-fold contrastive CV over the protocol-v2 split.
+
+    Parameters
+    ----------
+    name:
+        Experiment label (used for checkpoint directories).
+    experiment_data:
+        A ``genomic.experiment_data.GenomicExperimentData`` providing the frozen
+        development folds. The locked test set is never accessed.
+    config:
+        Model/training configuration (``embedding_dim``, ``flip_max``,
+        ``mask_max``, ``learning_rate``, ``lr_decay_factor``,
+        ``lr_decay_interval``, ``accelerator``, ``devices``, optional
+        ``precision``).
+    max_epochs:
+        Maximum training epochs per fold.
+    """
+    n_folds = experiment_data.split.n_folds
 
     print(f"\n{'='*80}")
     print(f"🧪 ESPERIMENTO: {name}")
-    print(f"   K-Fold: {k_folds} | Max epochs: {max_epochs} | FULL-BATCH (with size limit)")
+    print(f"   K-Fold: {n_folds} | Max epochs: {max_epochs} | FULL-BATCH (with size limit)")
     print(f"{'='*80}\n")
-
-    X, y = dm.X_processed, dm.y_processed
-    skf  = StratifiedKFold(n_splits=k_folds, shuffle=True, random_state=42)
 
     fold_metrics_list = []
     best_acc, best_model, best_Z, best_y = -1, None, None, None
 
-    for fold, (tr_idx, val_idx) in enumerate(skf.split(X, y)):
-        print(f"\n🔹 FOLD {fold+1}/{k_folds}  "
-              f"(train={len(tr_idx)}, val={len(val_idx)})")
+    for fold in range(n_folds):
+        fd = experiment_data.fold_data(fold)
+        n_markers = fd.X_train.shape[1]
 
-        X_tr,  X_val  = X[tr_idx],  X[val_idx]
-        y_tr,  y_val  = y[tr_idx],  y[val_idx]
+        print(f"\n🔹 FOLD {fold+1}/{n_folds}  "
+              f"(train={len(fd.X_train)}, val={len(fd.X_val)}, n_markers={n_markers})")
 
         # ── Limit batch size to prevent OOM ──────────────
         # Even though the paper does "full-batch", in practice on consumer GPUs
         # doing N*(N-1) pairs causes OutOfMemory. Bounding to max 512 or 1024.
-        eff_batch_size = min(len(X_tr), 512)
-
-        tr_dl  = DataLoader(
-            TensorDataset(torch.FloatTensor(X_tr),  torch.LongTensor(y_tr)),
-            batch_size=eff_batch_size,
-            shuffle=True, num_workers=4, pin_memory=True, drop_last=False)
-
-        val_dl = DataLoader(
-            TensorDataset(torch.FloatTensor(X_val), torch.LongTensor(y_val)),
-            batch_size=eff_batch_size,
-            num_workers=4, pin_memory=True, drop_last=False)
-
+        eff_batch_size = min(len(fd.X_train), 512)
+        tr_dl, val_dl = build_fold_dataloaders(fd, eff_batch_size)
         print(f"   Batch size effettivo: {eff_batch_size}")
 
         model = ContrastiveGeneticModel(
-            n_markers         = dm.num_snps,
+            n_markers         = n_markers,
             embedding_dim     = config['embedding_dim'],
             flip_max          = config['flip_max'],
             mask_max          = config['mask_max'],
@@ -86,19 +92,19 @@ def run_experiment(name: str, dm, config: dict,
         # ── Estrai embedding dal best checkpoint ───────────────
         best_ckpt  = callbacks[0].best_model_path
         best_fold  = ContrastiveGeneticModel.load_from_checkpoint(best_ckpt)
-        Z_val = extract_embeddings(best_fold, X_val)
-        m     = compute_metrics(Z_val, y_val, k=3)
+        Z_val = extract_embeddings(best_fold, fd.X_val)
+        m     = compute_metrics(Z_val, fd.y_val, k=3)
         print(f"   ✅ Fold {fold+1}: knn_acc@3={m['knn_acc_k3']} | sil={m['silhouette']}")
         fold_metrics_list.append(m)
 
         if m['knn_acc_k3'] > best_acc:
-            best_acc, best_model, best_Z, best_y = m['knn_acc_k3'], best_fold, Z_val, y_val
+            best_acc, best_model, best_Z, best_y = m['knn_acc_k3'], best_fold, Z_val, fd.y_val
 
     # ── Media sui fold ─────────────────────────────────────────
     avg    = {k: np.mean([fm[k] for fm in fold_metrics_list]) for k in fold_metrics_list[0]}
     result = {'Experiment': name, **{f'{k} (mean)': round(v, 4) for k, v in avg.items()}}
 
-    print(f"\n📊 Risultati medi ({k_folds} fold):")
+    print(f"\n📊 Risultati medi ({n_folds} fold):")
     for k, v in result.items():
         if k != 'Experiment': print(f"   {k}: {v}")
 

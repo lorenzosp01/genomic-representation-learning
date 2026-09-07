@@ -4,7 +4,6 @@ Core implementation extracted verbatim from the contrastive notebooks. The
 Integrated Gradients / attribution code remains in the notebooks for now.
 """
 
-from .data import GenomicDataModule
 from .augmentation import GeneticAugmentation
 from .encoder import GeneticEncoder
 from .loss import CentroidNPairLoss
@@ -14,7 +13,6 @@ from .experiment import run_experiment
 from .plotting import plot_confusion_matrix, plot_distribution, plot_embedding
 
 __all__ = [
-    "GenomicDataModule",
     "GeneticAugmentation",
     "GeneticEncoder",
     "CentroidNPairLoss",
