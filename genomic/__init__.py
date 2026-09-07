@@ -7,6 +7,7 @@ from genomic.splitting import (
     load_split,
     save_split,
 )
+from genomic.cohort import compute_individual_missingness, individual_qc_mask
 
 __all__ = [
     "PROTOCOL_VERSION",
@@ -14,4 +15,6 @@ __all__ = [
     "build_split",
     "load_split",
     "save_split",
+    "compute_individual_missingness",
+    "individual_qc_mask",
 ]

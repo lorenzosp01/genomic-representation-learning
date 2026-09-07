@@ -24,7 +24,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
-PROTOCOL_VERSION = 1
+PROTOCOL_VERSION = 2
 
 CSV_COLUMNS = [
     "source_index",
@@ -149,6 +149,9 @@ def build_split(
     test_frac: float = 0.15,
     k_folds: int = 3,
     cohort_min_breed_size: Optional[int] = None,
+    individual_missingness_mask: Optional[np.ndarray] = None,
+    individual_missingness_threshold: Optional[float] = None,
+    individual_missingness_rule: str = "<",
 ) -> SplitIndex:
     """Build a single outer development/test split plus a K-fold assignment.
 
@@ -165,9 +168,19 @@ def build_split(
     k_folds:
         Number of stratified folds inside the development set.
     cohort_min_breed_size:
-        A-priori cohort-eligibility threshold. Breeds with fewer individuals
-        are excluded. ``None`` means no eligibility filtering. This is *only*
-        an inclusion rule and is unrelated to the RQ2 training sample size N.
+        A-priori breed-eligibility threshold. Breeds with fewer individuals
+        are excluded. ``None`` means no breed eligibility filtering. This is
+        *only* an inclusion rule and is unrelated to the RQ2 training sample
+        size N.
+    individual_missingness_mask:
+        Optional boolean keep-mask (length = raw sample count) encoding
+        pre-split sample-level quality (e.g. ``missingness < threshold``). This
+        is applied BEFORE breed eligibility. ``None`` means no sample-level QC.
+    individual_missingness_threshold:
+        The sample-missingness threshold used to build ``individual_missingness_mask``
+        (recorded in metadata and used to derive the artifact cohort label).
+    individual_missingness_rule:
+        The comparison rule (default ``"<"``), recorded in metadata.
     """
     if not 0.0 < test_frac < 1.0:
         raise ValueError("test_frac must be in (0, 1)")
@@ -179,6 +192,8 @@ def build_split(
         raise ValueError("k_folds must be >= 2")
     if cohort_min_breed_size is not None and cohort_min_breed_size < 1:
         raise ValueError("cohort_min_breed_size must be >= 1")
+    if individual_missingness_threshold is not None and not 0.0 < individual_missingness_threshold < 1.0:
+        raise ValueError("individual_missingness_threshold must be in (0, 1)")
 
     source_index, fid, iid, sample_id, breed = _read_fam(fam_path)
     n_total = len(source_index)
@@ -191,12 +206,24 @@ def build_split(
 
     manifest_sha = _manifest_sha256(source_index, fid, iid, breed)
 
-    # --- A-priori cohort eligibility ------------------------------------
-    if cohort_min_breed_size is not None:
-        counts = Counter(breed.tolist())
-        keep = np.array([counts[b] >= cohort_min_breed_size for b in breed.tolist()])
+    # --- Pre-split individual sample-level QC ----------------------------
+    if individual_missingness_mask is not None:
+        iqc_keep = np.asarray(individual_missingness_mask, dtype=bool)
+        if iqc_keep.shape != (n_total,):
+            raise ValueError(
+                "individual_missingness_mask must have one entry per raw sample "
+                f"(expected {n_total}, got {iqc_keep.size})."
+            )
     else:
-        keep = np.ones(n_total, dtype=bool)
+        iqc_keep = np.ones(n_total, dtype=bool)
+    n_after_iqc = int(iqc_keep.sum())
+
+    # --- A-priori breed cohort eligibility ------------------------------
+    if cohort_min_breed_size is not None:
+        counts = Counter(breed[iqc_keep].tolist())
+        keep = iqc_keep & np.array([counts[b] >= cohort_min_breed_size for b in breed.tolist()])
+    else:
+        keep = iqc_keep
     elig = np.flatnonzero(keep)
     n_eligible = int(elig.size)
     elig_breed = breed[keep]
@@ -233,20 +260,32 @@ def build_split(
         for k, (_, val_idx) in enumerate(skf.split(np.zeros(dev_pos.size), dev_breed)):
             fold[dev_pos[val_idx]] = k
 
+    cohort_label = ""
+    if individual_missingness_threshold is not None:
+        cohort_label = "indmiss" + f"{individual_missingness_threshold:.2f}".replace(".", "p")
+
     meta = {
         "protocol_version": PROTOCOL_VERSION,
         "dataset_id": dataset_id,
+        "cohort_label": cohort_label,
+        "individual_missingness_threshold": individual_missingness_threshold,
+        "individual_missingness_rule": individual_missingness_rule if individual_missingness_threshold is not None else None,
         "outer_split_seed": outer_split_seed,
         "fold_seed": fold_seed,
+        "n_folds": k_folds,
+        "k_folds": k_folds,
         "dev_frac": dev_frac,
         "test_frac": test_frac,
-        "k_folds": k_folds,
         "cohort_min_breed_size": cohort_min_breed_size,
+        "raw_sample_count": n_total,
+        "eligible_after_individual_qc_count": n_after_iqc,
+        "final_primary_cohort_count": n_eligible,
         "n_total": n_total,
         "n_eligible": n_eligible,
         "n_development": int(np.sum(~test_mask)),
         "n_test": int(np.sum(test_mask)),
         "source_manifest_sha256": manifest_sha,
+        "cohort_manifest_sha256": _manifest_sha256(source_index[keep], fid[keep], iid[keep], breed[keep]),
     }
 
     return SplitIndex(
@@ -262,7 +301,9 @@ def build_split(
 
 
 def _split_stem(meta: Dict) -> str:
-    return f"{meta['dataset_id']}_outer{meta['outer_split_seed']}_fold{meta['fold_seed']}"
+    label = meta.get("cohort_label") or ""
+    base = meta["dataset_id"] + (f"_{label}" if label else "")
+    return f"{base}_outer{meta['outer_split_seed']}_fold{meta['fold_seed']}"
 
 
 def save_split(split: SplitIndex, out_dir: str = "splits") -> Tuple[str, str]:
@@ -298,14 +339,17 @@ def load_split(
     fold_seed: int,
     fam_path: str,
     out_dir: str = "splits",
+    cohort_label: str = "",
 ) -> SplitIndex:
     """Load a persisted split and verify it against the current ``.fam``.
 
     The manifest fingerprint is recomputed from ``fam_path`` and compared to the
     stored value; a mismatch means the source dataset changed since the split
-    was created.
+    was created. The cohort fingerprint (over the eligible samples) is also
+    recomputed from the CSV and verified.
     """
-    stem = f"{dataset_id}_outer{outer_split_seed}_fold{fold_seed}"
+    base = dataset_id + (f"_{cohort_label}" if cohort_label else "")
+    stem = f"{base}_outer{outer_split_seed}_fold{fold_seed}"
     csv_path = os.path.join(out_dir, stem + ".csv")
     meta_path = os.path.join(out_dir, stem + ".meta.json")
     if not (os.path.exists(csv_path) and os.path.exists(meta_path)):
@@ -341,6 +385,14 @@ def load_split(
     n_dev = int((O == "development").sum())
     if n_test != meta["n_test"] or n_dev != meta["n_development"]:
         raise ValueError("Split CSV outer_split counts do not match metadata.")
+
+    if "cohort_manifest_sha256" in meta:
+        cohort_sha = _manifest_sha256(si, F, I, B)
+        if cohort_sha != meta["cohort_manifest_sha256"]:
+            raise ValueError(
+                "Cohort manifest fingerprint mismatch: the eligible cohort "
+                "differs from the one used to create this split."
+            )
 
     return SplitIndex(
         source_index=si,

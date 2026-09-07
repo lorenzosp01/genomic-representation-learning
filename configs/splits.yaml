@@ -9,6 +9,10 @@ dataset_id: ADAPTmap_genotypeTOP_20160222_full
 # Path to the PLINK .fam manifest (FID = col 0, IID = col 1).
 fam_path: data/ADAPTmap_genotypeTOP_20160222_full.fam
 
+# Path to the PLINK .bed genotype matrix (used only for pre-split
+# sample-level individual-missingness QC).
+bed_path: data/ADAPTmap_genotypeTOP_20160222_full.bed
+
 # Where the split CSV + metadata JSON are written.
 out_dir: splits
 
@@ -24,11 +28,21 @@ test_frac: 0.15
 k_folds: 3
 
 # ---------------------------------------------------------------------------
+# Pre-split sample-level cohort eligibility (individual quality).
+#
+# Keep an individual iff its per-sample missingness is strictly below this
+# threshold. This is a deterministic per-sample rule and does NOT use other
+# samples, validation/test, MAF, LD, imputation or model outputs.
+# ---------------------------------------------------------------------------
+individual_missingness_threshold: 0.10
+individual_missingness_rule: "<"
+
+# ---------------------------------------------------------------------------
 # Primary cohort inclusion rule (RQ1, RQ3, RQ4).
 #
-# A breed belongs to the primary cohort if it has at least this many eligible
-# animals in the original dataset. This is ONLY an a-priori eligibility rule
-# and is unrelated to the RQ2 training sample sizes.
+# A breed belongs to the primary cohort if it has at least this many
+# individual-QC-eligible animals. This is ONLY an a-priori breed eligibility
+# rule and is unrelated to the RQ2 training sample sizes.
 # ---------------------------------------------------------------------------
 cohort_min_breed_size: 30
 
