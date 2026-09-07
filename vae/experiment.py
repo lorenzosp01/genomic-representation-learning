@@ -608,3 +608,161 @@ def run_experiment(name: str, config: dict, balanced: bool = False,
     plt.show()
     
     return results
+
+
+def run_grid(config: dict, min_samples_range: list, latent_dim_range: list,
+             all_results: list = None, cache_path: str = "results_cache.json") -> tuple:
+    """Run the min_samples × latent_dim grid (thin orchestration wrapper).
+
+    Pre-caches one DataModule per ``min_samples`` (so QC + LD pruning run once
+    per threshold), then invokes :func:`run_experiment` for every combination,
+    mirroring the original notebook grid cell. Results are appended to
+    ``all_results`` and incrementally saved via :func:`save_results_incrementally`.
+
+    Returns ``(grid_results, all_results)``.
+    """
+    from .results_io import save_results_incrementally
+
+    if all_results is None:
+        all_results = []
+
+    print("📦 Pre-caricamento DataModule per ogni soglia min_samples...")
+    print("   (QC + LD Pruning eseguiti UNA sola volta per soglia)\n")
+
+    cached_data_modules = {}
+    for min_samples in min_samples_range:
+        print(f"   Caricamento min_samples={min_samples}...")
+        dm = GenomicDataModule(
+            bed_path=config['bed_path'],
+            batch_size=config['batch_size'],
+            maf_thresh=config['maf_thresh'],
+            geno_thresh=config['geno_thresh'],
+            min_samples_per_class=min_samples,
+            ld_pruning=config['ld_pruning'],
+            ld_threshold=config['ld_threshold'],
+            ld_window=config['ld_window'],
+            val_split=config['val_split'],
+            test_split=config['test_split'],
+            metadata_path=config['metadata_path'],
+            use_breed=True,
+            use_continent=False,
+            use_caseina=False,
+            use_attitudine=False
+        )
+        dm.setup()
+        cached_data_modules[min_samples] = dm
+        print(f"   ✅ min_samples={min_samples}: {dm.num_classes_breed} razze, {dm.num_snps} SNPs\n")
+
+    print(f"📦 Pre-caricamento completato! ({len(cached_data_modules)} DataModule cachati)")
+
+    grid_results = []
+    total_experiments = len(min_samples_range) * len(latent_dim_range)
+    exp_counter = 0
+
+    for min_samples in min_samples_range:
+        dm_cached = cached_data_modules[min_samples]
+
+        for latent_dim in latent_dim_range:
+            exp_counter += 1
+
+            exp_config = config.copy()
+            exp_config['latent_dim'] = latent_dim
+            exp_config['min_samples_per_class'] = min_samples
+            exp_config['target_samples'] = min_samples  # Cap a min_samples (solo reali)
+
+            exp_name = f"Samples_{min_samples}_LatDim_{latent_dim}"
+
+            print(f"\n{'='*60}")
+            print(f"🔬 [{exp_counter}/{total_experiments}] Esperimento: {exp_name}")
+            print(f"   Min Samples: {min_samples} | Latent Dim: {latent_dim} | K-Fold: {config['k_folds']}")
+            print(f"{'='*60}")
+
+            try:
+                res = run_experiment(
+                    name=exp_name,
+                    config=exp_config,
+                    balanced=False,        # NO SMOTE
+                    cap_samples=True,      # Solo downsampling a min_samples
+                    coarse_mapping=None,
+                    max_epochs=config['max_epochs'],
+                    k_folds=config['k_folds'],  # 3-Fold Cross Validation
+                    classifier_config='breed_only',
+                    data_module=dm_cached  # Riusa DataModule pre-caricato (skip QC+LD)
+                )
+
+                res['Min_Samples'] = min_samples
+                res['Latent_Dim'] = latent_dim
+                grid_results.append(res)
+                all_results.append(res)
+
+                save_results_incrementally(all_results, path=cache_path)
+
+            except Exception as e:
+                print(f"⚠️ Errore nell'esperimento {exp_name}: {e}")
+                import traceback
+                traceback.print_exc()
+                continue
+
+    print(f"\n✅ Griglia esperimenti completata! ({len(grid_results)}/{total_experiments} riusciti)")
+    return grid_results, all_results
+
+
+def run_single(config: dict, min_samples: int, latent_dim: int,
+               save_checkpoint_path: str = None) -> tuple:
+    """Run a single experiment (thin orchestration wrapper).
+
+    Returns ``(single_result, exp_name)``.
+    """
+    print(f"📦 Caricamento DataModule (min_samples={min_samples})...")
+    dm_single = GenomicDataModule(
+        bed_path=config['bed_path'],
+        batch_size=config['batch_size'],
+        maf_thresh=config['maf_thresh'],
+        geno_thresh=config['geno_thresh'],
+        min_samples_per_class=min_samples,
+        ld_pruning=config['ld_pruning'],
+        ld_threshold=config['ld_threshold'],
+        ld_window=config['ld_window'],
+        val_split=config['val_split'],
+        test_split=config['test_split'],
+        metadata_path=config['metadata_path'],
+        use_breed=True,
+        use_continent=False,
+        use_caseina=False,
+        use_attitudine=False
+    )
+    dm_single.setup()
+    print(f"   ✅ {dm_single.num_classes_breed} razze, {dm_single.num_snps} SNPs\n")
+
+    single_config = config.copy()
+    single_config['latent_dim'] = latent_dim
+    single_config['min_samples_per_class'] = min_samples
+    single_config['target_samples'] = min_samples
+
+    exp_name = f"Samples_{min_samples}_LatDim_{latent_dim}"
+
+    print(f"🔬 Training: {exp_name}")
+    print(f"   K-Fold: {config['k_folds']} | Max Epochs: {config['max_epochs']}")
+    print(f"{'='*60}")
+
+    if save_checkpoint_path is None:
+        save_checkpoint_path = f"checkpoints/{exp_name}.ckpt"
+
+    single_result = run_experiment(
+        name=exp_name,
+        config=single_config,
+        balanced=False,
+        cap_samples=True,
+        coarse_mapping=None,
+        max_epochs=config['max_epochs'],
+        k_folds=config['k_folds'],
+        classifier_config='breed_only',
+        data_module=dm_single,
+        save_checkpoint_path=save_checkpoint_path
+    )
+
+    single_result['Min_Samples'] = min_samples
+    single_result['Latent_Dim'] = latent_dim
+
+    print(f"\n✅ Training completato!")
+    return single_result, exp_name
