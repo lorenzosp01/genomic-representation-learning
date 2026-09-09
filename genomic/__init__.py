@@ -16,6 +16,7 @@ from genomic.experiment_data import (
     load_genotype_matrix,
 )
 from genomic.classification_metrics import aggregate_folds, compute_classification_metrics
+from genomic.selection import best_epoch_from_checkpoint_path, select_best_configuration
 
 __all__ = [
     "PROTOCOL_VERSION",
@@ -33,4 +34,6 @@ __all__ = [
     "load_genotype_matrix",
     "compute_classification_metrics",
     "aggregate_folds",
+    "select_best_configuration",
+    "best_epoch_from_checkpoint_path",
 ]

@@ -14,6 +14,7 @@ from .data import build_fold_dataloaders
 from .model import ContrastiveGeneticModel
 from .evaluation import extract_embeddings, compute_metrics, evaluate_knn_classification
 from genomic.classification_metrics import aggregate_folds
+from genomic.selection import best_epoch_from_checkpoint_path
 
 
 def run_experiment(name: str, experiment_data, config: dict,
@@ -46,6 +47,7 @@ def run_experiment(name: str, experiment_data, config: dict,
 
     fold_class_metrics = []
     fold_metrics_list = []
+    fold_best_epochs = []
     best_acc, best_model, best_Z, best_y = -1, None, None, None
 
     for fold in range(n_folds):
@@ -95,6 +97,7 @@ def run_experiment(name: str, experiment_data, config: dict,
 
         # ── Estrai embedding dal best checkpoint ───────────────
         best_ckpt  = callbacks[0].best_model_path
+        fold_best_epochs.append(best_epoch_from_checkpoint_path(best_ckpt))
         best_fold  = ContrastiveGeneticModel.load_from_checkpoint(best_ckpt)
 
         # Deterministic eval embeddings (model.eval(), augment=False):
@@ -117,6 +120,8 @@ def run_experiment(name: str, experiment_data, config: dict,
               f"BalAcc={cm['balanced_accuracy']:.4f} | "
               f"self_consistency_knn_acc_k3={sc['knn_acc_k3']} | sil={sc['silhouette']}")
 
+        # Legacy presentation-only representative fold (self-consistency KNN).
+        # Has ZERO role in checkpoint/config selection or scientific comparison.
         if sc['knn_acc_k3'] > best_acc:
             best_acc, best_model, best_Z, best_y = sc['knn_acc_k3'], best_fold, Z_val, fd.y_val
 
@@ -134,6 +139,9 @@ def run_experiment(name: str, experiment_data, config: dict,
         result['Per_Class_Recall (mean)'] = agg['per_class_recall_mean']
         result['Per_Class_Recall (std)'] = agg['per_class_recall_std']
         result['Confusion_Matrix'] = agg['confusion_matrix_sum']
+
+    result['Best_Epochs'] = fold_best_epochs
+    result['Median_Best_Epoch'] = float(np.median(fold_best_epochs)) if fold_best_epochs else None
 
     # ── Legacy diagnostic fields (self-consistency KNN + clustering) ──
     avg = {k: np.mean([fm[k] for fm in fold_metrics_list]) for k in fold_metrics_list[0]}

@@ -160,7 +160,7 @@ def test_run_grid_invocation_semantics(monkeypatch):
     assert {c["name"] for c in calls} == {"LatDim_32", "LatDim_64"}
     for call in calls:
         assert call["balanced"] is False
-        assert call["cap_samples"] is True
+        assert call["cap_samples"] is False
         assert call["classifier_config"] == "breed_only"
         assert call["max_epochs"] == 100
         assert call["folds"] is fake_folds
@@ -183,7 +183,7 @@ def test_run_single_invocation_semantics(monkeypatch):
 
     call = calls[0]
     assert call["balanced"] is False
-    assert call["cap_samples"] is True
+    assert call["cap_samples"] is False
     assert call["classifier_config"] == "breed_only"
     assert call["config"]["latent_dim"] == 96
     assert call["save_checkpoint_path"] == "checkpoints/LatDim_96.ckpt"

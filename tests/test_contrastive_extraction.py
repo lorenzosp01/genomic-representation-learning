@@ -207,6 +207,8 @@ def test_run_experiment_model_config_semantics(monkeypatch):
         }, np.zeros(len(y_val), dtype=np.int64)
 
     monkeypatch.setattr(contrastive_experiment, "evaluate_knn_classification", fake_evaluate)
+    epochs = iter([3, 5, 7])
+    monkeypatch.setattr(contrastive_experiment, "best_epoch_from_checkpoint_path", lambda p: next(epochs))
 
     config = {
         "embedding_dim": 3,
@@ -240,4 +242,6 @@ def test_run_experiment_model_config_semantics(monkeypatch):
     assert result["Balanced_Accuracy (mean)"] == pytest.approx(0.8)
     assert result["Accuracy (mean)"] == pytest.approx(0.9)
     assert result["Self_Consistency_knn_acc_k3 (mean)"] == 1.0
+    assert result["Best_Epochs"] == [3, 5, 7]
+    assert result["Median_Best_Epoch"] == 5.0
     assert result["_best_Z"] is not None

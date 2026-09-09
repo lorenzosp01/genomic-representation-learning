@@ -12,6 +12,7 @@ dal layer condiviso.
 
 import os
 import gc
+import shutil
 import numpy as np
 import pandas as pd
 import torch
@@ -26,7 +27,7 @@ from sklearn.metrics import (
 )
 from sklearn.decomposition import PCA
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import EarlyStopping
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 
 from .data_module import build_vae_fold, VAEFoldData
 from .lightning_module import VMGP_LightningSystem
@@ -38,6 +39,7 @@ from .utils import (
     compute_neighbor_overlap,
 )
 from genomic.classification_metrics import aggregate_folds, compute_classification_metrics
+from genomic.selection import best_epoch_from_checkpoint_path, select_best_configuration
 
 
 # --- CONFIGURAZIONI ESPERIMENTI ---
@@ -127,6 +129,26 @@ def _build_folds(experiment_data, config, use_breed, use_continent, use_caseina,
     return folds
 
 
+def _balance_training(X_train, y_breed_train, y_continent_train, y_caseina_train,
+                      y_attitudine_train, *, cap_samples, balanced, target_samples):
+    """Apply train-only balancing. Returns inputs unchanged when disabled.
+
+    Primary RQ1 uses ``cap_samples=False`` and ``balanced=False`` so the model
+    trains on ALL fold-training samples (no per-class cap, no SMOTE).
+    """
+    if cap_samples:
+        return cap_dataset_multilabel(
+            X_train, y_breed_train, y_continent_train, y_caseina_train,
+            target_samples, y_attitudine_train,
+        )
+    if balanced:
+        return balance_dataset_multilabel(
+            X_train, y_breed_train, y_continent_train, y_caseina_train,
+            target_samples, y_attitudine_train,
+        )
+    return X_train, y_breed_train, y_continent_train, y_caseina_train, y_attitudine_train
+
+
 def run_experiment(name: str, experiment_data, config: dict,
                    max_epochs: int = 50,
                    use_breed: bool = True,
@@ -210,6 +232,7 @@ def run_experiment(name: str, experiment_data, config: dict,
     best_model = None
     cm_breed = None
     fold_class_metrics = []
+    fold_best_epochs = []
 
     for vfd in folds:
         fold = vfd.fold
@@ -226,19 +249,13 @@ def run_experiment(name: str, experiment_data, config: dict,
         y_caseina_val = vfd.y_caseina_val
         y_attitudine_val = vfd.y_attitudine_val
 
-        # ⚠️ BALANCING SOLO SUI DATI DI TRAINING (dopo il preprocessing)
-        if cap_samples:
-            print(f"   ✂️ Capping SOLO training set a {config['target_samples']} samples/classe...")
-            X_train, y_breed_train, y_continent_train, y_caseina_train, y_attitudine_train = cap_dataset_multilabel(
-                X_train, y_breed_train, y_continent_train, y_caseina_train,
-                config['target_samples'], y_attitudine_train
-            )
-        elif balanced:
-            print(f"   ⚖️ Balancing SOLO training set (SMOTE multilabel)...")
-            X_train, y_breed_train, y_continent_train, y_caseina_train, y_attitudine_train = balance_dataset_multilabel(
-                X_train, y_breed_train, y_continent_train, y_caseina_train,
-                config['target_samples'], y_attitudine_train
-            )
+        # ⚠️ BALANCING SOLO SUI DATI DI TRAINING (dopo il preprocessing).
+        # Primary RQ1: cap_samples=False, balanced=False -> nessuna riduzione.
+        X_train, y_breed_train, y_continent_train, y_caseina_train, y_attitudine_train = _balance_training(
+            X_train, y_breed_train, y_continent_train, y_caseina_train, y_attitudine_train,
+            cap_samples=cap_samples, balanced=balanced,
+            target_samples=config.get('target_samples'),
+        )
 
         train_ds = TensorDataset(
             torch.FloatTensor(X_train),
@@ -279,21 +296,37 @@ def run_experiment(name: str, experiment_data, config: dict,
             latent_dim=config.get('latent_dim', 96)
         )
 
+        ckpt_dir = f"checkpoints/{name.replace(' ', '_')}/fold_{fold+1}"
+        checkpoint = ModelCheckpoint(
+            dirpath=ckpt_dir,
+            filename='{epoch:04d}-{val_loss:.4f}',
+            save_top_k=1,
+            monitor='val_loss',
+            mode='min',
+        )
         early_stop = EarlyStopping(monitor='val_loss', patience=15, mode='min', verbose=False)
         trainer = pl.Trainer(
             precision="16-mixed",
             max_epochs=max_epochs,
             accelerator=config['accelerator'],
             devices=config['devices'],
-            callbacks=[early_stop],
+            callbacks=[checkpoint, early_stop],
             enable_progress_bar=False,
             enable_model_summary=False,
-            enable_checkpointing=False,
+            enable_checkpointing=True,
             logger=False,
             check_val_every_n_epoch=1
         )
         trainer.fit(model_fold, train_loader, val_loader)
 
+        # Restore the best-val_loss checkpoint for final fold evaluation.
+        best_ckpt = checkpoint.best_model_path
+        if best_ckpt:
+            fold_best_epochs.append(best_epoch_from_checkpoint_path(best_ckpt))
+            model_fold = VMGP_LightningSystem.load_from_checkpoint(best_ckpt)
+        else:
+            # No checkpoint saved (e.g. zero training); fall back to last state.
+            fold_best_epochs.append(0)
         model_fold.eval()
         model_fold.freeze()
 
@@ -401,6 +434,8 @@ def run_experiment(name: str, experiment_data, config: dict,
             result_str += f" | Acc_Breed: {fold_metrics['Acc_Breed'][-1]:.4f}"
         print(result_str)
 
+        # Legacy presentation-only "best fold" (by GE). Does NOT affect
+        # configuration selection or the scientific 3-fold aggregate.
         if GE > best_fold_acc:
             best_fold_acc = GE
             best_fold_idx = fold
@@ -411,7 +446,7 @@ def run_experiment(name: str, experiment_data, config: dict,
             best_model = model_fold
             if save_checkpoint_path:
                 os.makedirs(os.path.dirname(save_checkpoint_path), exist_ok=True)
-                trainer.save_checkpoint(save_checkpoint_path)
+                shutil.copyfile(best_ckpt, save_checkpoint_path)
                 print(f"   💾 Checkpoint best fold salvato: {save_checkpoint_path}")
 
         del trainer, train_loader, val_loader, train_ds, val_ds
@@ -431,8 +466,10 @@ def run_experiment(name: str, experiment_data, config: dict,
 
     results = {
         'Experiment': name,
-        'Best Fold': best_fold_idx + 1,
-        'Best Fold GE': best_fold_acc,
+        'Best Fold (legacy GE)': best_fold_idx + 1 if best_fold_idx is not None else None,
+        'Best Fold GE (legacy)': best_fold_acc,
+        'Best_Epochs': fold_best_epochs,
+        'Median_Best_Epoch': float(np.median(fold_best_epochs)) if fold_best_epochs else None,
         'Num Classes Breed': folds[0].num_classes_breed if use_breed else 0,
         'Num Classes Continent': folds[0].num_classes_continent,
         'Num Classes Caseina': folds[0].num_classes_caseina,
@@ -523,7 +560,7 @@ def run_grid(experiment_data, config: dict, latent_dim_range: list,
                 max_epochs=config['max_epochs'],
                 classifier_config='breed_only',
                 balanced=False,
-                cap_samples=True,
+                cap_samples=False,
                 folds=folds,
             )
             res['Latent_Dim'] = latent_dim
@@ -537,6 +574,13 @@ def run_grid(experiment_data, config: dict, latent_dim_range: list,
             continue
 
     print(f"\n✅ Griglia esperimenti completata! ({len(grid_results)}/{total_experiments} riusciti)")
+    if grid_results:
+        best_i, best_res = select_best_configuration(grid_results)
+        print(f"🎯 Configurazione selezionata (Macro_F1 mean): "
+              f"Latent_Dim={best_res.get('Latent_Dim')} | "
+              f"Macro_F1={best_res.get('Macro_F1 (mean)')} | "
+              f"BalAcc={best_res.get('Balanced_Accuracy (mean)')} | "
+              f"Acc={best_res.get('Accuracy (mean)')}")
     return grid_results, all_results
 
 
@@ -565,7 +609,7 @@ def run_single(experiment_data, config: dict, latent_dim: int,
         max_epochs=config['max_epochs'],
         classifier_config='breed_only',
         balanced=False,
-        cap_samples=True,
+        cap_samples=False,
         folds=folds,
         save_checkpoint_path=save_checkpoint_path,
     )
