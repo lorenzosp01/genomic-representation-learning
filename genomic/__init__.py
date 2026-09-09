@@ -17,6 +17,11 @@ from genomic.experiment_data import (
 )
 from genomic.classification_metrics import aggregate_folds, compute_classification_metrics
 from genomic.selection import best_epoch_from_checkpoint_path, select_best_configuration
+from genomic.training_diagnostics import (
+    ConvergenceHistoryCallback,
+    classify_ceiling,
+    summarize_convergence,
+)
 
 __all__ = [
     "PROTOCOL_VERSION",
@@ -36,4 +41,7 @@ __all__ = [
     "aggregate_folds",
     "select_best_configuration",
     "best_epoch_from_checkpoint_path",
+    "ConvergenceHistoryCallback",
+    "summarize_convergence",
+    "classify_ceiling",
 ]

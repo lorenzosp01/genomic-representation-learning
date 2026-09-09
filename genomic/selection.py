@@ -38,13 +38,25 @@ def select_best_configuration(results: List[dict]) -> Tuple[int, dict]:
 
 
 def best_epoch_from_checkpoint_path(ckpt_path: str) -> int:
-    """Parse the 0-based Lightning epoch index from a checkpoint filename.
+    """Return the 1-based number of completed training epochs for a checkpoint.
 
-    Lightning stores ``trainer.current_epoch`` (0-based) in the ``{epoch}``
-    filename field. The returned value is the 1-based training-epoch count
-    (``parsed + 1``), so ``epoch=0000`` -> ``1``.
+    Preferred source of truth is the zero-based ``epoch`` stored in the
+    Lightning checkpoint metadata; the returned value is ``stored_epoch + 1``
+    (so checkpoint epoch 0 -> 1 completed epoch, epoch 99 -> 100). If the
+    checkpoint cannot be loaded (e.g. a non-existent path in a test), fall back
+    to parsing the ``epoch=NNNN`` field from the filename, which is explicitly
+    controlled by this project (``filename='{epoch:04d}-{val_loss:.4f}'``).
     """
+    try:
+        import torch
+
+        ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        if isinstance(ckpt, dict) and "epoch" in ckpt:
+            return int(ckpt["epoch"]) + 1
+    except Exception:
+        pass
+
     m = re.search(r"epoch=(\d+)", ckpt_path)
     if m is None:
-        raise ValueError(f"Cannot parse epoch from checkpoint path: {ckpt_path!r}")
+        raise ValueError(f"Cannot determine best epoch from checkpoint: {ckpt_path!r}")
     return int(m.group(1)) + 1

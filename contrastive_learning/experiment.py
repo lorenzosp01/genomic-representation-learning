@@ -18,7 +18,8 @@ from genomic.selection import best_epoch_from_checkpoint_path
 
 
 def run_experiment(name: str, experiment_data, config: dict,
-                   max_epochs: int = 5000) -> dict:
+                   max_epochs: int = 5000, *, folds=None,
+                   history_callback=None) -> dict:
     """Run the 3-fold contrastive CV over the protocol-v2 split.
 
     Parameters
@@ -35,8 +36,14 @@ def run_experiment(name: str, experiment_data, config: dict,
         ``precision``).
     max_epochs:
         Maximum training epochs per fold.
+    folds:
+        Optional explicit list of fold indices to run (default: all folds).
+    history_callback:
+        Optional :class:`~genomic.training_diagnostics.ConvergenceHistoryCallback`
+        used by the convergence pilot; does not alter training behaviour.
     """
     n_folds = experiment_data.split.n_folds
+    fold_indices = list(folds) if folds is not None else list(range(n_folds))
     n_classes = experiment_data.n_classes
     labels = np.arange(n_classes)
 
@@ -50,7 +57,7 @@ def run_experiment(name: str, experiment_data, config: dict,
     fold_best_epochs = []
     best_acc, best_model, best_Z, best_y = -1, None, None, None
 
-    for fold in range(n_folds):
+    for fold in fold_indices:
         fd = experiment_data.fold_data(fold)
         n_markers = fd.X_train.shape[1]
 
@@ -82,6 +89,8 @@ def run_experiment(name: str, experiment_data, config: dict,
             EarlyStopping(monitor='val_loss', patience=200, mode='min', verbose=False),
             LearningRateMonitor(logging_interval='epoch'),
         ]
+        if history_callback is not None:
+            callbacks.append(history_callback)
 
         trainer = pl.Trainer(
             max_epochs           = max_epochs,
@@ -159,3 +168,63 @@ def run_experiment(name: str, experiment_data, config: dict,
     result['_best_Z']     = best_Z
     result['_best_y']     = best_y
     return result
+
+
+def run_contrastive_pilot(experiment_data, config: dict, *, fold: int = 0,
+                          max_epochs: int = 1500,
+                          output_dir: str = "results/pilot", seed: int = 42) -> tuple:
+    """Run a single-fold contrastive convergence pilot (no production changes).
+
+    Uses the exact same fold data, preprocessing, model, optimizer, scheduler,
+    loss, precision, full-batch behaviour, early stopping and checkpoint
+    criterion as the normal runner; only the ``max_epochs`` ceiling is taken
+    from ``max_epochs`` (the production ceiling remains 5000).
+
+    Returns ``(summary_dict, history_rows)`` and writes CSV + JSON diagnostics.
+    """
+    import os
+
+    from genomic.training_diagnostics import (
+        ConvergenceHistoryCallback,
+        save_history_csv,
+        save_summary_json,
+        summarize_convergence,
+    )
+
+    cb = ConvergenceHistoryCallback()
+
+    res = run_experiment(
+        name=f"pilot_fold{fold}",
+        experiment_data=experiment_data,
+        config=config,
+        max_epochs=max_epochs,
+        folds=[fold],
+        history_callback=cb,
+    )
+
+    best_epochs = res.get('Best_Epochs') or []
+    best_epoch = best_epochs[0] if best_epochs else None
+
+    summary = summarize_convergence(
+        cb.history,
+        best_epoch=best_epoch,
+        stopped_epoch=cb.stopped_epoch,
+        max_epochs=max_epochs,
+        early_stopping_triggered=cb.early_stopping_triggered,
+    )
+    summary['metadata'] = {
+        'model': 'contrastive',
+        'embedding_dim': config.get('embedding_dim'),
+        'fold': fold,
+        'seed': seed,
+        'precision': config.get('precision', '32-true'),
+        'device': str(config.get('accelerator', 'cpu')),
+    }
+
+    os.makedirs(output_dir, exist_ok=True)
+    history_path = save_history_csv(cb.rows(), os.path.join(output_dir, 'contrastive_pilot_history.csv'))
+    summary_path = save_summary_json(summary, os.path.join(output_dir, 'contrastive_pilot_summary.json'))
+    print(f"💾 History: {history_path}")
+    print(f"💾 Summary: {summary_path}")
+
+    return summary, cb.rows()

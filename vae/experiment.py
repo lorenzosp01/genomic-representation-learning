@@ -161,7 +161,8 @@ def run_experiment(name: str, experiment_data, config: dict,
                    cap_samples: bool = False,
                    coarse_mapping: dict = None,
                    folds: list = None,
-                   save_checkpoint_path: str = None) -> dict:
+                   save_checkpoint_path: str = None,
+                   history_callback=None) -> dict:
     """Esegue un esperimento VMGP sui fold congelati del protocollo v2.
 
     Args:
@@ -305,12 +306,15 @@ def run_experiment(name: str, experiment_data, config: dict,
             mode='min',
         )
         early_stop = EarlyStopping(monitor='val_loss', patience=15, mode='min', verbose=False)
+        callbacks = [checkpoint, early_stop]
+        if history_callback is not None:
+            callbacks.append(history_callback)
         trainer = pl.Trainer(
             precision="16-mixed",
             max_epochs=max_epochs,
             accelerator=config['accelerator'],
             devices=config['devices'],
-            callbacks=[checkpoint, early_stop],
+            callbacks=callbacks,
             enable_progress_bar=False,
             enable_model_summary=False,
             enable_checkpointing=True,
@@ -617,3 +621,69 @@ def run_single(experiment_data, config: dict, latent_dim: int,
     single_result['Latent_Dim'] = latent_dim
     print(f"\n✅ Training completato!")
     return single_result, exp_name
+
+
+def run_vae_pilot(experiment_data, config: dict, *, latent_dim: int = 96,
+                  fold: int = 0, max_epochs: int = 100,
+                  output_dir: str = "results/pilot", seed: int = 42) -> tuple:
+    """Run a single-fold VAE convergence pilot (no production changes).
+
+    Uses the exact same fold data, preprocessing, model, optimizer, loss,
+    precision, early stopping and checkpoint criterion as the normal runner;
+    only the ``max_epochs`` ceiling is taken from ``max_epochs``. ``latent_dim``
+    is set locally for the pilot (production grid defaults are untouched).
+
+    Returns ``(summary_dict, history_rows)`` and writes CSV + JSON diagnostics.
+    """
+    from genomic.training_diagnostics import (
+        ConvergenceHistoryCallback,
+        save_history_csv,
+        save_summary_json,
+        summarize_convergence,
+    )
+
+    class_names_breed = experiment_data.class_names
+    vfd = build_vae_fold(experiment_data.fold_data(fold), class_names_breed=class_names_breed)
+
+    cb = ConvergenceHistoryCallback()
+    pilot_config = dict(config)
+    pilot_config['latent_dim'] = latent_dim
+
+    res = run_experiment(
+        name=f"pilot_LatDim{latent_dim}_fold{fold}",
+        experiment_data=experiment_data,
+        config=pilot_config,
+        max_epochs=max_epochs,
+        classifier_config='breed_only',
+        balanced=False,
+        cap_samples=False,
+        folds=[vfd],
+        history_callback=cb,
+    )
+
+    best_epochs = res.get('Best_Epochs') or []
+    best_epoch = best_epochs[0] if best_epochs else None
+
+    summary = summarize_convergence(
+        cb.history,
+        best_epoch=best_epoch,
+        stopped_epoch=cb.stopped_epoch,
+        max_epochs=max_epochs,
+        early_stopping_triggered=cb.early_stopping_triggered,
+    )
+    summary['metadata'] = {
+        'model': 'vae',
+        'latent_dim': latent_dim,
+        'fold': fold,
+        'seed': seed,
+        'precision': '16-mixed',
+        'device': str(config.get('accelerator', 'cpu')),
+    }
+
+    os.makedirs(output_dir, exist_ok=True)
+    history_path = save_history_csv(cb.rows(), os.path.join(output_dir, 'vae_pilot_history.csv'))
+    summary_path = save_summary_json(summary, os.path.join(output_dir, 'vae_pilot_summary.json'))
+    print(f"💾 History: {history_path}")
+    print(f"💾 Summary: {summary_path}")
+
+    return summary, cb.rows()
