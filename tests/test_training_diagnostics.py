@@ -138,12 +138,36 @@ def test_summarize_epochs_since_best_and_ratio():
         {"epoch": 1, "train_loss": 0.9, "val_loss": 0.8, "learning_rate": 0.1},
         {"epoch": 2, "train_loss": 0.8, "val_loss": 0.7, "learning_rate": 0.1},
     ]
-    s = summarize_convergence(history, best_epoch=2, stopped_epoch=None,
+    s = summarize_convergence(history, best_epoch=2, stopped_epoch=5,
                               max_epochs=10, early_stopping_triggered=False)
     assert s["best_epoch_ratio"] == pytest.approx(0.2)
-    assert s["epochs_since_best"] == 8
+    assert s["epochs_since_best"] == 3  # stopped_epoch - best_epoch = 5 - 2
     assert s["lr_at_best_epoch"] == pytest.approx(0.1)
     assert s["tail_slope"] < 0
+
+
+def test_epochs_since_best_semantics():
+    # A: early-stopped run
+    s = summarize_convergence([], best_epoch=121, stopped_epoch=136,
+                              max_epochs=200, early_stopping_triggered=True)
+    assert s["epochs_since_best"] == 15  # 136 - 121
+    assert s["best_epoch_ratio"] == pytest.approx(121 / 200)
+
+    # B: natural completion
+    s = summarize_convergence([], best_epoch=97, stopped_epoch=100,
+                              max_epochs=100, early_stopping_triggered=False)
+    assert s["epochs_since_best"] == 3  # 100 - 97
+
+    # C: early-stopped before ceiling
+    s = summarize_convergence([], best_epoch=40, stopped_epoch=55,
+                              max_epochs=200, early_stopping_triggered=False)
+    assert s["epochs_since_best"] == 15  # 55 - 40
+
+
+def test_epochs_since_best_none_when_stopped_epoch_missing():
+    s = summarize_convergence([], best_epoch=50, stopped_epoch=None,
+                              max_epochs=100, early_stopping_triggered=False)
+    assert s["epochs_since_best"] is None
 
 
 def test_tail_slope_deterministic_and_signed():

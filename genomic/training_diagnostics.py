@@ -173,11 +173,18 @@ def summarize_convergence(history: List[dict], *, best_epoch: Optional[int],
                           early_stopping_triggered: bool) -> dict:
     """Compute the pilot diagnostics from a convergence history.
 
-    ``best_epoch`` is 1-based (number of completed epochs); ``history`` rows are
-    keyed by the 0-based Lightning epoch index.
+    ``best_epoch`` and ``stopped_epoch`` are both 1-based completed-epoch
+    counts; ``history`` rows are keyed by the 0-based Lightning epoch index.
     """
     best_epoch_ratio = (best_epoch / max_epochs) if (best_epoch is not None and max_epochs) else None
-    epochs_since_best = (max_epochs - best_epoch) if best_epoch is not None else None
+    # epochs_since_best measures how many epochs after the best checkpoint the
+    # run actually continued, i.e. relative to when training stopped (which may
+    # be an EarlyStopping stop, not necessarily max_epochs).
+    epochs_since_best = (
+        (stopped_epoch - best_epoch)
+        if (best_epoch is not None and stopped_epoch is not None)
+        else None
+    )
 
     val_losses = [r.get("val_loss") for r in history]
     slope = tail_slope(val_losses)
