@@ -31,6 +31,25 @@ def extract_embeddings(model, X: np.ndarray, batch_size: int = 512) -> np.ndarra
     return np.concatenate([model(xb[0].to(device), augment=False).cpu().numpy() for xb in dl])
 
 
+def evaluate_knn_classification(Z_train, y_train, Z_val, y_val, *, k: int = 3, labels=None):
+    """Train -> validation KNN breed classification with common metrics.
+
+    Fits ``KNeighborsClassifier(k)`` on TRAIN embeddings only and predicts the
+    VALIDATION embeddings, then computes the shared classification metrics over
+    the canonical ``labels``. No validation sample is part of the fitting set.
+
+    Returns ``(metrics_dict, y_pred)`` where ``metrics_dict`` comes from
+    ``genomic.classification_metrics.compute_classification_metrics``.
+    """
+    from genomic.classification_metrics import compute_classification_metrics
+
+    knn = KNeighborsClassifier(n_neighbors=k)
+    knn.fit(Z_train, y_train)
+    y_pred = knn.predict(Z_val)
+    metrics = compute_classification_metrics(y_val, y_pred, labels=labels)
+    return metrics, y_pred
+
+
 def compute_metrics(Z: np.ndarray, y: np.ndarray, k: int = 3) -> dict:
     knn = KNeighborsClassifier(n_neighbors=k).fit(Z, y)
     yp  = knn.predict(Z)

@@ -8,7 +8,12 @@ from .augmentation import GeneticAugmentation
 from .encoder import GeneticEncoder
 from .loss import CentroidNPairLoss
 from .model import ContrastiveGeneticModel
-from .evaluation import compute_metrics, equal_earth_projection, extract_embeddings
+from .evaluation import (
+    compute_metrics,
+    equal_earth_projection,
+    evaluate_knn_classification,
+    extract_embeddings,
+)
 from .experiment import run_experiment
 from .plotting import plot_confusion_matrix, plot_distribution, plot_embedding
 
@@ -20,6 +25,7 @@ __all__ = [
     "run_experiment",
     "extract_embeddings",
     "compute_metrics",
+    "evaluate_knn_classification",
     "equal_earth_projection",
     "plot_distribution",
     "plot_embedding",

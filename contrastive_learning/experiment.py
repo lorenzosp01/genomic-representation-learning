@@ -12,7 +12,8 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Learning
 
 from .data import build_fold_dataloaders
 from .model import ContrastiveGeneticModel
-from .evaluation import extract_embeddings, compute_metrics
+from .evaluation import extract_embeddings, compute_metrics, evaluate_knn_classification
+from genomic.classification_metrics import aggregate_folds
 
 
 def run_experiment(name: str, experiment_data, config: dict,
@@ -35,12 +36,15 @@ def run_experiment(name: str, experiment_data, config: dict,
         Maximum training epochs per fold.
     """
     n_folds = experiment_data.split.n_folds
+    n_classes = experiment_data.n_classes
+    labels = np.arange(n_classes)
 
     print(f"\n{'='*80}")
     print(f"🧪 ESPERIMENTO: {name}")
     print(f"   K-Fold: {n_folds} | Max epochs: {max_epochs} | FULL-BATCH (with size limit)")
     print(f"{'='*80}\n")
 
+    fold_class_metrics = []
     fold_metrics_list = []
     best_acc, best_model, best_Z, best_y = -1, None, None, None
 
@@ -92,17 +96,52 @@ def run_experiment(name: str, experiment_data, config: dict,
         # ── Estrai embedding dal best checkpoint ───────────────
         best_ckpt  = callbacks[0].best_model_path
         best_fold  = ContrastiveGeneticModel.load_from_checkpoint(best_ckpt)
-        Z_val = extract_embeddings(best_fold, fd.X_val)
-        m     = compute_metrics(Z_val, fd.y_val, k=3)
-        print(f"   ✅ Fold {fold+1}: knn_acc@3={m['knn_acc_k3']} | sil={m['silhouette']}")
-        fold_metrics_list.append(m)
 
-        if m['knn_acc_k3'] > best_acc:
-            best_acc, best_model, best_Z, best_y = m['knn_acc_k3'], best_fold, Z_val, fd.y_val
+        # Deterministic eval embeddings (model.eval(), augment=False):
+        # no allele flipping, no random masking.
+        Z_train = extract_embeddings(best_fold, fd.X_train)
+        Z_val   = extract_embeddings(best_fold, fd.X_val)
 
-    # ── Media sui fold ─────────────────────────────────────────
-    avg    = {k: np.mean([fm[k] for fm in fold_metrics_list]) for k in fold_metrics_list[0]}
-    result = {'Experiment': name, **{f'{k} (mean)': round(v, 4) for k, v in avg.items()}}
+        # Correct train -> validation KNN breed classification.
+        cm, _ = evaluate_knn_classification(
+            Z_train, fd.y_train, Z_val, fd.y_val, k=3, labels=labels
+        )
+        fold_class_metrics.append(cm)
+
+        # Legacy self-consistency diagnostic (fit + eval on val embeddings),
+        # kept only for compatibility; NOT a breed-classification result.
+        sc = compute_metrics(Z_val, fd.y_val, k=3)
+        fold_metrics_list.append(sc)
+
+        print(f"   ✅ Fold {fold+1}: Macro_F1={cm['macro_f1']:.4f} | "
+              f"BalAcc={cm['balanced_accuracy']:.4f} | "
+              f"self_consistency_knn_acc_k3={sc['knn_acc_k3']} | sil={sc['silhouette']}")
+
+        if sc['knn_acc_k3'] > best_acc:
+            best_acc, best_model, best_Z, best_y = sc['knn_acc_k3'], best_fold, Z_val, fd.y_val
+
+    # ── Scientific 3-fold aggregate (common classification metrics) ──
+    result = {'Experiment': name}
+
+    if fold_class_metrics:
+        agg = aggregate_folds(fold_class_metrics)
+        result['Accuracy (mean)'] = agg['accuracy_mean']
+        result['Accuracy (std)'] = agg['accuracy_std']
+        result['Macro_F1 (mean)'] = agg['macro_f1_mean']
+        result['Macro_F1 (std)'] = agg['macro_f1_std']
+        result['Balanced_Accuracy (mean)'] = agg['balanced_accuracy_mean']
+        result['Balanced_Accuracy (std)'] = agg['balanced_accuracy_std']
+        result['Per_Class_Recall (mean)'] = agg['per_class_recall_mean']
+        result['Per_Class_Recall (std)'] = agg['per_class_recall_std']
+        result['Confusion_Matrix'] = agg['confusion_matrix_sum']
+
+    # ── Legacy diagnostic fields (self-consistency KNN + clustering) ──
+    avg = {k: np.mean([fm[k] for fm in fold_metrics_list]) for k in fold_metrics_list[0]}
+    for k, v in avg.items():
+        if k.startswith('knn_'):
+            result[f'Self_Consistency_{k} (mean)'] = round(v, 4)
+        else:
+            result[f'{k} (mean)'] = round(v, 4)
 
     print(f"\n📊 Risultati medi ({n_folds} fold):")
     for k, v in result.items():

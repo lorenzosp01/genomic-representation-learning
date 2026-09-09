@@ -152,6 +152,8 @@ class FakeFoldData:
 
 
 class FakeExperimentData:
+    n_classes = 34
+
     def __init__(self, fold_datas):
         self._fds = fold_datas
         self.split = SimpleNamespace(n_folds=len(fold_datas))
@@ -193,6 +195,19 @@ def test_run_experiment_model_config_semantics(monkeypatch):
         lambda Z, y, k=3: {"knn_acc_k3": 1.0, "knn_f1_k3": 1.0, "silhouette": 0.5, "davies_bouldin": 1.0},
     )
 
+    def fake_evaluate(Z_train, y_train, Z_val, y_val, *, k=3, labels=None):
+        n = len(labels)
+        return {
+            "accuracy": 0.9,
+            "macro_f1": 0.85,
+            "balanced_accuracy": 0.8,
+            "per_class_recall": np.full(n, 0.8),
+            "confusion_matrix": np.eye(n, dtype=np.int64),
+            "labels": np.arange(n),
+        }, np.zeros(len(y_val), dtype=np.int64)
+
+    monkeypatch.setattr(contrastive_experiment, "evaluate_knn_classification", fake_evaluate)
+
     config = {
         "embedding_dim": 3,
         "flip_max": 0.99,
@@ -221,5 +236,8 @@ def test_run_experiment_model_config_semantics(monkeypatch):
         assert kw["lr_decay_interval"] == config["lr_decay_interval"]
 
     assert result["Experiment"] == "t"
-    assert result["knn_acc_k3 (mean)"] == 1.0
+    assert result["Macro_F1 (mean)"] == pytest.approx(0.85)
+    assert result["Balanced_Accuracy (mean)"] == pytest.approx(0.8)
+    assert result["Accuracy (mean)"] == pytest.approx(0.9)
+    assert result["Self_Consistency_knn_acc_k3 (mean)"] == 1.0
     assert result["_best_Z"] is not None

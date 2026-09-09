@@ -15,6 +15,7 @@ from genomic.experiment_data import (
     GenomicExperimentData,
     load_genotype_matrix,
 )
+from genomic.classification_metrics import aggregate_folds, compute_classification_metrics
 
 __all__ = [
     "PROTOCOL_VERSION",
@@ -30,4 +31,6 @@ __all__ = [
     "GenomicExperimentData",
     "FoldData",
     "load_genotype_matrix",
+    "compute_classification_metrics",
+    "aggregate_folds",
 ]

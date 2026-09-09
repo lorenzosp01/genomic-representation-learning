@@ -22,7 +22,6 @@ from sklearn.metrics import (
     silhouette_score,
     davies_bouldin_score,
     mean_squared_error,
-    confusion_matrix,
     cohen_kappa_score,
 )
 from sklearn.decomposition import PCA
@@ -38,6 +37,7 @@ from .utils import (
     compute_generalization,
     compute_neighbor_overlap,
 )
+from genomic.classification_metrics import aggregate_folds, compute_classification_metrics
 
 
 # --- CONFIGURAZIONI ESPERIMENTI ---
@@ -209,6 +209,7 @@ def run_experiment(name: str, experiment_data, config: dict,
     best_fold_lbl_train = None
     best_model = None
     cm_breed = None
+    fold_class_metrics = []
 
     for vfd in folds:
         fold = vfd.fold
@@ -351,10 +352,14 @@ def run_experiment(name: str, experiment_data, config: dict,
         if use_breed and preds_breed_val:
             preds_b = np.concatenate(preds_breed_val)
             true_b = np.concatenate(true_breed_val)
-            acc_breed = accuracy_score(true_b, preds_b)
+            cm = compute_classification_metrics(
+                true_b, preds_b, labels=np.arange(vfd.num_classes_breed)
+            )
+            fold_class_metrics.append(cm)
+            acc_breed = cm['accuracy']
             fold_metrics['Acc_Breed'].append(acc_breed)
             fold_metrics['Kappa_Breed'].append(cohen_kappa_score(true_b, preds_b))
-            cm_breed = confusion_matrix(true_b, preds_b)
+            cm_breed = cm['confusion_matrix']
 
             cm_dir = 'results/confusion_matrices'
             os.makedirs(cm_dir, exist_ok=True)
@@ -443,6 +448,20 @@ def run_experiment(name: str, experiment_data, config: dict,
         if values:
             results[f'{metric} (mean)'] = np.mean(values)
             results[f'{metric} (std)'] = np.std(values)
+
+    # Common breed-classification metrics (canonical 34-class ordering),
+    # aggregated across the frozen folds (mean/std for scalars, summed CM).
+    if fold_class_metrics:
+        agg = aggregate_folds(fold_class_metrics)
+        results['Accuracy (mean)'] = agg['accuracy_mean']
+        results['Accuracy (std)'] = agg['accuracy_std']
+        results['Macro_F1 (mean)'] = agg['macro_f1_mean']
+        results['Macro_F1 (std)'] = agg['macro_f1_std']
+        results['Balanced_Accuracy (mean)'] = agg['balanced_accuracy_mean']
+        results['Balanced_Accuracy (std)'] = agg['balanced_accuracy_std']
+        results['Per_Class_Recall (mean)'] = agg['per_class_recall_mean']
+        results['Per_Class_Recall (std)'] = agg['per_class_recall_std']
+        results['Confusion_Matrix'] = agg['confusion_matrix_sum']
 
     # Visualizzazione PCA del best fold
     if best_fold_emb_val is not None:
