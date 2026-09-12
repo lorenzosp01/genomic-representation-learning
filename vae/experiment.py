@@ -150,7 +150,7 @@ def _balance_training(X_train, y_breed_train, y_continent_train, y_caseina_train
 
 
 def run_experiment(name: str, experiment_data, config: dict,
-                   max_epochs: int = 50,
+                   max_epochs: int = 200,
                    use_breed: bool = True,
                    use_continent: bool = False,
                    use_caseina: bool = False,
@@ -474,6 +474,7 @@ def run_experiment(name: str, experiment_data, config: dict,
         'Best Fold GE (legacy)': best_fold_acc,
         'Best_Epochs': fold_best_epochs,
         'Median_Best_Epoch': float(np.median(fold_best_epochs)) if fold_best_epochs else None,
+        'Max_Epochs': max_epochs,
         'Num Classes Breed': folds[0].num_classes_breed if use_breed else 0,
         'Num Classes Continent': folds[0].num_classes_continent,
         'Num Classes Caseina': folds[0].num_classes_caseina,
@@ -561,7 +562,7 @@ def run_grid(experiment_data, config: dict, latent_dim_range: list,
                 name=exp_name,
                 experiment_data=experiment_data,
                 config=exp_config,
-                max_epochs=config['max_epochs'],
+                max_epochs=config.get('max_epochs', 200),
                 classifier_config='breed_only',
                 balanced=False,
                 cap_samples=False,
@@ -601,7 +602,7 @@ def run_single(experiment_data, config: dict, latent_dim: int,
 
     exp_name = f"LatDim_{latent_dim}"
     print(f"🔬 Training: {exp_name}")
-    print(f"   K-Fold: {len(folds)} | Max Epochs: {config['max_epochs']}")
+    print(f"   K-Fold: {len(folds)} | Max Epochs: {config.get('max_epochs', 200)}")
 
     if save_checkpoint_path is None:
         save_checkpoint_path = f"checkpoints/{exp_name}.ckpt"
@@ -610,7 +611,7 @@ def run_single(experiment_data, config: dict, latent_dim: int,
         name=exp_name,
         experiment_data=experiment_data,
         config=single_config,
-        max_epochs=config['max_epochs'],
+        max_epochs=config.get('max_epochs', 200),
         classifier_config='breed_only',
         balanced=False,
         cap_samples=False,

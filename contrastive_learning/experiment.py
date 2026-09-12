@@ -151,6 +151,7 @@ def run_experiment(name: str, experiment_data, config: dict,
 
     result['Best_Epochs'] = fold_best_epochs
     result['Median_Best_Epoch'] = float(np.median(fold_best_epochs)) if fold_best_epochs else None
+    result['Max_Epochs'] = max_epochs
 
     # ── Legacy diagnostic fields (self-consistency KNN + clustering) ──
     avg = {k: np.mean([fm[k] for fm in fold_metrics_list]) for k in fold_metrics_list[0]}

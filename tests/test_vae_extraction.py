@@ -139,7 +139,6 @@ def make_config():
         "weight_breed": 1.0,
         "weight_continent": 0.0,
         "weight_caseina": 0.0,
-        "max_epochs": 100,
         "accelerator": "cpu",
         "devices": 1,
     }
@@ -162,7 +161,7 @@ def test_run_grid_invocation_semantics(monkeypatch):
         assert call["balanced"] is False
         assert call["cap_samples"] is False
         assert call["classifier_config"] == "breed_only"
-        assert call["max_epochs"] == 100
+        assert call["max_epochs"] == 200  # frozen PRIMARY RQ1 default
         assert call["folds"] is fake_folds
         assert call["config"]["latent_dim"] in (32, 64)
         assert call["name"] == f"LatDim_{call['config']['latent_dim']}"
