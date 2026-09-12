@@ -180,6 +180,34 @@ class LockedTestData:
         return int(self.X_test.shape[0])
 
 
+@dataclass
+class DevelopmentRawData:
+    """Development-only raw genotype rows.
+
+    This is the ONLY raw-data entry point handed to RQ2 code. It exposes the
+    development individuals exclusively; there is no field and no accessor for
+    locked-test genotype rows, so the locked test is structurally unavailable to
+    the RQ2 sampling/preprocessing path (not merely filtered afterwards).
+    """
+
+    X_dev: np.ndarray            # (n_dev, P) raw dosage {0, 1, 2, NaN}
+    dev_source_index: np.ndarray  # original PLINK row per development individual
+    dev_breed: np.ndarray        # breed string
+    dev_labels: np.ndarray       # canonical primary labels (reference only)
+    dev_fold: np.ndarray         # 0..K-1 fold assignment for development rows
+    n_classes: int
+    class_names: List[str]
+    n_folds: int
+
+    @property
+    def n_samples(self) -> int:
+        return int(self.X_dev.shape[0])
+
+    @property
+    def n_snps_raw(self) -> int:
+        return int(self.X_dev.shape[1])
+
+
 def locked_test_overlap(source_index, split: SplitIndex) -> int:
     """Number of source rows in ``source_index`` that belong to the locked test.
 
@@ -380,4 +408,26 @@ class GenomicExperimentData:
             test_breed=self.split.breed[test_pos],
             n_classes=self.n_classes,
             class_names=self.class_names,
+        )
+
+    # ------------------------------------------------------------------
+    # Development-only raw data (RQ2 entry point; locked test absent)
+    # ------------------------------------------------------------------
+    def development_raw_data(self) -> DevelopmentRawData:
+        """Return the development-only raw rows for RQ2 sampling/preprocessing.
+
+        Unlike :meth:`transform_locked_test`, this never selects locked-test
+        rows and the returned :class:`DevelopmentRawData` object has no field
+        that can carry them. RQ2 code consumes only this object.
+        """
+        dev_pos = np.flatnonzero(self.split.outer_split == "development")
+        return DevelopmentRawData(
+            X_dev=self._X[dev_pos].copy(),
+            dev_source_index=self.split.source_index[dev_pos].copy(),
+            dev_breed=self.split.breed[dev_pos].copy(),
+            dev_labels=self._y[dev_pos].copy(),
+            dev_fold=self.split.fold[dev_pos].copy(),
+            n_classes=self.n_classes,
+            class_names=list(self.class_names),
+            n_folds=self.split.n_folds,
         )

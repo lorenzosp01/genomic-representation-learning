@@ -162,7 +162,8 @@ def run_experiment(name: str, experiment_data, config: dict,
                    coarse_mapping: dict = None,
                    folds: list = None,
                    save_checkpoint_path: str = None,
-                   history_callback=None) -> dict:
+                   history_callback=None,
+                   drop_last: bool = True) -> dict:
     """Esegue un esperimento VMGP sui fold congelati del protocollo v2.
 
     Args:
@@ -202,7 +203,10 @@ def run_experiment(name: str, experiment_data, config: dict,
                              use_caseina, use_attitudine, attitudine_mapping)
 
     n_folds = len(folds)
-    class_names_breed = experiment_data.class_names
+    # Class names come from the provided fold(s), not the global experiment-data
+    # object: this preserves the primary 34-class RQ1 behaviour while supporting
+    # the canonical 15-class RQ2 fold data without a shape mismatch.
+    class_names_breed = folds[0].class_names_breed
 
     fold_metrics = {
         'Local Structure (L)': [],
@@ -274,7 +278,7 @@ def run_experiment(name: str, experiment_data, config: dict,
         )
 
         train_loader = DataLoader(train_ds, batch_size=config['batch_size'], shuffle=True,
-                                  num_workers=4, pin_memory=True, drop_last=True)
+                                  num_workers=4, pin_memory=True, drop_last=drop_last)
         val_loader = DataLoader(val_ds, batch_size=config['batch_size'],
                                 num_workers=4, pin_memory=True)
 
