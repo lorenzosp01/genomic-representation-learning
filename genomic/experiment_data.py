@@ -24,7 +24,7 @@ Design invariants (frozen protocol):
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterator, Optional
+from typing import Dict, Iterator, List, Optional
 
 import numpy as np
 from bed_reader import open_bed
@@ -123,6 +123,70 @@ class FoldData:
     @property
     def retained_snp_metadata(self) -> Optional[Dict[str, np.ndarray]]:
         return self.preprocessor.retained_snp_metadata_
+
+
+@dataclass
+class FinalDevelopmentData:
+    """Full-development data for PRIMARY RQ1 final training.
+
+    The preprocessor is fit from scratch on ALL development rows only, and the
+    development matrix is transformed with it. Locked-test rows are never
+    obtained, transformed or returned here.
+    """
+
+    preprocessor: GenomicPreprocessor
+    X_dev: np.ndarray
+    y_dev: np.ndarray
+    dev_source_index: np.ndarray
+    dev_breed: np.ndarray
+    n_classes: int
+    class_names: List[str]
+
+    @property
+    def n_features(self) -> int:
+        return int(self.X_dev.shape[1])
+
+    @property
+    def n_samples(self) -> int:
+        return int(self.X_dev.shape[0])
+
+    @property
+    def retained_snp_indices(self) -> np.ndarray:
+        return self.preprocessor.retained_snp_indices_
+
+
+@dataclass
+class LockedTestData:
+    """Locked-test data transformed with an already-fitted development preprocessor.
+
+    Produced only by the explicit :meth:`GenomicExperimentData.transform_locked_test`
+    call, after final training is complete. Performs no fitting.
+    """
+
+    preprocessor: GenomicPreprocessor
+    X_test: np.ndarray
+    y_test: np.ndarray
+    test_source_index: np.ndarray
+    test_breed: np.ndarray
+    n_classes: int
+    class_names: List[str]
+
+    @property
+    def n_features(self) -> int:
+        return int(self.X_test.shape[1])
+
+    @property
+    def n_samples(self) -> int:
+        return int(self.X_test.shape[0])
+
+
+def locked_test_overlap(source_index, split: SplitIndex) -> int:
+    """Number of source rows in ``source_index`` that belong to the locked test.
+
+    Used for the pre-final assertion that no locked-test row entered
+    development preparation or training.
+    """
+    return len(set(np.asarray(source_index).tolist()) & set(split.test_indices().tolist()))
 
 
 class GenomicExperimentData:
@@ -265,3 +329,55 @@ class GenomicExperimentData:
     def iter_folds(self) -> Iterator[FoldData]:
         for k in range(self.split.n_folds):
             yield self.fold_data(k)
+
+    # ------------------------------------------------------------------
+    # Final development preparation (locked test NOT accessed here)
+    # ------------------------------------------------------------------
+    def build_final_development_data(
+        self, *, preprocessor_kwargs: Optional[Dict] = None
+    ) -> FinalDevelopmentData:
+        """Fit a fresh preprocessor on ALL development rows only.
+
+        Selects development rows, fits a new ``GenomicPreprocessor`` on exactly
+        those rows, and transforms them. It NEVER obtains, transforms or returns
+        locked-test rows; locked-test access is a separate explicit call
+        (:meth:`transform_locked_test`) that can only happen after training.
+        """
+        dev_pos = np.flatnonzero(self.split.outer_split == "development")
+        kwargs = self.preprocessor_kwargs if preprocessor_kwargs is None else preprocessor_kwargs
+
+        pre = GenomicPreprocessor(**kwargs)
+        pre.fit(self._X[dev_pos], snp_metadata=self._snp_metadata)
+        X_dev = pre.transform(self._X[dev_pos])
+
+        return FinalDevelopmentData(
+            preprocessor=pre,
+            X_dev=X_dev,
+            y_dev=self._y[dev_pos],
+            dev_source_index=self.split.source_index[dev_pos],
+            dev_breed=self.split.breed[dev_pos],
+            n_classes=self.n_classes,
+            class_names=self.class_names,
+        )
+
+    # ------------------------------------------------------------------
+    # Locked-test transform (explicit, fit-free, post-training only)
+    # ------------------------------------------------------------------
+    def transform_locked_test(self, preprocessor: GenomicPreprocessor) -> LockedTestData:
+        """Transform the frozen locked-test rows with an already-fitted preprocessor.
+
+        Explicit separate call: transform-only, no fitting and no model/epoch/
+        configuration selection. Must be invoked only after final training.
+        """
+        test_pos = np.flatnonzero(self.split.outer_split == "test")
+        X_test = preprocessor.transform(self._X[test_pos])
+
+        return LockedTestData(
+            preprocessor=preprocessor,
+            X_test=X_test,
+            y_test=self._y[test_pos],
+            test_source_index=self.split.source_index[test_pos],
+            test_breed=self.split.breed[test_pos],
+            n_classes=self.n_classes,
+            class_names=self.class_names,
+        )

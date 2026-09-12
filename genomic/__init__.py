@@ -11,9 +11,12 @@ from genomic.cohort import compute_individual_missingness, individual_qc_mask
 from genomic.preprocessing import GenomicPreprocessor, load_bim
 from genomic.labels import CanonicalLabelMapper
 from genomic.experiment_data import (
+    FinalDevelopmentData,
     FoldData,
     GenomicExperimentData,
+    LockedTestData,
     load_genotype_matrix,
+    locked_test_overlap,
 )
 from genomic.classification_metrics import aggregate_folds, compute_classification_metrics
 from genomic.selection import best_epoch_from_checkpoint_path, select_best_configuration
@@ -36,7 +39,10 @@ __all__ = [
     "CanonicalLabelMapper",
     "GenomicExperimentData",
     "FoldData",
+    "FinalDevelopmentData",
+    "LockedTestData",
     "load_genotype_matrix",
+    "locked_test_overlap",
     "compute_classification_metrics",
     "aggregate_folds",
     "select_best_configuration",
