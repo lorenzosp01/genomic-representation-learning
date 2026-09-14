@@ -8,8 +8,10 @@ For every (fold, replicate seed, N) the runner:
      MSE + 1e-4*KL, Adam 1e-4, max_epochs=200, EarlyStopping patience=15,
      16-mixed, best-val-loss checkpoint restore) with the RQ2-specific training
      DataLoader semantics (``drop_last=False``);
-  4. persists metrics / CM / per-class recall / provenance atomically and
-     deletes the temporary per-run checkpoint by default.
+  4. persists metrics / CM / per-class recall / PCA figure / provenance
+     atomically and deletes the temporary per-run checkpoint by default;
+     ``plt.show`` is suppressed during the run so a GUI window never blocks it,
+     while the PCA figure is still saved under ``.../pca/``.
 
 The locked test is never received or materialized: everything operates on
 :class:`~genomic.experiment_data.DevelopmentRawData`.
@@ -20,8 +22,10 @@ from __future__ import annotations
 import os
 import shutil
 import time
+from contextlib import contextmanager
 from typing import Dict, Optional, Sequence
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
@@ -104,14 +108,47 @@ def _run_name(fold: int, seed: int, n: int) -> str:
     return f"rq2_fold{fold}_seed{seed}_N{n}"
 
 
-def _cleanup_side_effects(name: str, ckpt_dir: str, keep_checkpoints: bool) -> None:
-    """Remove the temporary checkpoint (unless kept) and run_experiment plots/CSV."""
+@contextmanager
+def _suppress_plt_show():
+    """Temporarily disable ``plt.show`` so batch runs never block on a GUI window.
+
+    ``run_experiment`` calls ``plt.savefig(...)`` *before* ``plt.show()``, so the
+    PCA figure is still written; only the blocking window is suppressed. The
+    previous ``show`` is restored afterwards (no global backend change).
+    """
+    original = plt.show
+    plt.show = lambda *args, **kwargs: None
+    try:
+        yield
+    finally:
+        plt.show = original
+
+
+def _finalize_run_artifacts(name: str, base: str, ckpt_dir: str, out_dir: str,
+                            keep_checkpoints: bool) -> Optional[str]:
+    """Move the PCA figure into the RQ2 artifact tree, free figures, clean up.
+
+    The temporary minimum-val-loss checkpoint is deleted unless
+    ``keep_checkpoints`` is set. The ``run_experiment`` confusion-matrix CSV
+    side effect is removed (RQ2 persists its own canonical CM).
+    """
+    src = f"plot_vae_{name}_kfold.png"
+    pca_path = os.path.join(out_dir, "pca", f"{base}.png")
+    moved = None
+    if os.path.exists(src):
+        os.makedirs(os.path.dirname(pca_path), exist_ok=True)
+        shutil.move(src, pca_path)
+        moved = pca_path
+
+    plt.close("all")
+
+    csv_path = os.path.join("results", "confusion_matrices", f"cm_{name}.csv")
+    if os.path.exists(csv_path):
+        os.remove(csv_path)
+
     if not keep_checkpoints:
         shutil.rmtree(os.path.join(ckpt_dir, name), ignore_errors=True)
-    for path in (f"plot_vae_{name}_kfold.png",
-                 os.path.join("results", "confusion_matrices", f"cm_{name}.csv")):
-        if os.path.exists(path):
-            os.remove(path)
+    return moved
 
 
 def run_rq2_single(dev_raw, mapper: CanonicalLabelMapper, *,
@@ -133,21 +170,23 @@ def run_rq2_single(dev_raw, mapper: CanonicalLabelMapper, *,
 
     cb = ConvergenceHistoryCallback()
     name = _run_name(fold, seed, n)
+    base = f"fold{fold}_seed{seed}_N{n}"
     cfg = rq2_vae_config(accelerator=accelerator, devices=devices)
 
     t0 = time.time()
-    res = run_experiment_fn(
-        name=name,
-        experiment_data=None,          # folds are supplied explicitly
-        config=cfg,
-        max_epochs=RQ2_MAX_EPOCHS,
-        classifier_config="breed_only",
-        balanced=False,
-        cap_samples=False,
-        folds=[vfd],
-        history_callback=cb,
-        drop_last=False,               # RQ2-specific intentional deviation
-    )
+    with _suppress_plt_show():
+        res = run_experiment_fn(
+            name=name,
+            experiment_data=None,          # folds are supplied explicitly
+            config=cfg,
+            max_epochs=RQ2_MAX_EPOCHS,
+            classifier_config="breed_only",
+            balanced=False,
+            cap_samples=False,
+            folds=[vfd],
+            history_callback=cb,
+            drop_last=False,               # RQ2-specific intentional deviation
+        )
     runtime = time.time() - t0
 
     if cb.stopped_epoch is None:
@@ -181,10 +220,10 @@ def run_rq2_single(dev_raw, mapper: CanonicalLabelMapper, *,
         "val_source_index": [int(x) for x in sample.val_source_index],
         "preprocessing": preprocessing_provenance(sample.preprocessor),
         "checkpoint_kept": bool(keep_checkpoints),
+        "pca_plot": os.path.join(out_dir, "pca", f"{base}.png"),
     }
     validate_run_record(record)
 
-    base = f"fold{fold}_seed{seed}_N{n}"
     save_json_atomic(
         {"class_names": record["class_names"], "confusion_matrix": record["confusion_matrix"]},
         os.path.join(out_dir, "confusion_matrices", f"{base}.json"),
@@ -196,7 +235,7 @@ def run_rq2_single(dev_raw, mapper: CanonicalLabelMapper, *,
     # Authoritative record written last (atomic) so its presence == complete run.
     save_json_atomic(record, os.path.join(out_dir, "runs", f"{base}.json"))
 
-    _cleanup_side_effects(name, ckpt_dir, keep_checkpoints)
+    _finalize_run_artifacts(name, base, ckpt_dir, out_dir, keep_checkpoints)
     return record
 
 

@@ -27,9 +27,12 @@ implemented a later experimental training variant of the VMGP model.
 
 ### Status
 
-- **Not part of the current VMGP methodology.** The canonical `vae/`
+- **Not part of the current VMGP methodology.** The canonical `vae/`- - **Not part of the current VMGP methodology.** The canonical `vae/`
+**Not part of the current VMGP methodology.** The canonical `vae/`
+
   model trains with plain cross-entropy for breed classification and no
   center loss.
 - The variant is preserved in Git history under the legacy baseline
   snapshot and must be treated as obsolete unless it is explicitly
   reconsidered as a future ablation experiment.
+67y

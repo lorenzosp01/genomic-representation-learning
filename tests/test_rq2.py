@@ -15,6 +15,7 @@ import matplotlib
 
 matplotlib.use("Agg", force=True)
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import torch
@@ -392,6 +393,40 @@ def test_run_rq2_single_persists_and_cleans_checkpoint(tmp_path):
     assert not stale.exists()                       # temporary checkpoint deleted
     assert not rec["checkpoint_kept"]
     validate_run_record(rec)
+
+
+def test_run_rq2_single_saves_pca_plot(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    dev_raw, _ = make_dev_raw(tmp_path)
+    mapper = _mapper15()
+    fake = make_fake_run_experiment([])
+    sampled, _ = sample_nested_rq2(dev_raw, fold=0, seed=42)
+    _, val_pos = rq2_fold_partitions(dev_raw, 0)
+
+    # Simulate the PNG that run_experiment's PCA block writes before plt.show().
+    src = tmp_path / "plot_vae_rq2_fold0_seed42_N5_kfold.png"
+    src.write_bytes(b"png")
+
+    rec = run_rq2_single(
+        dev_raw, mapper, fold=0, seed=42, n=5,
+        train_positions=sampled[5], val_positions=val_pos,
+        out_dir=str(tmp_path / "out"), ckpt_dir=str(tmp_path / "ckpt"),
+        run_experiment_fn=fake, accelerator="cpu",
+    )
+    dst = tmp_path / "out" / "pca" / "fold0_seed42_N5.png"
+    assert dst.exists()                       # PCA preserved in the RQ2 tree
+    assert not src.exists()                   # moved, not left in CWD
+    assert rec["pca_plot"].endswith("pca/fold0_seed42_N5.png")
+
+
+def test_suppress_plt_show_is_non_blocking():
+    from vae.rq2_experiment import _suppress_plt_show
+
+    original = plt.show
+    with _suppress_plt_show():
+        assert plt.show is not original
+        plt.show()                            # must return immediately
+    assert plt.show is original
 
 
 def test_15_class_metrics_and_cm_shape():
