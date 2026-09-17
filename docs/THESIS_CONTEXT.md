@@ -10,9 +10,9 @@ This repository contains the experimental code for an MSc thesis in
 Computer Science concerning machine learning and deep representation
 learning applied to livestock SNP genotype data.
 
-The primary experimental analysis is performed on ovine genomic data.
-An independent caprine dataset is used for methodological cross-species
-validation.
+The primary experimental analysis is performed on caprine genomic data
+(ADAPTmap goat cohort). An independent ovine dataset (ISGC Sheep HapMap)
+is used for methodological cross-species generalization validation.
 
 Cross-species validation does NOT imply that the same SNP markers are
 shared or expected to be informative across species.
@@ -119,7 +119,7 @@ Examples relevant to this thesis:
 - Random Forest;
 - neural networks;
 - variational representation learning;
-- contrastive representation learning.
+- contrastive representation learning
 
 
 ## VMGP-Inspired Variational Model

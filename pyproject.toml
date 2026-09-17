@@ -18,4 +18,5 @@ dependencies = [
     "tensorboard>=2.20.0",
     "tensorboardx>=2.6.4",
     "bed-reader>=1.0.6",
+    "shap>=0.52.0",
 ]

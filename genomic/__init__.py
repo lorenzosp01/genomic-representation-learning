@@ -19,6 +19,14 @@ from genomic.experiment_data import (
     locked_test_overlap,
 )
 from genomic.classification_metrics import aggregate_folds, compute_classification_metrics
+from genomic.fst import weir_cockerham_fst
+from genomic.panel_evaluation import (
+    aggregate_panel_records,
+    evaluate_full_panel,
+    evaluate_panel,
+    minimum_panel_size,
+)
+from genomic.ranking import MarkerRankingResult, compute_marker_ranking
 from genomic.selection import best_epoch_from_checkpoint_path, select_best_configuration
 from genomic.training_diagnostics import (
     ConvergenceHistoryCallback,
@@ -45,6 +53,13 @@ __all__ = [
     "locked_test_overlap",
     "compute_classification_metrics",
     "aggregate_folds",
+    "weir_cockerham_fst",
+    "evaluate_panel",
+    "evaluate_full_panel",
+    "aggregate_panel_records",
+    "minimum_panel_size",
+    "MarkerRankingResult",
+    "compute_marker_ranking",
     "select_best_configuration",
     "best_epoch_from_checkpoint_path",
     "ConvergenceHistoryCallback",
