@@ -1,0 +1,33 @@
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    >=Latex,
+    font=\small,
+    box/.style={draw, semithick, rounded corners=2pt, align=center,
+                minimum height=10mm, minimum width=42mm, inner sep=4pt, fill=black!2},
+    key/.style={box, fill=black!7},
+    small/.style={draw, semithick, rounded corners=2pt, align=center,
+                  minimum height=9mm, minimum width=29mm, inner sep=3pt, fill=black!2},
+    arr/.style={->, semithick}
+]
+\node[key] (x) at (0,4.6) {Encoded SNP profile $\mathbf{x}$};
+\node[box] (enc) at (0,3.2) {Encoder $q_\phi$};
+\node[small] (mu) at (-2.2,1.75) {$\boldsymbol{\mu}(\mathbf{x})$};
+\node[small] (lv) at (2.2,1.75) {$\log\boldsymbol{\sigma}^{2}(\mathbf{x})$};
+\node[key] (z) at (0,0.15) {Reparameterization $\rightarrow$ latent $\mathbf{z}$};
+\node[box] (dec) at (-3.0,-1.35) {Decoder};
+\node[box] (head) at (3.0,-1.35) {Breed prediction head};
+\node[small] (rec) at (-3.0,-2.8) {Reconstruction};
+\node[small] (prob) at (3.0,-2.8) {Breed probabilities};
+\node[key] (loss) at (0,-4.35) {Joint objective $\alpha\mathcal{L}_{\mathrm{rec}}+(1-\alpha)\mathcal{L}_{\mathrm{breed}}$, with $\mathcal{L}_{\mathrm{rec}}=\mathcal{L}_{\mathrm{MSE}}+10^{-4}\mathcal{L}_{\mathrm{KL}}$};
+
+\draw[arr] (x)--(enc); \draw[arr] (enc)--(mu); \draw[arr] (enc)--(lv);
+\draw[arr] (mu)--(z); \draw[arr] (lv)--(z);
+\draw[arr] (z)--(dec); \draw[arr] (z)--(head);
+\draw[arr] (dec)--(rec); \draw[arr] (head)--(prob);
+\draw[arr] (rec)--(loss); \draw[arr] (prob)--(loss);
+\end{tikzpicture}
+
+\caption{Variational multi-task architecture used as the basis of the breed-aware genomic representation model. The encoder parameterizes a latent posterior regularized by a KL-divergence term; the resulting latent variable supports both genotype reconstruction and breed prediction. Author's adaptation of the VAE formulation \cite{kingma2013auto} and the VMGP multi-task paradigm \cite{zhao2025vmgp}.}
+\label{fig:vmgp_architecture}
+\end{figure}

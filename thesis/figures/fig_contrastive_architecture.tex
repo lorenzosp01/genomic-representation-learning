@@ -1,0 +1,38 @@
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    >=Latex,
+    font=\small,
+    box/.style={draw, semithick, rounded corners=2pt, align=center,
+                minimum height=10mm, minimum width=37mm, inner sep=4pt, fill=black!2},
+    key/.style={box, fill=black!7},
+    small/.style={draw, semithick, rounded corners=2pt, align=center,
+                  minimum height=9mm, minimum width=31mm, inner sep=3pt, fill=black!2},
+    arr/.style={->, semithick}
+]
+\node[key] (x) at (0,4.65) {Genotype profile $\mathbf{x}_i$};
+\node[box] (aa) at (-3.25,3.15) {Augmented view A};
+\node[box] (ab) at (3.25,3.15) {Augmented view B};
+\node[box] (ea) at (-3.25,1.65) {Shared encoder $f_\theta$};
+\node[box] (eb) at (3.25,1.65) {Shared encoder $f_\theta$};
+\node[small] (za) at (-3.25,0.15) {$L_2$ norm. $\rightarrow \mathbf{z}_i^{a}$};
+\node[small] (zb) at (3.25,0.15) {$L_2$ norm. $\rightarrow \mathbf{z}_i^{b}$};
+\node[key] (np) at (0,-1.35) {Centroid N-pair loss (Eqs.~3--6)};
+\node[key] (sphere) at (0,-2.90) {Hyperspherical latent space $\mathbb{S}^{2}$};
+
+\draw[arr] (x) -- (aa); \draw[arr] (x) -- (ab);
+\draw[arr] (aa) -- (ea); \draw[arr] (ab) -- (eb);
+\draw[arr] (ea) -- (za); \draw[arr] (eb) -- (zb);
+\draw[<->, semithick] (za) -- node[above]{positive pair} (zb);
+\draw[arr] (za) -- (np); \draw[arr] (zb) -- (np);
+\draw[arr] (np) -- (sphere);
+\end{tikzpicture}
+
+\caption{Self-supervised hyperspherical pipeline. Two independently
+augmented views of the same individual are encoded by a shared
+convolutional encoder and $L_2$-normalized onto the unit sphere. The
+representation is optimized with the centroid N-pair objective, without
+a projection head, without NT-Xent temperature and without breed labels
+\cite{thor2025contrastive,wang2020understanding}.}
+\label{fig:contrastive_architecture}
+\end{figure}

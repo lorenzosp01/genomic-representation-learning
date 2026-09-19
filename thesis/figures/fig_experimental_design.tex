@@ -1,0 +1,42 @@
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    >=Latex,
+    font=\small,
+    box/.style={draw, semithick, rounded corners=2pt, align=center,
+                minimum height=10mm, minimum width=39mm, inner sep=4pt, fill=black!2},
+    key/.style={box, fill=black!7},
+    small/.style={draw, semithick, rounded corners=2pt, align=center,
+                  minimum height=9mm, minimum width=34mm, inner sep=3pt, fill=black!2},
+    note/.style={draw, dashed, semithick, rounded corners=2pt, align=center,
+                 minimum height=9mm, minimum width=27mm, inner sep=3pt},
+    arr/.style={->, semithick},
+    darr/.style={->, semithick, dashed}
+]
+\node[key] (raw) at (0,5.0) {Raw genotype data};
+\node[box] (qc) at (0,3.65) {Quality control + encoding};
+\node[key] (split) at (0,2.3) {Train / validation / test split};
+\node[box] (train) at (-2.9,0.85) {Training partition};
+\node[box] (test) at (3.2,0.85) {Held-out test partition};
+
+\node[note] (sub) at (-6.15,0.85) {Subsample $n$\\per breed};
+\node[small] (repr) at (-3.8,-0.85) {Representation learning};
+\node[small] (classic) at (0.0,-0.85) {Classical ranking};
+\node[small] (xai) at (-3.8,-2.25) {XAI attribution};
+\node[key] (rank) at (-1.9,-3.65) {Training-only SNP ranking};
+\node[key] (panel) at (-1.9,-5.05) {Reduced marker panels};
+\node[box] (clf) at (-1.9,-6.45) {Downstream classifier};
+\node[key] (eval) at (3.2,-6.45) {Final test evaluation};
+
+\draw[arr] (raw)--(qc); \draw[arr] (qc)--(split);
+\draw[arr] (split)--(train); \draw[arr] (split)--(test);
+\draw[arr] (train)--(repr); \draw[arr] (train)--(classic);
+\draw[darr] (train.west) -- (sub.east);
+\draw[arr] (repr)--(xai); \draw[arr] (xai)--(rank); \draw[arr] (classic)--(rank);
+\draw[arr] (rank)--(panel); \draw[arr] (panel)--(clf); \draw[arr] (clf)--(eval);
+\draw[arr] (test) -- (eval);
+\end{tikzpicture}
+
+\caption{Leakage-safe experimental design. Model fitting and SNP ranking are performed using training data, whereas the held-out test partition is reserved for final evaluation. The dashed branch represents the repeated per-breed subsampling used in sample-size experiments. Author's elaboration.}
+\label{fig:experimental_design}
+\end{figure}

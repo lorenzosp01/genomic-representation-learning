@@ -1,0 +1,40 @@
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    >=Latex,
+    font=\small,
+    box/.style={draw, semithick, rounded corners=2pt, align=center,
+                minimum height=10mm, minimum width=34mm, inner sep=4pt, fill=black!2},
+    key/.style={box, fill=black!7},
+    small/.style={draw, semithick, rounded corners=2pt, align=center,
+                  minimum height=9mm, minimum width=27mm, inner sep=3pt, fill=black!2},
+    arr/.style={->, semithick}
+]
+\node[font=\bfseries\normalsize] at (-4.1,3.25) {Generative};
+\node[font=\bfseries\normalsize] at (4.1,3.25) {Contrastive};
+\node[key] (gx) at (-4.1,2.35) {Input $\mathbf{x}$};
+\node[box] (ge) at (-4.1,0.95) {Encoder};
+\node[box] (gz) at (-4.1,-0.45) {Latent $\mathbf{z}$};
+\node[box] (gd) at (-4.1,-1.85) {Decoder};
+\node[key] (gr) at (-4.1,-3.25) {Reconstruction $\hat{\mathbf{x}}$};
+\draw[arr] (gx)--(ge); \draw[arr] (ge)--(gz); \draw[arr] (gz)--(gd); \draw[arr] (gd)--(gr);
+
+\node[key] (cx) at (4.1,2.35) {Input $\mathbf{x}$};
+\node[small] (ca) at (2.35,0.85) {Augmented view A};
+\node[small] (cb) at (5.85,0.85) {Augmented view B};
+\node[small] (cea) at (2.35,-0.55) {Shared encoder};
+\node[small] (ceb) at (5.85,-0.55) {Shared encoder};
+\node[small] (cza) at (2.35,-1.95) {$\mathbf{z}_a$};
+\node[small] (czb) at (5.85,-1.95) {$\mathbf{z}_b$};
+\node[key] (closs) at (4.1,-3.45) {Contrastive objective};
+\draw[arr] (cx)--(ca); \draw[arr] (cx)--(cb);
+\draw[arr] (ca)--(cea); \draw[arr] (cb)--(ceb);
+\draw[arr] (cea)--(cza); \draw[arr] (ceb)--(czb);
+\draw[<->, semithick] (cza) -- node[midway, above=10pt, fill=white, inner sep=1pt]{positive pair} (czb);
+\draw[arr] (cza)--(closs); \draw[arr] (czb)--(closs);
+\draw[gray, dashed] (0,2.95)--(0,-4.05);
+\end{tikzpicture}
+
+\caption{Conceptual comparison between generative and contrastive representation learning. Generative models optimize reconstruction through a latent variable, whereas contrastive methods organize representations through similarity relationships between augmented views. Author's elaboration based on \cite{kingma2013auto,chen2020simple}.}
+\label{fig:generative_contrastive_topologies}
+\end{figure}

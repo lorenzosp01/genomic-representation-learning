@@ -1,0 +1,42 @@
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    >=Latex,
+    font=\small,
+    box/.style={draw, semithick, rounded corners=2pt, align=center,
+                minimum height=12mm, minimum width=31mm, inner sep=4pt, fill=black!2},
+    key/.style={draw, semithick, rounded corners=2pt, align=center,
+                minimum height=10mm, minimum width=62mm, inner sep=4pt, fill=black!7},
+    arr/.style={->, semithick}
+]
+\node[key] (x) at (0,3.05) {Training genotype matrix ($N \times P$)};
+\node[box] (fst) at (-5.25,1.35) {$F_{ST}$\\population differentiation};
+\node[box] (rf)  at (-1.75,1.35) {Random Forest\\Gini importance};
+\node[box] (shap) at (1.75,1.35) {SHAP\\VMGP breed logits};
+\node[box] (ig)  at (5.25,1.35) {Integrated Gradients\\contrastive centroid};
+\node[key] (rank) at (0,-0.55) {Global SNP ranking $s_1 \ge \cdots \ge s_P$};
+\node[key] (panels) at (0,-2.15) {Nested panels $P_K$, $K \in \{50,\ldots,5000\}$};
+\node[key] (eval) at (0,-3.75) {Downstream Random Forest, validation-only evaluation};
+
+\draw[arr] (x) -- (fst);
+\draw[arr] (x) -- (rf);
+\draw[arr] (x) -- (shap);
+\draw[arr] (x) -- (ig);
+\draw[arr] (fst) -- (rank);
+\draw[arr] (rf) -- (rank);
+\draw[arr] (shap) -- (rank);
+\draw[arr] (ig) -- (rank);
+\draw[arr] (rank) -- (panels);
+\draw[arr] (panels) -- (eval);
+\end{tikzpicture}
+
+\caption{Marker-ranking families compared in RQ4. Each family defines
+marker relevance through a different principle: population
+differentiation, predictive impurity importance, additive model
+attribution, and gradient-based attribution. All rankings are
+constructed inside the training partition and are converted into the
+same nested panel sizes, whose utility is judged by the same downstream
+classifier \cite{weir1984estimating,breiman2001random,
+lundberg2017unified,sundararajan2017axiomatic}.}
+\label{fig:ranking_families}
+\end{figure}

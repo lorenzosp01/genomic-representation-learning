@@ -1,0 +1,148 @@
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+    >=Latex,
+    font=\small,
+    box/.style={
+        draw,
+        semithick,
+        rounded corners=2pt,
+        align=center,
+        minimum height=10mm,
+        minimum width=39mm,
+        inner sep=4pt,
+        fill=black!2
+    },
+    key/.style={
+        box,
+        fill=black!7
+    },
+    marker/.style={
+        draw,
+        semithick,
+        rounded corners=2pt,
+        align=center,
+        minimum height=9mm,
+        minimum width=22mm,
+        inner sep=3pt,
+        fill=black!2
+    },
+    arr/.style={->, semithick},
+    note/.style={
+        align=center,
+        font=\scriptsize,
+        text=black!70
+    }
+]
+
+% ------------------------------------------------------------------
+% Titles
+% ------------------------------------------------------------------
+
+\node[font=\bfseries\normalsize] at (-4.1,3.45)
+    {Locus-wise analysis};
+
+\node[font=\bfseries\normalsize] at (4.1,3.45)
+    {Multivariate modelling};
+
+% ------------------------------------------------------------------
+% LEFT: LOCUS-WISE
+% ------------------------------------------------------------------
+
+\node[key] (lm) at (-4.1,2.45) {
+    Genotype matrix\\
+    $N$ individuals $\times$ $P$ SNP markers
+};
+
+\node[note] at (-4.1,1.80) {
+    each SNP is considered separately
+};
+
+\node[marker] (s1) at (-6.1,0.85) {SNP$_1$};
+\node[marker] (s2) at (-4.1,0.85) {SNP$_2$};
+\node[marker] (sp) at (-2.1,0.85) {SNP$_P$};
+
+\node[box] (lst) at (-4.1,-0.70) {
+    Marker-specific statistic\\
+    e.g.\ $F_{ST}$ or association score
+};
+
+\node[key] (lr) at (-4.1,-2.20) {
+    SNP ranking\\
+    $s_1,\ldots,s_P$
+};
+
+\draw[arr] (lm) -- (s1);
+\draw[arr] (lm) -- (s2);
+\draw[arr] (lm) -- (sp);
+
+\draw[arr] (s1) -- (lst);
+\draw[arr] (s2) -- (lst);
+\draw[arr] (sp) -- (lst);
+
+\draw[arr] (lst) -- (lr);
+
+% ------------------------------------------------------------------
+% RIGHT: MULTIVARIATE
+% ------------------------------------------------------------------
+
+\node[key] (rv) at (4.1,2.45) {
+    Individual genotype profile\\
+    $\mathbf{x}\in\mathbb{R}^{P}$\\
+    \scriptsize $P$ SNP values
+};
+
+\node[note] at (4.1,1.60) {
+    all SNPs are processed jointly
+};
+
+\node[box] (rm) at (4.1,0.60) {
+    Multivariate / neural model\\
+    $f(\mathbf{x})$
+};
+
+\node[box] (rz) at (4.1,-0.85) {
+    Learned representation\\
+    $\mathbf{z}\in\mathbb{R}^{d}$,\quad $d \ll P$
+};
+
+\node[key] (ro) at (4.1,-2.35) {
+    Breed classification\\
+    and/or SNP attribution
+};
+
+\draw[arr] (rv) -- (rm);
+\draw[arr] (rm) -- (rz);
+\draw[arr] (rz) -- (ro);
+
+% ------------------------------------------------------------------
+% Separator
+% ------------------------------------------------------------------
+
+\draw[gray, dashed] (0,3.10) -- (0,-2.95);
+
+% ------------------------------------------------------------------
+% Bottom notation
+% ------------------------------------------------------------------
+
+\node[note] at (0,-3.35) {
+    $N$: number of individuals \qquad
+    $P$: number of SNP markers \qquad
+    $d$: latent-space dimension
+};
+
+\end{tikzpicture}
+
+\caption{
+Conceptual comparison between locus-wise genomic analysis and
+multivariate modelling.
+Locus-wise approaches evaluate each of the $P$ SNP markers
+individually and derive marker-specific statistics, whereas
+multivariate models process the complete genotype profile jointly
+and may learn a lower-dimensional representation with $d \ll P$.
+$N$ denotes the number of individuals in the dataset.
+Author's elaboration based on
+\cite{weir1984estimating,dimauro2013canonical,bengio2013representation}.
+}
+\label{fig:inductive_bias_comparison}
+\end{figure}
