@@ -518,15 +518,18 @@ def _build_protocol(
     shap_kwargs: dict,
     ig_kwargs: dict,
     smoke: bool,
+    dataset_id: str = DATASET_ID,
+    cohort_label: str = COHORT_LABEL,
+    n_classes: int = N_CLASSES_PRIMARY,
 ) -> dict:
     from genomic.panel_evaluation import RF_N_ESTIMATORS, RF_RANDOM_STATE
 
     return {
-        "dataset_id": DATASET_ID,
+        "dataset_id": dataset_id,
         "cohort": {
-            "label": COHORT_LABEL,
-            "description": "primary 34-breed development cohort",
-            "n_classes": N_CLASSES_PRIMARY,
+            "label": cohort_label,
+            "description": f"{n_classes}-breed development cohort",
+            "n_classes": int(n_classes),
             "n_folds": len(fold_n_features),
         },
         "folds": {str(k): {"n_markers": int(v)} for k, v in sorted(fold_n_features.items())},
@@ -595,6 +598,8 @@ def _run_pipeline(
     ig_kwargs: dict,
     smoke: bool,
     split_meta: dict,
+    dataset_id: str = DATASET_ID,
+    cohort_label: str = COHORT_LABEL,
     load_models: Optional[Callable[[FoldSpec], None]] = None,
 ) -> dict:
     methods = tuple(methods)
@@ -644,6 +649,9 @@ def _run_pipeline(
 
     summary = build_summary(records, ks=ks, methods=methods, epsilons=EPSILON_P)
     protocol = _build_protocol(
+        dataset_id=dataset_id,
+        cohort_label=cohort_label,
+        n_classes=n_classes,
         split_meta=split_meta,
         fold_n_features=fold_n_features,
         checkpoints=checkpoints,
@@ -740,17 +748,23 @@ def run(
     contrastive_ckpt_pattern: str = DEFAULT_CONTRASTIVE_CKPT_PATTERN,
     shap_kwargs: Optional[dict] = None,
     ig_kwargs: Optional[dict] = None,
+    dataset_id: str = DATASET_ID,
+    fam_path: str = FAM_PATH,
+    bed_path: str = BED_PATH,
+    bim_path: str = BIM_PATH,
+    splits_dir: str = SPLITS_DIR,
+    cohort_label: str = COHORT_LABEL,
 ) -> dict:
     """Production RQ3/RQ4 run over the protocol-v2 development folds."""
     _validate_methods(methods)
     shap_kwargs = dict(shap_kwargs or {})
     ig_kwargs = dict(ig_kwargs or {})
 
-    split = load_split(DATASET_ID, 42, 42, FAM_PATH, out_dir=SPLITS_DIR,
-                       cohort_label=COHORT_LABEL)
-    ed = GenomicExperimentData.from_plink(split, BED_PATH, bim_path=BIM_PATH)
+    split = load_split(dataset_id, 42, 42, fam_path, out_dir=splits_dir,
+                       cohort_label=cohort_label)
+    ed = GenomicExperimentData.from_plink(split, bed_path, bim_path=bim_path)
     n_classes = int(ed.n_classes)
-    if n_classes != N_CLASSES_PRIMARY:
+    if dataset_id == DATASET_ID and n_classes != N_CLASSES_PRIMARY:
         raise RuntimeError(
             f"protocol-v2 primary cohort expects {N_CLASSES_PRIMARY} breeds, "
             f"found {n_classes}."
@@ -813,6 +827,8 @@ def run(
         ig_kwargs=ig_kwargs,
         smoke=False,
         split_meta=split.meta,
+        dataset_id=dataset_id,
+        cohort_label=cohort_label,
         load_models=_load,
     )
 
@@ -916,6 +932,8 @@ def run_smoke(
         ig_kwargs=dict(ig_kwargs),
         smoke=True,
         split_meta={"synthetic": True, "seed": 0},
+        dataset_id="synthetic",
+        cohort_label="",
         load_models=None,
     )
 
@@ -938,6 +956,12 @@ def main(argv=None) -> int:
                         help="recompute all rankings instead of reusing the cache")
     parser.add_argument("--rq3-out-dir", default=RQ3_OUT_DIR)
     parser.add_argument("--rq4-out-dir", default=RQ4_OUT_DIR)
+    parser.add_argument("--dataset-id", default=DATASET_ID)
+    parser.add_argument("--fam", default=FAM_PATH)
+    parser.add_argument("--bed", default=BED_PATH)
+    parser.add_argument("--bim", default=BIM_PATH)
+    parser.add_argument("--splits-dir", default=SPLITS_DIR)
+    parser.add_argument("--cohort-label", default=COHORT_LABEL)
     parser.add_argument("--vae-ckpt-pattern", default=DEFAULT_VAE_CKPT_PATTERN)
     parser.add_argument("--contrastive-ckpt-pattern",
                         default=DEFAULT_CONTRASTIVE_CKPT_PATTERN)
@@ -994,6 +1018,12 @@ def main(argv=None) -> int:
             contrastive_ckpt_pattern=args.contrastive_ckpt_pattern,
             shap_kwargs=shap_kwargs,
             ig_kwargs=ig_kwargs,
+            dataset_id=args.dataset_id,
+            fam_path=args.fam,
+            bed_path=args.bed,
+            bim_path=args.bim,
+            splits_dir=args.splits_dir,
+            cohort_label=args.cohort_label,
         )
 
     print(f"Total wall-clock: {time.time() - t0:.1f}s")
