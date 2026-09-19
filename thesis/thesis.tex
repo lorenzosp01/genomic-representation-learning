@@ -1,0 +1,135 @@
+% !TeX encoding = UTF-8
+% !TeX program = pdflatex
+% !TeX spellcheck = en_US
+
+\documentclass{sapthesis}
+\usepackage[autostyle]{csquotes}
+\usepackage[english]{babel}
+\usepackage[pdfusetitle,hidelinks]{hyperref}
+\usepackage{cleveref}
+\usepackage{amssymb}
+\usepackage{overpic}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{algorithm,algpseudocode}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds}
+\usepackage{nicematrix,tikz}  % For vertical dotted lines in tables (NiceTabular environment)
+\usepackage{arydshln}  % For horizontal dotted lines in tables (\hdottedlines)
+\setlength\dashlinedash{0.2pt}
+\setlength\dashlinegap{1.5pt}
+\setlength\arrayrulewidth{0.3pt}
+
+\renewcommand\tabularxcolumn[1]{m{#1}}% for vertical centering text in X column
+
+\usepackage{subcaption,graphicx}
+\graphicspath{{assets/}}
+
+\setcounter{tocdepth}{1}  % Table of Contents includes up to \section
+\usepackage{multirow}
+
+\renewcommand\tabularxcolumn[1]{m{#1}} % for vertical centering text in X column
+
+\renewcommand{\arraystretch}{1.3}   % Increase table rows height
+
+\usepackage{natbib}
+
+%% Add icons to make (1) points
+\usepackage{pifont}
+\newcommand{\pointbone}{\ding{202}~}%
+\newcommand{\pointbtwo}{\ding{203}~}%
+\newcommand{\pointbthree}{\ding{204}~}%
+
+\newcommand{\tickrule}{%
+\midrule[1.5pt]%
+}
+
+%% Useful command to highlight a TODO in the PDF too
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{TODO:} #1}}
+
+% Fix bibliography in subfiles: https://tex.stackexchange.com/a/284908
+\def\mainbib{%
+\bibliographystyle{plainnat}%
+\bibliography{bibliography}%
+}
+\def\subbib{\mainbib}
+
+%% Do not display floats in a different section they are declared
+\usepackage{placeins}
+\let\oldsection\section
+\renewcommand{\section}{\FloatBarrier\oldsection}
+
+\usepackage{subfiles} % Best loaded last in the preamble
+
+\title{Representation Learning and Attribution-Based Feature Selection in Livestock Genomics: A Leakage-Controlled Benchmark}
+\author{Lorenzo Spataro}
+
+\IDnumber{1946590}
+\course{Master's Degree in Computer Science [LM-18]}
+\courseorganizer{Faculty of Information Engineering, Informatics, and Statistics}
+
+\AcademicYear{2025/2026}
+
+\advisor{Prof. Stefano Faralli}
+\coadvisor{Dott. Roberto Steri}
+
+\authoremail{spataro.1946590@studenti.uniroma1.it}
+\copyyear{2026}
+\thesistype{Master Degree thesis}
+
+
+\newcommand{\bw}{\mathbf{W}}
+\newcommand{\be}{\mathbf{e}}
+\newcommand{\loss}{\mathcal{L}}
+\newcommand{\Loss}{\loss}
+\newcommand{\bxa}{\mathbf{x}^{\star}}
+\newcommand{\bya}{\mathbf{y}^{\star}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bg}{\mathbf{g}}
+\newcommand{\bz}{\mathbf{z}}
+\newcommand{\net}{\boldsymbol{\theta}}
+
+
+
+\begin{document}
+
+\def\subbib{}  %% Fix from https://tex.stackexchange.com/a/284908
+
+% \hypersetup{
+%     pdfcreator={LaTeX},///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+%     pdfsubject={Master's Degree Thesis},
+%     pdfkeywords={LLM,Artificial Intelligence,Adversarial Attacks},
+% }
+\versiondate{\today}
+
+\frontmatter
+\maketitle
+
+% \dedication{Dedicated to}         %% TODO
+
+\subfile{chapters/abstract}
+
+\tableofcontents
+\mainmatter
+
+\subfile{chapters/introduction}
+\subfile{chapters/related_work}
+\subfile{chapters/genomic_data_and_experimental_framework}
+\subfile{chapters/learning_compact_genomic_representations}
+\subfile{chapters/from_representations_to_informative_markers}
+\subfile{chapters/experimental_evaluation}
+\subfile{chapters/conclusion}
+
+\backmatter
+\cleardoublepage
+\phantomsection % Give this command only if hyperref is loaded
+\addcontentsline{toc}{chapter}{\bibname}
+
+\mainbib{
+}
+
+\end{document}

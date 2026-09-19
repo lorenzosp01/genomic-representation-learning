@@ -4,7 +4,8 @@
 
 Working title:
 
-**Learning Compact Genomic Representations for Livestock Breed Classification**
+**Representation Learning and Attribution-Based Feature Selection in
+Livestock Genomics: A Leakage-Controlled Benchmark**
 
 This repository contains the experimental code for an MSc thesis in
 Computer Science concerning machine learning and deep representation

@@ -1,0 +1,646 @@
+\chapter{Genomic Data and Experimental Framework}
+\label{chap:experimental_framework}
+% Backward-compatible label for older references.
+\label{chap:methods}
+
+Before introducing the learning models themselves, it is useful to
+separate the properties of the data from the properties of the
+algorithms. This chapter describes the genomic domains used in the
+thesis and the rules that determine how information is allowed to flow
+through the experimental pipeline.
+
+This separation is especially important in high-dimensional genomic
+analysis. Marker filtering, imputation, LD pruning, model selection,
+and feature ranking can all introduce optimistic bias if information
+from held-out individuals is allowed to influence them. For this
+reason, the experimental protocol is treated as part of the method
+rather than as a final implementation detail.
+
+\section{Genomic Datasets}
+\label{sec:genomic_datasets_preprocessing}
+
+The thesis considers two independent livestock genomic domains.
+
+The primary domain is the caprine ADAPTmap dataset. It is used to
+develop and evaluate the main experimental pipeline, including breed
+classification, sample-efficiency analysis, marker-efficiency
+analysis, and comparison of marker-ranking strategies.
+
+A second ovine Sheep HapMap dataset is used for independent
+cross-species methodological validation. The ovine data are not
+treated as an extension of ADAPTmap and the same SNP identifiers are
+not assumed to have the same role across species. Instead, each domain
+is processed as a separate classification problem with its own cohort,
+label mapping, preprocessing fit, marker panel, and data partition.
+
+\subsection{Primary Caprine Domain: ADAPTmap}
+\label{subsec:adaptmap_dataset}
+
+ADAPTmap was developed to characterize worldwide goat genetic
+diversity and population structure
+\cite{stella2018adaptmap, colli2018genome}. The source used by the
+current implementation is provided in PLINK format and contains
+$4653$ sample rows before individual-level eligibility filtering and
+$53347$ raw SNP markers.
+
+Breed identity is obtained from the source sample metadata. The
+original row identity of each animal is retained throughout the
+pipeline so that split membership and preprocessing provenance remain
+auditable.
+
+Individual eligibility is determined before the development/test
+split. Animals with genotype missingness greater than or equal to
+$0.10$ are excluded. Among the remaining individuals, only breeds
+represented by at least $30$ eligible animals are retained. These
+rules lead to the frozen primary cohort of $2863$ individuals from
+$34$ breeds.
+
+The threshold of $30$ individuals is a \emph{cohort-eligibility
+rule}. It should not be confused with the sample-size question studied
+later in the thesis. RQ2 deliberately constructs a separate controlled
+experiment in which the amount of training data per breed is varied.
+
+\subsection{Independent Ovine Domain: Sheep HapMap}
+\label{subsec:sheep_hapmap_dataset}
+
+The Sheep HapMap domain is used to investigate whether the behavior of
+the computational framework is specific to ADAPTmap or can be
+observed in an independent ovine dataset.
+
+The validation is methodological rather than marker-level. A marker
+ranked highly in goats is not expected, by construction, to
+correspond to the same biological locus in sheep. What can be compared
+across the two domains are broader properties: whether compact
+representations support breed classification, how performance changes
+under data scarcity, and whether reduced panels retain useful
+discriminative information.
+
+The ovine domain is the ISGC SNP50 HapMap and Sheep Breed Diversity
+dataset \cite{kijas2012sheep}, distributed by the CSIRO Data Access
+Portal \cite{csiroSheepHapMap2013}. The audited Breedv1 release used
+here contains $2819$ animals from $74$ breeds genotyped on the ovine
+SNP50 BeadChip, with $49{,}034$ markers retained after the consortium
+quality filtering. The distributed PED/MAP files were converted to
+PLINK binary with \texttt{plink --sheep --make-bed}.
+
+Individual eligibility follows the same Protocol-v2 rule as the primary
+domain: animals with genotype missingness greater than or equal to
+$0.10$ are excluded. All $2819$ animals pass this filter (maximum
+missingness $1.99\%$). Among the remaining individuals, breeds
+represented by at least $30$ eligible animals are retained, yielding a
+frozen ovine cohort of $28$ breeds and $1863$ animals. The cohort is
+partitioned into $1585$ development and $278$ locked-test individuals
+using the same $85/15$ fractions and the same seeds ($42/42$) as the
+caprine domain.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{fig_dataset_cohort}
+  \caption{Population structure and cohort composition. For each domain,
+  the left panel shows a PCA of the fold-0 training dosages (LD-pruned
+  panel; each color is one breed) and the right panel the distribution
+  of cohort sizes across breeds together with the $\geq 30$ eligibility
+  threshold.}
+  \label{fig:dataset_cohort}
+\end{figure}
+
+\section{From Raw Genotypes to Model Input}
+\label{sec:genotype_preprocessing}
+
+Raw genotype matrices require quality control before they can be used
+by the learning models. The purpose of preprocessing in this thesis is
+not to optimize a score using all available individuals, but to
+estimate every data-dependent transformation only from the training
+portion that is legitimately available at that stage.
+
+Common genomic quality-control operations include sample missingness,
+marker missingness, Minor Allele Frequency (MAF) filtering, and LD
+pruning \cite{purcell2007plink, anderson2010data,
+chang2015second}. The frozen pipeline applies the following
+marker-level sequence:
+
+\begin{enumerate}
+
+    \item markers with training-set missingness greater than or equal
+    to $0.10$ are removed;
+
+    \item MAF is computed using the observed training genotypes only,
+    and markers with $\mathrm{MAF}<0.01$ are removed;
+
+    \item missing values are imputed using the genotype mode estimated
+    from the training data for each retained marker; if multiple
+    genotype states are tied, the lowest state is selected
+    deterministically;
+
+    \item greedy LD pruning is performed in source marker order using a
+    window of $50$ markers, removing a marker when $r^2>0.2$ with a
+    marker already retained in the active window.
+
+\end{enumerate}
+
+No Hardy--Weinberg-equilibrium filter is applied and the allele
+dosages are not standardized.
+
+Once fitted, the preprocessing state is applied unchanged to held-out
+individuals. The post-QC representation therefore contains integer
+allele dosages
+
+\begin{equation}
+    g_{i,j}\in\{0,1,2\},
+    \label{eq:allele_dosage}
+\end{equation}
+
+with no missing values. This matrix is the common input from which the
+variational and contrastive models construct their model-specific
+representations.
+
+\section{Development Data and the Locked Test Set}
+\label{sec:data_partitioning}
+
+The $2863$ eligible ADAPTmap individuals are divided into two
+different roles.
+
+The \emph{development set} contains $2437$ individuals. All model
+configuration, cross-validation, preprocessing decisions,
+training-control choices, and marker-ranking development must take
+place inside this set.
+
+The remaining $426$ individuals form the \emph{locked test set}. They
+are excluded from model development and are used only after the
+configuration of a final model has already been fixed. This
+distinction is important: a test set can provide an unbiased estimate
+of final generalization only if its outcomes are not used to make
+subsequent modeling decisions \cite{ambroise2002selection}.
+
+For development, three fixed stratified folds are used:
+
+\begin{center}
+\begin{tabular}{c|cc}
+\hline
+Fold & Training & Validation \\
+\hline
+0 & 1624 & 813 \\
+1 & 1625 & 812 \\
+2 & 1625 & 812 \\
+\hline
+\end{tabular}
+\end{center}
+
+For each fold, preprocessing is fitted again using only that fold's
+training individuals. As a consequence, the retained SNP panel is
+allowed to differ slightly from one fold to another. This is
+preferable to building a global marker intersection or union, because
+such a global construction would mix information across training
+partitions.
+
+In the frozen primary protocol, the three fold-specific post-QC
+panels contain $46442$, $46402$, and $46444$ SNPs. These values are
+properties of the fold-specific preprocessing fit, not fixed
+dimensions imposed on the raw data.
+
+\section{A Common Label Space}
+\label{sec:canonical_labels}
+
+For a task containing $C$ breeds, textual breed identifiers are
+mapped deterministically to dense class indices
+
+\begin{equation}
+    y_i\in\{0,\ldots,C-1\}.
+\end{equation}
+
+The same canonical mapping is used by all models evaluated on the same
+task cohort. For the primary ADAPTmap classification task, the $34$
+retained breeds are
+
+For the primary ADAPTmap classification task, the frozen cohort
+contains $34$ breeds. Throughout the thesis, breed names are used in
+the narrative text, while the original ADAPTmap identifiers are
+retained when compact labels are required, for example in confusion
+matrices or computational artifacts. The correspondence is reported
+in Table~\ref{tab:adaptmap_breed_mapping}.
+
+\begin{table}[ht]
+\centering
+\caption{Breed names and ADAPTmap identifiers for the primary
+34-breed caprine cohort.}
+\label{tab:adaptmap_breed_mapping}
+\begin{tabular}{ll@{\qquad}ll}
+\hline
+Breed & ID & Breed & ID \\
+\hline
+Abergelle & ABR &
+Alpine & ALP \\
+
+Angora & ANG &
+Boer & BOE \\
+
+Bari & BRI &
+Barki & BRK \\
+
+Burundi goat & BUR &
+Bugituri & BUT \\
+
+Cameroon goat & CAM &
+Canindé & CAN \\
+
+Cashmere & CAS &
+Creole & CRE \\
+
+Corse & CRS &
+Girgentana & GGT \\
+
+Gumez & GUM &
+Kamori & KAM \\
+
+Keffa & KEF &
+Kilis & KLS \\
+
+Landim & LND &
+Landrace & LNR \\
+
+Malagueña & MLG &
+Moxotó & MOX \\
+
+Nubian & NBN &
+Oasis & OSS \\
+
+Pateri & PAT &
+Rangeland & RAN \\
+
+Rossa Mediterranea & RME &
+Saanen & SAA \\
+
+Sarda & SAR &
+Small East African & SEA \\
+
+Saidi & SID &
+Teddi & TED \\
+
+West African Dwarf & WAD &
+Woyito Guji & WYG \\
+\hline
+\end{tabular}
+\end{table}
+
+Using a common label order is more than an implementation convenience.
+It makes fold-level per-class recall and confusion matrices directly
+comparable and allows them to be interpreted without remapping class
+indices after every experiment.
+
+\section{The Development Questions as Controlled Experiments}
+\label{sec:experimental_design}
+
+The thesis studies several questions using the same general data
+framework. The difference between experiments lies in what is
+deliberately changed while the remaining protocol is held fixed.
+
+For breed classification, the complete post-QC genomic representation
+is used as the reference setting. For sample efficiency, the selected
+VMGP configuration is held fixed while the number of training
+individuals per breed is reduced; the corresponding 15-breed
+validation population remains unchanged within each development fold.
+For marker efficiency, the input panel is progressively reduced using
+a ranking constructed only from legitimate training information.
+Finally, different marker-ranking methods are compared by evaluating the downstream panels that they
+produce.
+
+This view is useful because it avoids treating every experiment as an
+independent benchmark. They are different probes of the same
+underlying question: how much information is required to preserve
+breed-discriminative structure?
+
+\input{figures/fig_experimental_design.tex}
+
+\section{Cross-Validation and Model Selection}
+\label{sec:rq1_protocol}
+
+For RQ1, scalar classification metrics are computed on each of the
+three development folds. The primary model-selection metric is
+macro-averaged F1.
+
+Configurations are selected using the following fixed rule:
+
+\begin{enumerate}
+    \item maximize mean Macro-F1 across the three folds;
+    \item if tied, maximize mean Balanced Accuracy;
+    \item if still tied, maximize mean Accuracy;
+    \item if an exact tie remains, preserve deterministic
+    configuration order.
+\end{enumerate}
+
+Validation loss is used only as a training-control signal for early
+stopping and checkpoint restoration. It is not used as the scientific
+ranking metric between candidate model configurations.
+
+The important consequence is that there is no ``best fold'' that is
+reported as the final cross-validation result. A configuration is
+characterized by its behavior across all three held-out development
+partitions.
+
+\section{Studying Sample Scarcity}
+\label{sec:sample_size_protocol}
+
+RQ2 asks how breed-classification performance changes when fewer
+training individuals are available for each breed. Unlike RQ1, the
+objective is no longer to compare alternative representation-learning
+approaches. The sample-efficiency experiment therefore uses the
+VMGP-inspired model selected during RQ1 as a fixed reference model,
+with latent dimensionality $d=96$ and all architectural, loss, and
+optimization choices held fixed.
+
+This distinction is important because the experiment is intended to
+isolate the effect of training-population size. Repeating model
+selection independently at every sample size would introduce an
+additional source of variation and would make it difficult to
+determine whether changes in performance were caused by the amount of
+available data or by changes in model configuration.
+
+A controlled comparison also requires the classification task itself
+to remain unchanged as the training population is reduced. The RQ2
+cohort is therefore restricted to breeds for which at least $30$
+training individuals are available in every predefined development
+fold. The value $30$ corresponds to the largest per-breed training
+population considered in the experiment.
+
+Applying this requirement yields a fixed cohort of 15 breeds:
+Abergelle, Alpine, Angora, Boer, Barki, Burundi goat, Creole,
+Landrace goat, Nubian, Oasis, Rangeland, Saanen, Small East African,
+Saidi, and West African Dwarf. Their corresponding ADAPTmap
+identifiers are reported in
+Table~\ref{tab:adaptmap_breed_mapping}.
+
+Using the same breed set for every sample-size condition is essential
+for interpretation. If breeds entered or disappeared from the
+classification problem as the number of available individuals changed,
+differences in performance could reflect changes in class composition
+or task difficulty rather than changes in training-population size.
+
+The evaluated numbers of training individuals per breed are
+
+\begin{equation}
+    \mathcal{N}
+    =
+    \{5,10,15,20,25,30\}.
+    \label{eq:sample_sizes}
+\end{equation}
+
+For a given fold and a given $N\in\mathcal{N}$, exactly $N$ training
+individuals are sampled from every breed. The resulting training
+population therefore contains $15N$ animals, ranging from $75$
+individuals for $N=5$ to $450$ individuals for $N=30$.
+
+The validation population is not subsampled. For each development
+fold, all validation individuals belonging to the same 15 breeds are
+retained, and their source identities remain unchanged across all
+sample sizes and sampling replicates. Consequently, differences along
+the learning curve are evaluated against the same validation
+population within a fold.
+
+A new genomic preprocessor is fitted independently for every
+combination of development fold, sampling replicate, and sample size.
+Only the selected $15N$ training individuals are used to estimate its
+state. The fitted preprocessor is then applied to both the sampled
+training population and the unchanged validation population.
+
+This choice is deliberate because sample scarcity affects more than
+neural-network optimization. Training-dependent genomic quantities,
+including marker missingness, minor-allele frequency, genotype-mode
+imputation, and linkage-disequilibrium pruning, are themselves
+estimated from the available animals. Reusing a preprocessing state
+estimated from the complete fold would therefore give the smaller
+sample-size conditions information derived from animals that are
+supposed to be unavailable.
+
+RQ2 consequently measures \emph{end-to-end sample scarcity}: reducing
+$N$ changes both the information available for genomic preprocessing
+and the number of observations available for representation learning.
+
+The particular animals selected at a given value of $N$ provide
+another potential source of variability. Individuals belonging to the
+same breed are not necessarily interchangeable: within-breed genetic
+diversity, relatedness, population substructure, and less common
+genotype profiles can make some subsets more informative than others.
+A learning curve obtained from only one random subsample could
+therefore partly reflect an accidental choice of animals rather than
+the general effect of sample size.
+
+To reduce this dependence, the sampling procedure is repeated using
+five predefined random seeds,
+
+\begin{equation}
+    \mathcal{R}
+    =
+    \{42,43,44,45,46\}.
+    \label{eq:rq2_replicate_seeds}
+\end{equation}
+
+For every development fold and replicate, a deterministic random
+ordering of the available training individuals is generated separately
+for each breed. Sample-size conditions are derived from the same
+ordering in nested form,
+
+\begin{equation}
+S_5
+\subset
+S_{10}
+\subset
+S_{15}
+\subset
+S_{20}
+\subset
+S_{25}
+\subset
+S_{30}.
+\label{eq:rq2_nested_samples}
+\end{equation}
+
+Thus, moving from $N=5$ to $N=10$ within a replicate adds five
+individuals per breed to the existing population rather than replacing
+the original five with an unrelated sample. The same principle applies
+to all subsequent values of $N$.
+
+Five sampling replicates are used as a compromise between
+characterizing the variability induced by training-set composition and
+the computational cost of repeatedly fitting the complete genomic
+pipeline. The number five is not intended as a universal statistical
+requirement. The purpose of repeated subsampling is instead to avoid
+drawing conclusions from a single arbitrary selection of animals.
+
+Together with the three predefined development folds, the five
+sampling replicates provide
+
+\begin{equation}
+    3 \times 5 = 15
+\end{equation}
+
+performance measurements for each value of $N$. These measurements
+are used descriptively to characterize average performance and its
+variability. They should not be interpreted as 15 fully independent
+experimental populations, because measurements within the same
+development framework may share validation individuals and partially
+overlapping training subsets.
+
+One training detail differs intentionally from the primary RQ1
+protocol. RQ2 uses mini-batches of at most $64$ individuals but retains
+the final incomplete mini-batch rather than discarding it. This ensures
+that every individual selected for a sample-size condition can
+contribute to optimization. Discarding the final mini-batch would
+remove a different proportion of the available training population for
+different values of $N$, which would be undesirable when the number of
+available individuals is itself the experimental variable.
+
+Throughout this experiment, the locked test set remains completely
+outside the RQ2 data path. It is neither used for sampling nor
+transformed by any RQ2-specific preprocessing state.
+
+\section{Evaluation Metrics}
+\label{sec:evaluation_metrics}
+
+No single metric describes every aspect of a multiclass classifier.
+The primary metric used in the thesis is macro-averaged F1,
+
+\begin{equation}
+    F_{1}^{\mathrm{macro}}
+    =
+    \frac{1}{C}
+    \sum_{c=1}^{C}
+    F_{1,c},
+    \label{eq:macro_f1}
+\end{equation}
+
+which gives equal weight to each breed \cite{sokolova2009systematic}.
+
+Balanced Accuracy is reported as the mean recall across classes,
+
+\begin{equation}
+    \operatorname{BAcc}
+    =
+    \frac{1}{C}
+    \sum_{c=1}^{C}
+    \operatorname{Recall}_c.
+\end{equation}
+
+Standard multiclass Accuracy is included as a secondary measure.
+
+For cross-validation, scalar metrics are reported using the mean and
+standard deviation across the three frozen folds. Per-class recall and
+the raw confusion matrix are retained as diagnostic information.
+Because the canonical breed mapping is identical across folds,
+class-specific quantities remain directly interpretable.
+
+The RQ2 sample-efficiency analysis additionally includes the five
+predefined subsampling replicates. For each value of
+$N\in\mathcal{N}$, the three development folds and five sampling
+replicates therefore yield 15 performance measurements.
+
+Macro-F1, Balanced Accuracy, and Accuracy are summarized using their
+arithmetic mean and sample standard deviation across these 15
+measurements. Macro-F1 remains the primary quantity used to interpret
+the sample-efficiency curve and to determine the operational minimum
+training-population size.
+
+\section{Defining ``Minimum'' Before Looking at the Curves}
+\label{sec:minimum_requirements}
+
+The terms ``minimum number of individuals'' and ``minimum number of
+markers'' can become ambiguous if the threshold is chosen only after
+looking at experimental curves. For this reason, the thesis uses an
+operational retained-performance definition.
+
+Let $S_{\mathrm{full}}$ be the Macro-F1 obtained using the complete
+post-QC marker panel, and let $S(P')$ be the score obtained with a
+reduced panel containing $P'$ markers. A minimum retained panel can be
+defined as
+
+\begin{equation}
+    P_{\min}
+    =
+    \min
+    \left\{
+        P':
+        S(P')
+        \geq
+        (1-\epsilon_P)
+        S_{\mathrm{full}}
+    \right\}.
+    \label{eq:minimum_marker_definition}
+\end{equation}
+
+Similarly, if $S(N')$ denotes the score obtained using $N'$ training
+individuals per breed and $S_{\mathrm{reference}}$ is the predefined
+reference score,
+
+\begin{equation}
+    N_{\min}
+    =
+    \min
+    \left\{
+        N':
+        S(N')
+        \geq
+        (1-\epsilon_N)
+        S_{\mathrm{reference}}
+    \right\}.
+    \label{eq:minimum_sample_definition}
+\end{equation}
+
+For RQ2, the reference performance is defined internally within the
+fixed 15-breed sample-efficiency task. Let
+
+\begin{equation}
+    S_{\mathrm{ref}}
+    =
+    \overline{F_1^{\mathrm{macro}}}(30)
+\end{equation}
+
+denote the mean Macro-F1 obtained at $N=30$ across the three
+development folds and five subsampling replicates.
+
+Before inspecting the definitive sample-efficiency curve, the
+retained-performance tolerance was fixed as
+
+\begin{equation}
+    \epsilon_N = 0.02.
+\end{equation}
+
+The operational definition used in RQ2 is consequently
+
+\begin{equation}
+    N_{\min}
+    =
+    \min
+    \left\{
+        N\in\mathcal{N}:
+        \overline{F_1^{\mathrm{macro}}}(N)
+        \geq
+        0.98\,
+        \overline{F_1^{\mathrm{macro}}}(30)
+    \right\}.
+    \label{eq:rq2_minimum_sample_definition}
+\end{equation}
+
+The $98\%$ criterion refers to retained performance relative to the
+$N=30$ reference condition; it does not require an absolute Macro-F1
+of $0.98$. Fixing this rule before examining the definitive RQ2 curve
+prevents the definition of ``minimum'' from being adjusted
+retrospectively to match the observed results.
+
+The tolerances must be fixed before the definitive curves are
+interpreted. In the frozen protocol they are
+
+\begin{equation}
+    \epsilon_N = 0.02,
+    \qquad
+    \epsilon_P = 0.02 \;\text{(primary)},
+    \qquad
+    \epsilon_P = 0.05 \;\text{(secondary)}.
+    \label{eq:frozen_tolerances}
+\end{equation}
+
+The marker-efficiency grid is
+$K\in\{50,100,200,500,1000,2000,5000\}$. For the ovine
+sample-efficiency mini-sweep, where the minimum fold-training count per
+breed is $17$, the grid is truncated to $N\in\{5,10,15\}$ with $N=15$
+as the internal reference; the ovine $N_{\min}$ is therefore bounded
+above by the reference value and is interpreted through the shape of
+the retention curve rather than as an extended minimum.
