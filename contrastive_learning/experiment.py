@@ -6,6 +6,8 @@ preprocessing happens here; each fold's model uses that fold's retained SNP
 count as ``n_markers`` (folds may legitimately differ).
 """
 
+import os
+
 import numpy as np
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, LearningRateMonitor
@@ -19,7 +21,8 @@ from genomic.selection import best_epoch_from_checkpoint_path
 
 def run_experiment(name: str, experiment_data, config: dict,
                    max_epochs: int = 5000, *, folds=None,
-                   history_callback=None) -> dict:
+                   history_callback=None,
+                   checkpoint_dir: str = "checkpoints") -> dict:
     """Run the 3-fold contrastive CV over the protocol-v2 split.
 
     Parameters
@@ -81,7 +84,7 @@ def run_experiment(name: str, experiment_data, config: dict,
             lr_decay_interval = config['lr_decay_interval'],
         )
 
-        ckpt_dir = f"checkpoints/{name.replace(' ','_')}/fold_{fold+1}"
+        ckpt_dir = os.path.join(checkpoint_dir, name.replace(' ','_'), f"fold_{fold+1}")
         callbacks = [
             ModelCheckpoint(dirpath=ckpt_dir, filename='{epoch:04d}-{val_loss:.4f}',
                             save_top_k=1, monitor='val_loss', mode='min'),

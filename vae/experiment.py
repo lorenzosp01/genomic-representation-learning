@@ -163,7 +163,9 @@ def run_experiment(name: str, experiment_data, config: dict,
                    folds: list = None,
                    save_checkpoint_path: str = None,
                    history_callback=None,
-                   drop_last: bool = True) -> dict:
+                   drop_last: bool = True,
+                   checkpoint_dir: str = "checkpoints",
+                   cm_dir: str = "results/confusion_matrices") -> dict:
     """Esegue un esperimento VMGP sui fold congelati del protocollo v2.
 
     Args:
@@ -301,7 +303,7 @@ def run_experiment(name: str, experiment_data, config: dict,
             latent_dim=config.get('latent_dim', 96)
         )
 
-        ckpt_dir = f"checkpoints/{name.replace(' ', '_')}/fold_{fold+1}"
+        ckpt_dir = os.path.join(checkpoint_dir, name.replace(' ', '_'), f"fold_{fold+1}")
         checkpoint = ModelCheckpoint(
             dirpath=ckpt_dir,
             filename='{epoch:04d}-{val_loss:.4f}',
@@ -402,7 +404,6 @@ def run_experiment(name: str, experiment_data, config: dict,
             fold_metrics['Kappa_Breed'].append(cohen_kappa_score(true_b, preds_b))
             cm_breed = cm['confusion_matrix']
 
-            cm_dir = 'results/confusion_matrices'
             os.makedirs(cm_dir, exist_ok=True)
             cm_df = pd.DataFrame(cm_breed, index=class_names_breed, columns=class_names_breed)
             cm_df.to_csv(f'{cm_dir}/cm_{name.replace(" ", "_")}.csv')

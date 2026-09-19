@@ -113,6 +113,7 @@ class VMGP_LightningSystem(pl.LightningModule):
         kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         kl_loss /= x.size(0)  # Normalize by batch size
         loss_rec = mse_loss + 0.0001 * kl_loss  # KL weight 0.0001 come nel notebook funzionante
+        self.log(f'{stage}_kl_loss', kl_loss, prog_bar=False)
         
         # --- Loss Predizione (Multiple Tasks) ---
         loss_pred = torch.tensor(0.0, device=self.device)
