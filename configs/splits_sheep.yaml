@@ -1,0 +1,57 @@
+# Splitting configuration for the ISGC Sheep HapMap cross-species cohort.
+#
+# Thesis design (goat-primary): the ADAPTmap caprine cohort is the primary
+# reference cohort; this ovine cohort is the cross-species generalization
+# validation cohort. All Protocol-v2 parameters (seeds, fractions, K-fold,
+# individual-QC rule and breed threshold) mirror configs/splits.yaml exactly;
+# no sheep-specific tuning of the protocol is allowed.
+
+dataset_id: ISGC_sheep_hapmap
+
+# PLINK fileset produced by:
+#   plink --sheep --file data/sheep/raw/SNP50_Breedv1 --make-bed \
+#         --out data/sheep/sheep_hapmap_raw
+fam_path: data/sheep/sheep_hapmap_raw.fam
+bed_path: data/sheep/sheep_hapmap_raw.bed
+bim_path: data/sheep/sheep_hapmap_raw.bim
+
+# Protocol-v2 split artifacts for the sheep cohort.
+out_dir: data/sheep/splits
+
+# Independent seeds for the outer dev/test split and the inner K-fold.
+outer_split_seed: 42
+fold_seed: 42
+
+# Target fractions (must sum to 1.0).
+dev_frac: 0.85
+test_frac: 0.15
+
+# Number of stratified folds inside the development set.
+k_folds: 3
+
+# ---------------------------------------------------------------------------
+# Pre-split sample-level cohort eligibility (individual quality).
+#
+# Frozen Protocol-v2 rule: keep an individual iff its per-sample missingness
+# is STRICTLY below 0.10. Applied BEFORE breed eligibility.
+# ---------------------------------------------------------------------------
+individual_missingness_threshold: 0.10
+individual_missingness_rule: "<"
+
+# ---------------------------------------------------------------------------
+# Primary cohort inclusion rule (RQ1, RQ3, RQ4).
+#
+# Frozen decision: a breed belongs to the sheep cohort iff it has at least 30
+# individual-QC-eligible animals (POST-QC count).
+# ---------------------------------------------------------------------------
+cohort_min_breed_size: 30
+
+# ---------------------------------------------------------------------------
+# RQ2 (sample efficiency) is intentionally NOT executed on the sheep cohort.
+#
+# Rationale (frozen decision): with the minimum eligible count of 30 animals,
+# edge breeds leave only ~20 training individuals per breed in each CV fold,
+# below the RQ2 grid (5..30 per breed). This is documented as a
+# methodological limitation of the cross-species validation.
+# ---------------------------------------------------------------------------
+rq2_executed: false
