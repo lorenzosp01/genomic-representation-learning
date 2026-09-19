@@ -1,0 +1,154 @@
+\chapter{Conclusions}
+\label{chap:conclusion}
+
+This thesis is motivated by a simple difficulty of modern genomic
+analysis: obtaining more markers does not necessarily mean that every
+marker, or every available individual, contributes equally to a
+classification problem. Livestock SNP datasets can contain tens of
+thousands of correlated variables while the number of genotyped
+animals remains comparatively small. The work therefore approaches
+breed classification as a problem of learning, compression, and
+interpretation at the same time.
+
+The methodology developed throughout the thesis connects these three
+levels. A leakage-safe genomic pipeline first defines which
+information is available during development. Variational and
+self-supervised contrastive models then provide two different ways of
+constructing compact representations of complete genotype profiles.
+Finally, classical population-genetics statistics, machine-learning
+feature importance, and neural attribution methods are used to move
+from the learned representations back to individual markers.
+
+The value of the framework is not tied to a single score or a single
+model. Its main purpose is to make several questions comparable under
+the same experimental assumptions: how reliably breeds can be
+distinguished, how the task changes when fewer animals are available,
+how aggressively the SNP panel can be reduced, and whether different
+marker-ranking strategies preserve the same downstream information.
+
+The final evidence can be summarized in four points. First, compact
+genomic representations classify livestock breeds very accurately
+without species-specific tuning: Macro-F1 $0.9703$ and $0.9496$ on the
+caprine locked test and $0.9555$ and $0.9148$ on the independent ovine
+locked test for the supervised and self-supervised models
+respectively. Second, a surprisingly small training population
+suffices: in the caprine cohort $N_{\min}=10$ individuals per breed
+retained $98.5\%$ of the reference performance, and in the ovine cohort
+the same sample size retained $98.6\%$. Third, the marker panel can be
+reduced by two orders of magnitude: $200$ $F_{ST}$-selected markers
+match the full post-QC panel under the frozen evaluator, while neural
+attributions require much larger panels ($500$ markers for SHAP and
+$2000$--$5000$ for Integrated Gradients). Fourth, neural attribution is
+not a substitute for feature selection: the top-marker lists of the
+four families overlap little (mostly close to chance for the neural
+methods), and their downstream utility differs accordingly.
+Cross-species validation supports the representation pipeline but
+shows that its advantage over classical baselines is
+dataset-dependent.
+
+\section*{Limitations}
+
+The conclusions of the thesis must be interpreted within the
+boundaries of the available data and protocol.
+
+First, breed classification is not equivalent to discovering causal
+biological variants. A SNP can be useful for population discrimination
+because it tags population structure or correlates with other loci,
+without being a functional cause of breed identity.
+
+Second, marker importance in high-LD genomic data is not necessarily
+unique. Several correlated markers may carry interchangeable
+predictive information, so disagreement between rankings does not
+automatically imply that one method is incorrect.
+
+Third, the number and distribution of genotyped individuals constrain
+what can be concluded about sample efficiency. The operational
+training-population threshold identified in this thesis depends on the
+selected breeds, their genomic diversity, marker density,
+preprocessing pipeline, learning architecture, and retained-performance
+criterion. Consequently, the resulting value of $N_{\min}$ should not
+be interpreted as a universal biological minimum number of animals
+required for breed classification.
+
+Finally, cross-species validation is methodological. ADAPTmap and
+Sheep HapMap represent different species, marker spaces, and
+classification problems. The value of the second domain lies in
+testing whether the behavior of the methodology is reproducible, not
+in expecting identical important loci or directly comparable raw
+scores.
+
+\section*{Future Work}
+
+Several extensions follow naturally from the framework.
+
+A first direction is biological annotation of the most stable and
+predictive SNPs. Connecting computational rankings to genes,
+regulatory regions, and known population-history signals would help
+distinguish predictive markers from biologically interpretable
+candidates.
+
+A second direction is to study ranking uncertainty more explicitly.
+Bootstrap procedures, repeated sampling, and methods that operate on
+LD blocks rather than individual SNPs could provide a more realistic
+view of feature importance when correlated markers are
+interchangeable.
+
+The representation-learning models could also be extended. The
+variational formulation may be investigated with alternative
+regularization strategies or multi-view genomic information, while
+the contrastive model could be studied with augmentation policies that
+are designed more explicitly around biological invariances.
+
+A further direction is open-set breed assignment: instead of assuming
+that every query individual belongs to one of the reference breeds,
+the model could be asked to reject individuals that do not, using the
+geometry of the learned sphere or the reconstruction error as a
+rejection score.
+
+A further direction concerns synthetic genomic data generation for
+data-scarce populations. Generative models could in principle be used
+to augment breeds represented by only a small number of real
+individuals and to investigate whether synthetic genotype profiles can
+recover part of the classification performance lost under severe
+sample scarcity.
+
+Such an extension would require more than generating numerically
+plausible genotype vectors. Synthetic individuals should preserve
+relevant population-genetic properties, including allele-frequency
+distributions, linkage-disequilibrium structure, and within-breed
+genomic diversity. Particular care would be required when very few
+real animals are available, since a generative model trained on an
+extremely limited population could reproduce close variants of the
+observed individuals rather than learn a representative genomic
+distribution.
+
+The sample-efficiency analysis developed in this thesis provides a
+natural basis for such future work. Once the range in which
+classification performance deteriorates has been identified, synthetic
+augmentation could be evaluated specifically in that data-scarce
+regime by comparing models trained on real individuals alone with
+models trained on the same real individuals supplemented by synthetic
+genomic profiles.
+
+Finally, the reduced-panel analysis could be moved closer to an
+applied traceability setting. Independent external cohorts, additional
+breeds, and genotyping platforms with different marker densities would
+provide stronger evidence about how well a computationally selected
+panel transfers outside the datasets used during model development.
+
+\section*{Practical Impact}
+
+The practical motivation of this work is the possibility of replacing
+an unnecessarily large genomic representation with a smaller one
+without losing the information needed for a defined task. If reliable
+reduced panels can be identified reproducibly, they may provide a
+computational starting point for more economical breed-assignment or
+traceability workflows.
+
+Such a transition requires caution. A computational ranking is not by
+itself a validated diagnostic panel, and independent biological and
+technical validation would be required before deployment. The
+contribution of the thesis is therefore best viewed as a
+methodological bridge between high-density genomic data, modern
+representation learning, and the design of compact, testable genomic
+subsets.

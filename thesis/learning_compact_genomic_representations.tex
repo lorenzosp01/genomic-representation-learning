@@ -1,0 +1,509 @@
+\chapter{Learning Compact Genomic Representations}
+\label{chap:representations}
+\label{chap:latent_representations}
+
+After defining how genomic data are prepared and separated, the next
+question is what kind of representation should be learned from them.
+The original post-QC genotype vector still contains more than forty
+thousand markers, while the population structure of interest may
+occupy a much smaller effective space.
+
+This chapter develops two different answers to that question. The
+first explicitly combines genotype reconstruction and breed prediction
+in a variational architecture. The second removes breed supervision
+from representation learning and asks whether a self-supervised
+contrastive objective can organize individuals in a very small
+hyperspherical latent space.
+
+The purpose of the chapter is to explain the models and the reasoning
+behind their design. Their quantitative comparison is deliberately
+deferred to Chapter~\ref{chap:evaluation}.
+
+\section{Why Learn a Latent Genomic Space?}
+\label{sec:why_latent_genomics}
+
+Using the complete genomic vector directly has an intuitive advantage:
+no marker is discarded before learning. At the same time, a
+representation with tens of thousands of coordinates is difficult to
+inspect and may contain substantial redundancy due to LD.
+
+A latent space changes the problem. Instead of representing an
+individual by every measured locus, the model is asked to summarize
+the input through a much smaller vector. The usefulness of this
+operation depends on what is preserved by the compression.
+
+A reconstruction-based model is encouraged to retain information that
+describes the original genotype profile. A supervised classifier is
+encouraged to retain information that distinguishes breeds. A
+contrastive model, in turn, is encouraged to preserve information that
+remains stable across different views of the same individual while
+separating different individuals.
+
+These objectives are not equivalent. Comparing them provides a way to
+investigate whether direct breed supervision is necessary to obtain a
+discriminative genomic representation or whether breed structure also
+emerges from a self-supervised organization of genotype profiles. Any
+learning procedure encodes assumptions about the structure of the data,
+i.e. an inductive bias \cite{mitchell1980need}, and the two objectives
+below differ precisely in the assumptions they impose on a useful
+genomic representation.
+
+\section{A Variational Approach to Genotype Representation}
+\label{sec:vmgp_architecture}
+
+The first model follows the variational autoencoder paradigm
+\cite{kingma2013auto, rezende2014stochastic} and is inspired by VMGP
+\cite{zhao2025vmgp}. The original VMGP formulation was developed for
+plant genomic prediction. Here, its architectural ideas are adapted to
+livestock breed classification.
+
+Let $P$ denote the number of markers retained by the preprocessor for
+the current training partition. The variational encoder receives a
+dosage vector $\mathbf{x}\in\mathbb{R}^{P}$ and processes it through
+
+\begin{equation}
+    P
+    \rightarrow
+    2048
+    \rightarrow
+    512.
+\end{equation}
+
+Each hidden stage uses a linear transformation followed by Batch
+Normalization, LeakyReLU with negative slope $0.2$, and dropout with
+probability $0.1$. Two projections then produce the parameters of a
+diagonal Gaussian posterior,
+
+\begin{equation}
+    \boldsymbol{\mu}(\mathbf{x}),
+    \log\boldsymbol{\sigma}^{2}(\mathbf{x})
+    \in\mathbb{R}^{d}.
+\end{equation}
+
+\subsection{Sampling and Reconstruction}
+
+During training, a latent vector is sampled using the
+reparameterization trick,
+
+\begin{equation}
+    \mathbf{z}
+    =
+    \boldsymbol{\mu}
+    +
+    \exp
+    \left(
+        \frac{1}{2}\log\boldsymbol{\sigma}^{2}
+    \right)
+    \odot
+    \boldsymbol{\epsilon},
+    \qquad
+    \boldsymbol{\epsilon}
+    \sim
+    \mathcal{N}(\mathbf{0},\mathbf{I}).
+    \label{eq:reparameterization}
+\end{equation}
+
+The decoder mirrors the encoder,
+
+\begin{equation}
+    d
+    \rightarrow
+    512
+    \rightarrow
+    2048
+    \rightarrow
+    P,
+\end{equation}
+
+and reconstructs the original allele-dosage vector.
+
+At evaluation time, the stochastic sampling step is removed and the
+deterministic posterior mean $\boldsymbol{\mu}$ is used as the
+representation.
+
+\subsection{Breed Prediction from the Latent Mean}
+
+Reconstruction alone does not guarantee that the latent space will
+organize individuals in a way that is convenient for breed
+classification. For this reason, a supervised head receives the
+posterior mean and maps it through
+
+\begin{equation}
+    d
+    \rightarrow
+    128
+    \rightarrow
+    C,
+\end{equation}
+
+where $C$ is the number of breeds. The hidden layer uses Batch
+Normalization, LeakyReLU with slope $0.2$, and dropout with
+probability $0.3$. The final linear layer produces breed logits.
+
+Using the posterior mean rather than a stochastic sample for breed
+prediction also gives the classifier a deterministic representation
+on which to operate.
+
+\subsection{Joint Reconstruction and Classification Objective}
+
+The reconstruction term combines element-wise mean squared error with
+a small KL regularizer,
+
+\begin{equation}
+    \mathcal{L}_{\mathrm{rec}}
+    =
+    \mathcal{L}_{\mathrm{MSE}}
+    +
+    10^{-4}
+    \mathcal{L}_{\mathrm{KL}},
+\end{equation}
+
+where
+
+\begin{equation}
+    \mathcal{L}_{\mathrm{KL}}
+    =
+    -\frac{1}{2B}
+    \sum_{n=1}^{B}
+    \sum_{j=1}^{d}
+    \left(
+        1
+        +
+        \log\sigma_{n,j}^{2}
+        -
+        \mu_{n,j}^{2}
+        -
+        \sigma_{n,j}^{2}
+    \right).
+\end{equation}
+
+Breed prediction uses multiclass cross-entropy,
+
+\begin{equation}
+    \mathcal{L}_{\mathrm{breed}}
+    =
+    \operatorname{CE}
+    \left(
+        \mathbf{l}_{\mathrm{breed}},
+        \mathbf{y}
+    \right).
+\end{equation}
+
+The executable objective is
+
+\begin{equation}
+    \mathcal{L}_{\mathrm{VMGP}}
+    =
+    \alpha\mathcal{L}_{\mathrm{rec}}
+    +
+    (1-\alpha)\mathcal{L}_{\mathrm{breed}},
+    \qquad
+    \alpha=0.5.
+    \label{eq:vmgp_total_loss}
+\end{equation}
+
+The KL coefficient is therefore fixed at $10^{-4}$ inside the
+reconstruction term. The implementation is not treated as an active
+$\beta$-VAE, and no auxiliary continent, casein, or aptitude
+prediction head contributes to the training loss.
+
+\subsection{How Large Should the Variational Representation Be?}
+
+A latent representation should be small enough to provide meaningful
+compression but large enough to preserve the structure required by the
+task. Rather than selecting a dimensionality by intuition, four
+candidate sizes are considered during development,
+
+\begin{equation}
+    d\in\{32,64,96,128\}.
+\end{equation}
+
+The choice among them is made only from the three development folds
+using the selection rule defined in Section~\ref{sec:rq1_protocol}.
+The purpose of separating the candidate definition from its evaluation
+is to avoid rewriting the architecture around the outcome of the
+final test.
+
+Optimization uses Adam with learning rate $10^{-4}$ and a batch size
+of $64$. Training uses mixed precision. The development ceiling is
+$200$ epochs, while EarlyStopping monitors validation loss with
+patience $15$. The checkpoint with minimum validation loss is restored
+before fold-level classification metrics are computed.
+
+\input{figures/fig_vmgp_architecture.tex}
+
+\section{A Self-Supervised Contrastive Approach}
+\label{sec:contrastive_model}
+
+The second model starts from a different question. Instead of telling
+the representation learner which breed an individual belongs to, can
+a useful genomic space be learned from the relationship between
+different views of the same individual?
+
+The implementation follows the paper-faithful contrastive design of
+Thor and Nettelblad \cite{thor2025contrastive}. Its core components are
+a genomic augmentation operator, a convolutional encoder, normalization
+onto a hypersphere, and a centroid N-pair objective. Breed labels do not
+enter the contrastive training loss.
+
+\subsection{Genomic Views and Data Augmentation}
+
+The shared preprocessing pipeline produces dosage states $0$, $1$,
+and $2$. For contrastive learning, these states are represented
+categorically using four channels. The first three correspond to the
+biological genotype states, while the fourth is reserved for an
+augmentation-only mask state $-1$,
+
+\begin{equation}
+    \tilde{g}_{i,j}
+    \in
+    \{-1,0,1,2\}
+    \longrightarrow
+    \mathbf{x}_{i,j}
+    \in
+    \{0,1\}^{4}.
+    \label{eq:contrastive_one_hot}
+\end{equation}
+
+During training, two independently augmented views of the same
+individual are generated,
+
+\begin{equation}
+    \tilde{\mathbf{x}}_i^{a},
+    \tilde{\mathbf{x}}_i^{b}
+    \sim
+    \mathcal{T}(\mathbf{x}_i).
+    \label{eq:contrastive_views}
+\end{equation}
+
+The implemented augmentation combines genotype-state perturbation and
+masking. For each generated view, a perturbation probability is
+sampled uniformly in the configured interval from $0.01$ to $0.99$.
+Homozygous states can be moved toward the heterozygous state
+($0\rightarrow1$ and $2\rightarrow1$), while a heterozygous state can
+be perturbed toward either homozygous state. A masking probability is
+then sampled in the same interval and the selected positions are
+assigned to the special state $-1$.
+
+The augmentation is intentionally disabled during deterministic
+evaluation. At that point the fourth channel is zero and the embedding
+is derived from the unperturbed post-QC genotype profile.
+
+\subsection{Encoder and Hyperspherical Embedding}
+
+The categorical tensor has shape $(B,4,P)$ and is processed by two
+one-dimensional convolutions,
+
+\begin{equation}
+\operatorname{Conv1d}(4,5,3)
+\rightarrow
+\operatorname{SiLU}
+\rightarrow
+\operatorname{Conv1d}(5,5,3)
+\rightarrow
+\operatorname{SiLU},
+\end{equation}
+
+using padding one in both layers.
+
+After flattening, the representation passes through
+
+\begin{equation}
+    5P
+    \rightarrow
+    256
+    \rightarrow
+    256
+    \rightarrow
+    256
+    \rightarrow
+    3.
+\end{equation}
+
+Each $256$-unit hidden layer uses Batch Normalization and SiLU.
+
+The final vector is normalized,
+
+\begin{equation}
+    \mathbf{z}
+    =
+    \frac{\mathbf{h}}{\|\mathbf{h}\|_2},
+    \qquad
+    \|\mathbf{z}\|_2=1.
+    \label{eq:hyperspherical_normalization}
+\end{equation}
+
+The resulting three-dimensional embeddings therefore lie on
+$\mathbb{S}^{2}\subset\mathbb{R}^{3}$. This extremely small
+representation is a deliberate part of the contrastive design rather
+than a value selected from the same grid used by the variational
+model.
+
+\subsection{Centroid N-Pair Learning}
+
+For an anchor $\mathbf{z}_i$, a positive view $\mathbf{z}_i^{+}$, and
+a negative embedding $\mathbf{z}_{ij}^{-}$, the implemented objective
+first defines a centroid
+
+\begin{equation}
+    \mathbf{c}_{ij}
+    =
+    \frac{
+        \mathbf{z}_i
+        +
+        2\mathbf{z}_{ij}^{-}
+        +
+        \mathbf{z}_i^{+}
+    }{4}.
+\end{equation}
+
+The three vectors are centered around this centroid and scaled by
+
+\begin{equation}
+    r_{ij}
+    =
+    \sqrt{
+        \max
+        \left(
+            \|\mathbf{z}_i-\mathbf{c}_{ij}\|_2^2,
+            \|\mathbf{z}_i^{+}-\mathbf{c}_{ij}\|_2^2,
+            \|\mathbf{z}_{ij}^{-}-\mathbf{c}_{ij}\|_2^2
+        \right)
+        +
+        10^{-8}
+    }.
+\end{equation}
+
+Using the centered and scaled vectors, positive and negative
+similarities are
+
+\begin{equation}
+    s_{ij}^{+}
+    =
+    \tilde{\mathbf{z}}_i^\top
+    \tilde{\mathbf{z}}_i^{+},
+    \qquad
+    s_{ij}^{-}
+    =
+    \tilde{\mathbf{z}}_i^\top
+    \tilde{\mathbf{z}}_{ij}^{-}.
+\end{equation}
+
+The per-anchor contribution is
+
+\begin{equation}
+    \ell_i
+    =
+    \log
+    \left[
+        1
+        +
+        \sum_{j\neq i}
+        \max
+        \left(
+            0,
+            \exp(s_{ij}^{-}-s_{ij}^{+})
+            -
+            e^{-2}
+        \right)
+    \right].
+\end{equation}
+
+The batch loss is the mean of $\ell_i$. This objective is different
+from NT-Xent: it does not use a temperature parameter and retains the
+centroid-based geometry of the reference implementation.
+
+\subsection{From a Self-Supervised Space to Breed Prediction}
+
+The contrastive model does not contain a supervised breed head. Once
+training for a development fold is complete, deterministic embeddings
+are extracted separately for the training and validation individuals.
+
+A $k$-nearest-neighbor classifier with $k=3$ is then fitted using only
+the training embeddings and training breed labels. The validation
+embeddings are classified using this fitted KNN.
+
+This two-stage procedure is important for interpretation. A successful
+breed prediction does not mean that the contrastive loss was trained
+with breed labels. It means that breed structure has become
+recoverable from a representation learned through self-supervised
+instance relationships.
+
+\subsection{Optimization}
+
+The contrastive model is optimized using Adam with learning rate
+$10^{-3}$, $\beta_1=0.9$, and $\beta_2=0.999$. A StepLR scheduler
+multiplies the learning rate by $0.99$ every $10$ epochs.
+
+The development ceiling is $5000$ epochs. Early stopping monitors
+validation loss with patience $200$ and the checkpoint with minimum
+validation loss is restored before the downstream embedding
+evaluation.
+
+\input{figures/fig_contrastive_architecture.tex}
+
+\section{Two Different Views of the Same Genomic Problem}
+\label{sec:two_views_genomic_problem}
+
+The two models deliberately solve different learning problems.
+
+The variational architecture receives direct information about breed
+identity and balances this supervised objective with reconstruction of
+the genotype profile. Its latent variables are therefore shaped by
+both population discrimination and input reconstruction.
+
+The contrastive model receives no breed labels while learning its
+representation. It is instead constrained by augmentation invariance
+and by the geometry induced by positive and negative relationships.
+
+A direct comparison of their classification metrics is meaningful
+because both are evaluated on the same development individuals and the
+same train-fitted genomic preprocessing. At the same time, the
+comparison should not be reduced to the claim that one neural
+architecture is universally better. The objectives answer different
+representation-learning questions, and the evaluation chapter
+considers both predictive performance and the properties of the
+resulting latent spaces.
+
+\section{Final Development Training}
+\label{sec:final_training_protocol}
+
+Cross-validation is used for development and configuration selection.
+Once a configuration has been fixed, the purpose of final training is
+different: all development individuals should contribute to the model
+that will be evaluated on the locked test.
+
+For a selected configuration, let $e_1^{*}$, $e_2^{*}$, and
+$e_3^{*}$ denote the one-based epochs of the minimum-validation-loss
+checkpoints observed in the three development folds. The final
+training duration is defined as
+
+\begin{equation}
+    E_{\mathrm{final}}
+    =
+    \operatorname{median}
+    \left(
+        e_1^{*},
+        e_2^{*},
+        e_3^{*}
+    \right).
+    \label{eq:final_epoch_budget}
+\end{equation}
+
+A new genomic preprocessor is fitted from scratch on the complete
+development set. The selected model is then trained using all
+development individuals for exactly $E_{\mathrm{final}}$ completed
+epochs.
+
+There is no validation split, no early stopping, and no checkpoint
+selection based on held-out outcomes during this stage. Only after
+final training has finished is the locked test transformed with the
+already fitted development preprocessor and evaluated once.
+
+For the contrastive model, the final KNN is fitted on the
+deterministic embeddings of the complete development set and then
+applied to the locked-test embeddings.
+
+The numerical values selected during development are intentionally
+reported with the experimental evaluation rather than embedded in the
+architectural description of this chapter.

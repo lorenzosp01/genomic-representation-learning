@@ -1,0 +1,287 @@
+\chapter{From Genomic Representations to Informative Markers}
+\label{chap:feature_importance}
+
+Learning a compact representation answers only part of the problem. A
+latent vector may support breed classification while still leaving
+open the question of which original SNP markers carried the relevant
+information.
+
+This chapter describes how the thesis moves from representation
+learning back to the genomic input space. The central idea is to
+construct global SNP rankings using several different notions of
+relevance and then judge those rankings through their downstream
+utility. A marker receives value not merely because an attribution
+algorithm assigns it a large score, but because a panel built from
+highly ranked markers should preserve useful breed-discriminative
+information.
+
+\section{Why Marker Importance Is a Separate Problem}
+\label{sec:why_marker_importance}
+
+Prediction and interpretation are related but different goals. A
+classifier can achieve good performance by using many correlated
+features without making it obvious which of them are individually
+important. In genomic data this issue is amplified by LD: neighboring
+markers can contain overlapping information, so multiple plausible
+rankings may exist.
+
+The thesis therefore avoids treating any single importance method as
+a biological ground truth. Instead, different ranking strategies are
+viewed as hypotheses about which parts of the genotype matrix are most
+useful for population discrimination.
+
+These hypotheses are tested by constructing reduced panels and
+re-evaluating the downstream classification task.
+
+\input{figures/fig_ranking_families.tex}
+
+Figure~\ref{fig:ranking_families} summarizes the four ranking families
+that are constructed and compared in the experimental evaluation.
+
+\section{From Local Attributions to a Global SNP Ranking}
+\label{sec:local_to_global_ranking}
+
+Neural attribution methods usually explain a particular model output
+for a particular individual. Marker reduction, however, requires a
+single ranking that can be applied to the dataset.
+
+Let $a_{i,j}$ denote the attribution assigned to SNP $j$ for
+individual $i$ under a specified target. A generic global relevance
+score can be written as
+
+\begin{equation}
+    s_j
+    =
+    \mathcal{A}
+    \left(
+        a_{1,j},
+        a_{2,j},
+        \ldots,
+        a_{N,j}
+    \right),
+\end{equation}
+
+where $\mathcal{A}$ is an aggregation rule. Markers are then sorted
+according to $s_j$ and nested panels are constructed from the
+top-ranked loci.
+
+The exact aggregation rule matters. A signed mean, an absolute mean,
+a class-balanced aggregation, and a maximum attribution can produce
+different interpretations. For this reason, aggregation is treated as
+part of the marker-ranking method and must be fixed before definitive
+RQ4 evaluation.
+
+All neural rankings follow fixed, executable aggregation rules. For the
+SHAP-based ranking of the variational model, the global score of a
+marker is the mean absolute attribution over the evaluation subset and
+over all breed outputs,
+\begin{equation}
+    s_j
+    =
+    \frac{1}{C\,N_{\mathrm{eval}}}
+    \sum_{c=1}^{C}
+    \sum_{i=1}^{N_{\mathrm{eval}}}
+    \left|
+        \phi_{i,j,c}
+    \right| .
+\end{equation}
+For the contrastive model, Integrated Gradients values are reduced to a
+per-marker value per sample as the $L_1$ sum over the four genotype
+channels; the per-sample values are then averaged within each breed and
+finally averaged with equal weight across breeds. Both aggregation
+rules are implemented in the shared ranking module and are not modified
+after inspecting downstream panel performance.
+
+\section{Explaining the Variational Breed Predictor}
+\label{sec:vmgp_marker_attribution}
+
+The VMGP-inspired model contains a supervised breed-prediction head.
+This gives the attribution problem a direct target: changes in the SNP
+input can be related to the output associated with a particular breed
+prediction.
+
+SHAP \cite{shapley1953value, lundberg2017unified} is considered as a
+way to decompose model predictions into feature-level contributions.
+For a fixed model and a defined background distribution, SHAP assigns
+each input feature a contribution relative to the reference
+prediction.
+
+In the genomic setting, the resulting values are first associated with
+individual SNPs and individuals. They must then be aggregated across
+observations and, where appropriate, across breed-specific outputs
+before a global marker ranking is obtained.
+
+The important methodological point is that the ranking must be
+constructed using only the training information available inside the
+current experimental partition. The locked test set cannot be used as
+the SHAP background, for attribution aggregation, or for deciding
+which markers should be retained.
+
+The executable pipeline uses \texttt{shap.GradientExplainer} on a thin
+wrapper that exposes the breed-logit output of the VMGP model. The
+explainer background is a deterministic stratified sample of
+$n_{\mathrm{bg}}=100$ training individuals, and attributions are
+computed on a second deterministic stratified sample of
+$n_{\mathrm{eval}}=200$ training individuals (or on all training rows
+when fewer are available). The sampling seed is fixed to $42$ and the
+explainer seed is set to the same value. Attributions are taken in
+absolute value and averaged across classes and evaluation samples; no
+validation or test individual contributes to the background, the
+evaluation subset or the aggregation.
+
+\section{Explaining a Self-Supervised Contrastive Space}
+\label{sec:contrastive_marker_attribution}
+
+Attributing the contrastive model is conceptually more difficult. The
+representation learner has no breed-classification head, so there is
+no native breed logit to explain.
+
+Integrated Gradients \cite{sundararajan2017axiomatic} remains
+applicable to differentiable scalar functions of the model, but a
+meaningful scalar target must first be defined from the learned
+representation. This target may be related to a downstream
+discriminative function or to a geometric property of the embedding,
+depending on the final attribution design.
+
+This distinction is important enough to make explicit. Integrated
+Gradients is an attribution \emph{mechanism}; it does not by itself
+determine what aspect of the contrastive representation should count
+as breed relevance. The chosen target therefore becomes part of the
+scientific method.
+
+In the definitive protocol the scalar target is the cosine similarity
+between the $L_2$-normalized embedding and the breed centroid of the
+sample's own breed, where the centroid is the $L_2$-normalized mean of
+the training embeddings of that breed. The baseline is the zero vector
+in the four-channel one-hot genotype space, and the path integral is
+approximated with $50$ steps. Per-marker per-sample attributions are
+obtained as the $L_1$ sum over the four channels and aggregated as
+described above. The supervised probe path implemented in the earlier
+notebook is not used for the definitive RQ4 rankings.
+
+\section{Population-Genetics Reference: Fixation Index}
+\label{sec:fst_ranking}
+
+A classical comparison is provided by locus-wise population
+differentiation. For a SNP, $F_{ST}$ measures how strongly allele
+frequencies differ among populations
+\cite{wright1949genetical, weir1984estimating}.
+
+Using $F_{ST}$ as a ranking has two useful properties. First, the score
+has a direct population-genetics interpretation. Second, it does not
+depend on the internal behavior of a neural network.
+
+At the same time, a locus-wise statistic and a deep attribution method
+should not be expected to produce identical rankings. The former
+measures population differentiation at each marker, while the latter
+describes relevance under a learned multivariate prediction or
+representation. Their comparison is therefore informative precisely
+because they are based on different principles.
+
+\section{Machine-Learning Reference: Random Forest}
+\label{sec:rf_ranking}
+
+Random Forest provides a second reference \cite{breiman2001random}.
+Unlike $F_{ST}$, it is explicitly predictive and can model non-linear
+interactions between features.
+
+A marker ranking can be obtained from a fitted Random Forest using a
+chosen importance estimator. However, feature importance in tree
+ensembles can be affected by correlated predictors and by the
+estimator used \cite{strobl2007bias, nicodemus2010correlation}. The
+final thesis should therefore report the exact importance definition
+rather than referring generically to ``Random Forest importance''.
+
+The frozen Random Forest ranking uses impurity-based (Gini) importance
+from $200$ trees with a fixed random seed ($42$), fitted only on the
+training partition of each fold. Because impurity importance is known
+to favour markers with high minor-allele frequency and correlated
+predictors, the thesis treats this ranking as a predictive
+machine-learning reference rather than as an unbiased estimate of
+biological relevance.
+
+\section{Constructing Nested Reduced Panels}
+\label{sec:reduced_panel_construction}
+
+Once a ranking
+$r=(j_1,j_2,\ldots,j_P)$
+has been produced, reduced marker panels can be constructed
+progressively,
+
+\begin{equation}
+    \mathcal{P}_K
+    =
+    \{j_1,j_2,\ldots,j_K\}.
+\end{equation}
+
+The nested construction is useful because every larger panel contains
+the markers used by the smaller one. Changes in downstream performance
+can therefore be interpreted as the effect of adding progressively
+lower-ranked markers rather than as the difference between unrelated
+subsets.
+
+The full post-QC panel remains the reference point. The purpose of RQ3
+is not to maximize performance at any cost, but to identify how
+aggressively the marker set can be reduced while retaining a
+predefined fraction of the full-panel classification performance.
+
+The definitive grid is $K \in \{50, 100, 200, 500, 1000, 2000, 5000\}$,
+fixed before inspecting any downstream result. The primary retention
+tolerance is $\epsilon_P = 0.02$, with $\epsilon_P = 0.05$ reported as
+a secondary reference. For every ranking method, the smallest grid
+value satisfying the criterion is reported as $P_{\min}$.
+
+\section{Leakage Prevention During Marker Selection}
+\label{sec:marker_selection_leakage}
+
+Marker selection is itself a learning procedure. If a held-out
+individual's breed label or genotype pattern influences the ranking,
+downstream validation is no longer independent.
+
+For this reason, every ranking considered in the thesis must be fitted
+or constructed inside the relevant training partition. The validation
+partition is used only to evaluate the reduced panel that results from
+that ranking. The locked test remains unavailable throughout
+marker-ranking development.
+
+This requirement applies equally to apparently ``classical'' methods
+and neural attributions. $F_{ST}$, Random Forest importance, SHAP,
+Integrated Gradients, and any derived aggregation must obey the same
+information boundary.
+
+\section{Ranking Stability and Downstream Utility}
+\label{sec:ranking_stability_utility}
+
+Two complementary questions can be asked about a marker ranking.
+
+The first is \emph{stability}: do different development folds or
+sampling replicates tend to identify similar high-ranked markers? This
+can be investigated using overlap measures or rank correlations.
+
+The second is \emph{utility}: does a panel built from the ranking
+preserve breed-classification performance when evaluated on unseen
+individuals?
+
+Stability without predictive utility is not sufficient, because a
+ranking could be reproducible but uninformative. Conversely, high
+predictive utility with unstable marker identities may indicate that
+several correlated genomic subsets contain interchangeable
+information.
+
+Considering both views is especially important in genomic data, where
+LD can make multiple marker panels functionally similar even when
+their exact SNP identities differ.
+
+\section{What This Chapter Does Not Claim}
+\label{sec:attribution_not_causality}
+
+The marker-ranking analysis is computational. A high attribution,
+$F_{ST}$ value, or Random Forest importance score does not by itself
+establish that a locus is causal for breed identity, nor that it
+should be interpreted as a functional variant.
+
+The output of the framework is instead a ranked set of candidate
+markers whose value is evaluated through reproducibility and
+downstream discrimination. Biological interpretation of individual
+loci would require additional genomic annotation and domain-specific
+validation beyond the scope of the present computational study.
