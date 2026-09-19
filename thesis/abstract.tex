@@ -1,42 +1,60 @@
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-High-density Single Nucleotide Polymorphism (SNP) arrays provide
-genome-wide information on genetic variation and have been
-successfully used for breed discrimination and assignment in
-livestock populations
-\cite{dimauro2013canonical, dimauro2015sheep,
-      sorbolini2016signatures}.
-However, their high dimensionality introduces substantial
-computational challenges and raises the question of whether the full
-marker set is necessary for reliable breed assignment.
+High-density Single Nucleotide Polymorphism (SNP) arrays make it
+possible to describe livestock individuals using tens of thousands of
+genomic markers. This amount of information is useful for population
+characterization and breed assignment, but it also creates a difficult
+computational setting: the number of variables is often much larger
+than the number of available animals, several markers are correlated
+through linkage disequilibrium, and some breeds are represented by
+comparatively few individuals.
 
-This work investigates machine learning and deep representation
-learning for livestock breed classification from high-dimensional
-genotype data. Particular attention is given to two practical
-questions: how breed-classification performance on unseen individuals
-changes as the number of training individuals per breed is reduced,
-and how many genomic markers are needed to retain most of the
-predictive information available in the original SNP array.
+This thesis studies whether compact genomic representations can retain
+the information required for livestock breed classification and,
+subsequently, whether the same representations can help identify
+smaller sets of informative SNPs. Two complementary
+representation-learning strategies are considered. The first is a
+variational model inspired by the Variational Multi-view Genomics
+Predictor (VMGP), combining genotype reconstruction with supervised
+breed prediction. The second is a self-supervised hyperspherical
+contrastive model that learns from different augmented views of the
+same genomic profile without using breed labels in its
+representation-learning objective.
 
-Generative and contrastive representation-learning approaches are
-combined with feature-attribution techniques to derive global
-rankings of informative SNPs. The resulting reduced marker panels are
-compared with established population-genetics and machine-learning
-ranking strategies, including fixation-index-based ranking and Random
-Forest feature importance
-\cite{weir1984estimating, breiman2001random}.
+The work is organized around four connected questions. First, it
+investigates breed classification from high-dimensional SNP profiles.
+Second, it studies how classification changes when the number of
+training individuals per breed is reduced. Third, it considers how far
+the genomic panel can be reduced while retaining most of its
+predictive information. Finally, it examines whether marker rankings
+derived from learned representations and explainability methods
+provide useful reduced panels when compared with classical
+population-genetics and machine-learning approaches.
 
-The experimental protocol evaluates breed-classification performance
-under progressively reduced training-set sizes and SNP-panel sizes.
-The primary analysis is conducted on ovine genomic data, and the same
-methodological protocol is subsequently applied to an independent
-caprine dataset to assess whether the observed computational behavior
-generalizes across livestock species.
+The primary experimental domain is the caprine ADAPTmap dataset. A
+strict separation between model development and final evaluation is
+used throughout the work: preprocessing and model selection are
+performed only on development data, while a locked test partition is
+kept outside the development process. An independent ovine Sheep
+HapMap dataset is considered as a second domain for cross-species
+methodological validation. The aim of this second evaluation is not to
+assume that the same loci must be informative in goats and sheep, but
+to study whether the overall behavior of the computational methodology
+remains consistent across two different livestock genomic settings.
 
-Overall, the study investigates whether compact genomic
-representations and reduced SNP panels can preserve reliable breed
-classification while decreasing data and marker requirements. The
-resulting framework is designed to quantify the trade-off between
-predictive performance, training sample size, and genomic panel
-dimensionality.
+Rather than treating classification, dimensionality reduction, and
+marker interpretation as independent problems, the thesis connects
+them within a common experimental framework. The resulting study is
+intended to clarify how representation learning can be used not only
+to predict breed identity, but also to reason about sample scarcity,
+genomic dimensionality, and the construction of compact marker panels.
+The experiments show that compact representations classify breeds with
+high accuracy in two independent livestock domains, that most of that
+performance is retained with ten training individuals per breed, and
+that marker panels can be reduced by two orders of magnitude while
+preserving the downstream classification signal. They also show that
+neural feature attribution, although informative for model inspection,
+is not by itself a reliable marker-selection strategy: its rankings
+diverge from classical and tree-based importance and transfer less
+effectively to an independent downstream classifier.
