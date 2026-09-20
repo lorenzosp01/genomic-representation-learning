@@ -71,6 +71,12 @@ feature-attribution methods identify informative reduced marker panels?
 These rankings are compared with classical statistical and
 machine-learning approaches.
 
+The frozen comparison set is FST, Random Forest importance, VMGP SHAP and
+contrastive Integrated Gradients. A chi-square genotype x breed association
+test is additionally evaluated as an EXTENDED, non-frozen baseline under the
+same train-only rules (robustness analyses, caprine cohort only). It does not
+modify the pre-registered comparison.
+
 
 ## Genomic Terminology
 

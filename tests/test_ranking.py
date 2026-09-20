@@ -20,6 +20,7 @@ import genomic.ranking as ranking
 from genomic.ranking import (
     MarkerRankingResult,
     compute_marker_ranking,
+    rank_chi2_association,
     rank_contrastive_ig,
     rank_fst,
     rank_random_forest,
@@ -163,6 +164,58 @@ def test_rank_random_forest_consumes_only_training_arrays(monkeypatch):
         "n_estimators": 7, "random_state": 3, "n_jobs": 1,
     }
     assert result.scores.shape == (X.shape[1],)
+
+
+# ---------------------------------------------------------------------------
+# rank_chi2_association (extended baseline)
+# ---------------------------------------------------------------------------
+def test_rank_chi2_association_output_contract():
+    X, y = _synthetic(n_features=23)
+    result = rank_chi2_association(X, y)
+    _assert_ranking_contract(result, "chi2_association", 23)
+    assert (result.scores >= 0.0).all()
+
+
+def test_rank_chi2_association_ranks_associated_marker_first():
+    rng = np.random.RandomState(3)
+    n_samples = 300
+    y = np.repeat([0, 1], n_samples // 2)
+    X = rng.randint(0, 3, size=(n_samples, 6)).astype(np.float32)
+    X[:, 4] = np.where(y == 0, 0.0, 2.0)
+    result = rank_chi2_association(X, y, n_classes=2)
+    assert result.ranked_indices[0] == 4
+    # perfectly associated 2x2 table: chi-square equals the sample count
+    assert result.scores[4] == pytest.approx(float(n_samples), rel=1e-6)
+
+
+def test_rank_chi2_association_constant_marker_scores_zero():
+    X, y = _synthetic()
+    X = X.copy()
+    X[:, 0] = 1.0
+    result = rank_chi2_association(X, y, n_classes=3)
+    assert result.scores[0] == 0.0
+
+
+def test_rank_chi2_association_is_deterministic():
+    X, y = _synthetic()
+    a = rank_chi2_association(X, y, n_classes=3)
+    b = rank_chi2_association(X, y, n_classes=3)
+    assert np.array_equal(a.scores, b.scores)
+    assert np.array_equal(a.ranked_indices, b.ranked_indices)
+
+
+def test_rank_chi2_association_rejects_invalid_dosages():
+    X, y = _synthetic()
+    X = X.copy()
+    X[0, 0] = 3.0
+    with pytest.raises(ValueError, match="dosages"):
+        rank_chi2_association(X, y, n_classes=3)
+
+
+def test_dispatcher_routes_chi2_association():
+    X, y = _synthetic()
+    result = compute_marker_ranking("chi2_association", X, y, n_classes=3)
+    _assert_ranking_contract(result, "chi2_association", X.shape[1])
 
 
 # ---------------------------------------------------------------------------

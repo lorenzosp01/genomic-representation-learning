@@ -24,14 +24,23 @@ B) Model-native panel evaluation (attribution faithfulness). For every
    on the panel is the faithful analogue of "refit the evaluator on the
    panel" already used for the Random Forest.
 
+C) Extended classical association baseline. A chi-square test of
+   independence between genotype (0/1/2) and breed label is computed on the
+   fold training partition alone and used as an additional ranking family;
+   its panels are evaluated with the same frozen Random Forest downstream
+   protocol, and its overlap with the frozen rankings is measured. Outputs
+   go to ``results/rq4_extended/association/``. This analysis is caprine
+   only (it complements the primary RQ4 comparison).
+
 Rankings are loaded from the cached protocol-v2 RQ3 scores; every panel is
 built and evaluated on the fold partitions only. Checkpoints produced by
 this script are deleted after each run to avoid clutter.
 
 Usage:
-    uv run python scripts/run_rq4_extended.py                # both analyses
+    uv run python scripts/run_rq4_extended.py                # A + B + C
     uv run python scripts/run_rq4_extended.py --analysis a   # only A
     uv run python scripts/run_rq4_extended.py --analysis b   # only B
+    uv run python scripts/run_rq4_extended.py --analysis c   # only C
     uv run python scripts/run_rq4_extended.py --analysis b --ks-b 200 --vae-epochs 2 --con-epochs 2   # smoke
 """
 
@@ -69,6 +78,9 @@ CKPT_DIR = "checkpoints/rq4_extended"
 METHODS = ("fst", "random_forest", "vmgp_shap", "contrastive_ig")
 K_A = (50, 200, 500, 2000)
 K_B = (200, 500, 2000)
+K_C = (50, 100, 200, 500, 1000, 2000, 5000)
+ASSOCIATION_METHOD = "chi2_association"
+GOAT_RQ3_SUMMARY = os.path.join("results", "rq3_marker_efficiency", "summary.json")
 
 RUN_FIELDS = ["analysis", "fold", "method", "K", "evaluator",
               "macro_f1", "balanced_accuracy", "accuracy", "runtime_s"]
@@ -325,6 +337,114 @@ def analysis_b(ed, folds, ks, *, accelerator=None, vae_epochs=200,
 
 
 # ---------------------------------------------------------------------------
+# C. Extended classical association baseline (chi-square) under the frozen
+#    Random Forest downstream protocol
+# ---------------------------------------------------------------------------
+def analysis_c(ed, folds, ks, out_subdir, logger=print):
+    """Chi-square association ranking evaluated with the frozen RF protocol.
+
+    The ranking is computed from ``(X_train, y_train)`` only; panels are
+    evaluated on the fold validation partition with the same downstream
+    RandomForestClassifier(200, seed 42) used by RQ3/RQ4. The summary stores
+    the operational minimum panel sizes against the frozen caprine
+    ``S_full`` and the mean-over-folds Jaccard overlap with the four frozen
+    ranking families.
+    """
+    from genomic.panel_evaluation import (
+        evaluate_panel,
+        minimum_panel_size,
+        retention_threshold,
+    )
+    from genomic.ranking import compute_marker_ranking
+
+    records = []
+    ranked_by_fold = {}
+    for k in folds:
+        fd = ed.fold_data(k)
+        t0 = time.time()
+        result = compute_marker_ranking(ASSOCIATION_METHOD, fd.X_train, fd.y_train)
+        ranked = result.ranked_indices
+        ranked_by_fold[int(k)] = ranked
+        logger(f"[C] fold {k}: association ranking in {time.time() - t0:.1f}s "
+               f"(top score={result.scores[ranked[0]]:.1f})")
+        for panel_k in ks:
+            t0 = time.time()
+            metrics = evaluate_panel(
+                fd.X_train, fd.y_train, fd.X_val, fd.y_val,
+                ranked[:panel_k], n_classes=ed.n_classes,
+            )
+            records.append(_record(
+                "C_association", k, ASSOCIATION_METHOD, panel_k, "rf",
+                metrics, time.time() - t0,
+            ))
+            logger(f"  {ASSOCIATION_METHOD} K={panel_k:5d} rf "
+                   f"MacroF1={metrics['macro_f1']:.4f}")
+
+    aggregates = _aggregate(records)
+    with open(GOAT_RQ3_SUMMARY) as f:
+        frozen_summary = json.load(f)
+    s_full = float(frozen_summary["s_full"]["macro_f1_mean"])
+    n_markers = float(np.mean(frozen_summary["s_full"]["n_markers"]))
+    k_grid = sorted(int(k) for k in ks)
+    p_min = {
+        f"{eps:g}": minimum_panel_size(
+            ASSOCIATION_METHOD, aggregates, s_full, epsilon=eps, k_grid=k_grid
+        )
+        for eps in (0.02, 0.05)
+    }
+    thresholds = {
+        f"{eps:g}": retention_threshold(s_full, eps) for eps in (0.02, 0.05)
+    }
+    jaccard = {}
+    for panel_k in (50, 200, 500):
+        row = {}
+        for method in METHODS:
+            vals = []
+            for k in folds:
+                other_scores = np.load(
+                    os.path.join(RANKS_DIR, f"{method}_fold{k}_scores.npy")
+                )
+                other = np.argsort(-other_scores, kind="stable")
+                a = set(ranked_by_fold[int(k)][:panel_k].tolist())
+                b = set(other[:panel_k].tolist())
+                union = a | b
+                vals.append(len(a & b) / len(union) if union else 0.0)
+            row[method] = 100.0 * float(np.mean(vals))
+        jaccard[f"K={panel_k}"] = row
+    chance = {
+        f"K={panel_k}": 100.0 * panel_k / (2.0 * n_markers - panel_k)
+        for panel_k in (50, 200, 500)
+    }
+
+    os.makedirs(out_subdir, exist_ok=True)
+    _write_csv_atomic(records, os.path.join(out_subdir, "run_metrics.csv"),
+                      RUN_FIELDS)
+    agg_fields = list(aggregates[0].keys()) if aggregates else []
+    _write_csv_atomic(aggregates,
+                      os.path.join(out_subdir, "aggregate_metrics.csv"),
+                      agg_fields)
+    save_json_atomic({
+        "experiment": "rq4_extended_association_baseline",
+        "method": ASSOCIATION_METHOD,
+        "description": "chi-square genotype x breed association test (train-only)",
+        "folds": [int(k) for k in folds],
+        "panel_sizes": k_grid,
+        "s_full": s_full,
+        "retention_thresholds": thresholds,
+        "p_min": p_min,
+        "jaccard_vs_frozen_mean_over_folds_pct": jaccard,
+        "chance_jaccard_pct": chance,
+        "locked_test_accessed": False,
+    }, os.path.join(out_subdir, "summary.json"))
+
+    logger(f"[C] p_min: {p_min} | thresholds: {thresholds}")
+    for label, row in jaccard.items():
+        logger(f"[C] Jaccard {label}: "
+               + ", ".join(f"{m}={v:.1f}%" for m, v in row.items()))
+    return records
+
+
+# ---------------------------------------------------------------------------
 # Aggregation / persistence
 # ---------------------------------------------------------------------------
 def _aggregate(records, group_keys=("analysis", "evaluator", "method", "K")):
@@ -358,10 +478,11 @@ def _write_csv_atomic(rows, path, fieldnames):
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--analysis", choices=["a", "b", "all"], default="all")
+    parser.add_argument("--analysis", choices=["a", "b", "c", "all"], default="all")
     parser.add_argument("--folds", type=int, nargs="+", default=[0, 1, 2])
     parser.add_argument("--ks-a", type=int, nargs="+", default=list(K_A))
     parser.add_argument("--ks-b", type=int, nargs="+", default=list(K_B))
+    parser.add_argument("--ks-c", type=int, nargs="+", default=list(K_C))
     parser.add_argument("--vae-epochs", type=int, default=200)
     parser.add_argument("--con-epochs", type=int, default=5000)
     parser.add_argument("--device", default=None,
@@ -377,6 +498,7 @@ def main(argv=None) -> int:
 
     ks_a = tuple(int(k) for k in args.ks_a)
     ks_b = tuple(int(k) for k in args.ks_b)
+    ks_c = tuple(int(k) for k in args.ks_c)
     records = []
     if args.analysis in ("a", "all"):
         records.extend(analysis_a(ed, args.folds, ks_a))
@@ -386,6 +508,14 @@ def main(argv=None) -> int:
             accelerator=args.device,
             vae_epochs=args.vae_epochs, con_epochs=args.con_epochs,
         ))
+    if args.analysis in ("c", "all"):
+        analysis_c(ed, args.folds, ks_c,
+                   os.path.join(args.out_dir, "association"))
+
+    if not records:
+        print("No A/B records produced; analysis C outputs (if requested) "
+              f"are under {os.path.join(args.out_dir, 'association')}.")
+        return 0
 
     aggregates = _aggregate(records)
     os.makedirs(args.out_dir, exist_ok=True)

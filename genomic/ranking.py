@@ -9,6 +9,11 @@ partition:
 * contrastive Integrated Gradients toward the L2-normalised breed centroids
   on the unit hypersphere.
 
+The frozen protocol-v2 set is :data:`RANKING_METHODS`. The module also hosts
+extended baselines used by the robustness analyses (currently the chi-square
+association test in :data:`EXTENDED_RANKING_METHODS`); they obey the same
+train-only invariants but are not part of the frozen comparison.
+
 Protocol-v2 invariants
 ----------------------
 * Every method consumes only ``X_train`` / ``y_train``. No validation or
@@ -40,6 +45,9 @@ RANKING_METHODS: Tuple[str, ...] = (
     "contrastive_ig",
 )
 
+#: extended (non-frozen) baselines evaluated under the same train-only rules
+EXTENDED_RANKING_METHODS: Tuple[str, ...] = ("chi2_association",)
+
 
 @dataclass
 class MarkerRankingResult:
@@ -48,7 +56,8 @@ class MarkerRankingResult:
     Attributes
     ----------
     method:
-        Dispatcher name of the ranking method (one of :data:`RANKING_METHODS`).
+        Dispatcher name of the ranking method (one of :data:`RANKING_METHODS`
+        or :data:`EXTENDED_RANKING_METHODS`).
     scores:
         ``(P,)`` float64 raw importance/attribution scores (higher = more
         important). Scores are method-specific and not comparable across
@@ -184,6 +193,70 @@ def rank_random_forest(
     return _make_result("random_forest", forest.feature_importances_)
 
 
+def rank_chi2_association(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    n_classes: int | None = None,
+) -> MarkerRankingResult:
+    """Per-marker chi-square association between genotype and breed (train-only).
+
+    Extended classical baseline (not part of the frozen protocol-v2 set): each
+    marker is scored by the chi-square statistic of the
+    ``genotype (0/1/2) x breed`` contingency table computed on the fold's
+    training partition only. In a task without an external phenotype this is
+    the univariate association test that plays the role of a GWAS-style
+    analysis, with the breed label as the outcome. Markers whose table is
+    degenerate (a single genotype category or a single breed) receive a zero
+    score; the raw statistic is used, so scores are not standardised across
+    markers.
+
+    Parameters
+    ----------
+    X_train:
+        ``(N, P)`` dosage matrix with values in ``{0, 1, 2}``.
+    y_train:
+        ``(N,)`` non-negative integer breed labels.
+    n_classes:
+        Optional canonical class count used to size the contingency table
+        (defaults to ``max(y_train) + 1``).
+    """
+    X, _ = _check_training_arrays(X_train, y_train)
+    if not np.issubdtype(np.asarray(y_train).dtype, np.integer):
+        raise ValueError("y_train must contain integer breed labels.")
+    y = np.asarray(y_train, dtype=np.int64)
+    if y.size and y.min() < 0:
+        raise ValueError("y_train contains negative breed labels.")
+    if n_classes is None:
+        n_classes = int(y.max()) + 1 if y.size else 0
+    n_classes = int(n_classes)
+    if n_classes < 1:
+        raise ValueError("n_classes must be >= 1.")
+
+    G = np.rint(X).astype(np.int64)
+    if G.min() < 0 or G.max() > 2:
+        raise ValueError("X_train dosages must lie in {0, 1, 2}.")
+
+    n_samples, n_features = G.shape
+    class_counts = np.bincount(y, minlength=n_classes).astype(np.float64)
+    chi2 = np.zeros(n_features, dtype=np.float64)
+    for genotype in (0, 1, 2):
+        present = G == genotype
+        row_counts = present.sum(axis=0).astype(np.float64)
+        if not np.any(row_counts):
+            continue
+        observed = np.empty((n_classes, n_features), dtype=np.float64)
+        for breed in range(n_classes):
+            observed[breed] = present[y == breed].sum(axis=0)
+        expected = row_counts[None, :] * class_counts[:, None] / float(n_samples)
+        positive = expected > 0.0
+        contribution = np.zeros_like(expected)
+        contribution[positive] = (
+            observed[positive] - expected[positive]
+        ) ** 2 / expected[positive]
+        chi2 += contribution.sum(axis=0)
+    return _make_result("chi2_association", chi2)
+
+
 def rank_vmgp_shap(
     model,
     X_train: np.ndarray,
@@ -302,6 +375,7 @@ _MODEL_METHODS = ("vmgp_shap", "contrastive_ig")
 _DISPATCH: Dict[str, object] = {
     "fst": rank_fst,
     "random_forest": rank_random_forest,
+    "chi2_association": rank_chi2_association,
     "vmgp_shap": rank_vmgp_shap,
     "contrastive_ig": rank_contrastive_ig,
 }
@@ -310,16 +384,19 @@ _DISPATCH: Dict[str, object] = {
 def compute_marker_ranking(
     method: str, X_train: np.ndarray, y_train: np.ndarray, **kwargs
 ) -> MarkerRankingResult:
-    """Dispatch to a ranking method by name (see :data:`RANKING_METHODS`).
+    """Dispatch to a ranking method by name.
+
+    Valid names are the frozen protocol-v2 methods (:data:`RANKING_METHODS`)
+    plus the extended baselines (:data:`EXTENDED_RANKING_METHODS`).
 
     Model-based methods (``vmgp_shap``, ``contrastive_ig``) require a ``model``
     keyword argument. All methods consume only ``X_train`` / ``y_train`` plus
     method-specific configuration; no held-out data is accepted or read.
     """
     if method not in _DISPATCH:
+        valid = list(RANKING_METHODS) + list(EXTENDED_RANKING_METHODS)
         raise ValueError(
-            f"Unknown ranking method {method!r}; valid methods: "
-            f"{list(RANKING_METHODS)}."
+            f"Unknown ranking method {method!r}; valid methods: {valid}."
         )
     func = _DISPATCH[method]
     if method in _MODEL_METHODS:
