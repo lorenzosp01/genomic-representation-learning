@@ -32,15 +32,23 @@ C) Extended classical association baseline. A chi-square test of
    go to ``results/rq4_extended/association/``. This analysis is caprine
    only (it complements the primary RQ4 comparison).
 
+D) Full-panel references for the alternative evaluators. The frozen
+   Random Forest reference (``S_full``) is not transferable to the logistic
+   regression / linear SVM / gradient boosting evaluators of analysis A, so
+   their own full-post-QC-panel references are computed on the same folds
+   and stored under ``results/rq4_extended/evaluator_full_panel/``. They
+   allow retention and ``P_min`` to be recomputed per evaluator.
+
 Rankings are loaded from the cached protocol-v2 RQ3 scores; every panel is
 built and evaluated on the fold partitions only. Checkpoints produced by
 this script are deleted after each run to avoid clutter.
 
 Usage:
-    uv run python scripts/run_rq4_extended.py                # A + B + C
+    uv run python scripts/run_rq4_extended.py                # A + B + C + D
     uv run python scripts/run_rq4_extended.py --analysis a   # only A
     uv run python scripts/run_rq4_extended.py --analysis b   # only B
     uv run python scripts/run_rq4_extended.py --analysis c   # only C
+    uv run python scripts/run_rq4_extended.py --analysis d   # only D
     uv run python scripts/run_rq4_extended.py --analysis b --ks-b 200 --vae-epochs 2 --con-epochs 2   # smoke
 """
 
@@ -445,6 +453,81 @@ def analysis_c(ed, folds, ks, out_subdir, logger=print):
 
 
 # ---------------------------------------------------------------------------
+# D. Full-panel references for the alternative evaluators (companion of A)
+# ---------------------------------------------------------------------------
+def analysis_d(ed, folds, out_subdir, logger=print):
+    """Full post-QC panel references for the frozen and alternative evaluators.
+
+    The frozen ``S_full`` belongs to the Random Forest evaluator; retention
+    and ``P_min`` under the logistic regression / linear SVM / gradient
+    boosting evaluators of analysis A need their own references on the same
+    development folds. Every fit uses the complete post-QC marker axis of the
+    fold and the validation partition for scoring.
+    """
+    from sklearn.ensemble import RandomForestClassifier
+
+    from genomic.panel_evaluation import RF_N_ESTIMATORS, RF_RANDOM_STATE
+
+    labels = np.arange(ed.n_classes, dtype=np.int64)
+    evaluators = {
+        "rf": RandomForestClassifier(
+            n_estimators=RF_N_ESTIMATORS, random_state=RF_RANDOM_STATE,
+            n_jobs=-1,
+        ),
+        **_classifiers(),
+    }
+    records = []
+    for k in folds:
+        fd = ed.fold_data(k)
+        for name, clf in evaluators.items():
+            t0 = time.time()
+            clf.fit(fd.X_train, fd.y_train)
+            metrics = compute_classification_metrics(
+                fd.y_val, clf.predict(fd.X_val), labels=labels
+            )
+            records.append(_record("D_full", k, "full_panel", fd.n_features,
+                                   name, metrics, time.time() - t0))
+            logger(f"[D] fold {k} {name:3s} n_markers={fd.n_features} "
+                   f"MacroF1={metrics['macro_f1']:.4f} "
+                   f"({time.time() - t0:.1f}s)")
+
+    per_evaluator = {}
+    for name in evaluators:
+        recs = [r for r in records if r["evaluator"] == name]
+        vals = np.asarray([r["macro_f1"] for r in recs], dtype=np.float64)
+        per_evaluator[name] = {
+            "macro_f1_mean": float(vals.mean()),
+            "macro_f1_std": float(vals.std(ddof=1)) if vals.size > 1 else 0.0,
+            "balanced_accuracy_mean": float(
+                np.mean([r["balanced_accuracy"] for r in recs])
+            ),
+            "accuracy_mean": float(np.mean([r["accuracy"] for r in recs])),
+            "per_fold": [
+                {"fold": r["fold"], "n_markers": r["K"],
+                 "macro_f1": r["macro_f1"]}
+                for r in recs
+            ],
+        }
+    os.makedirs(out_subdir, exist_ok=True)
+    _write_csv_atomic(records, os.path.join(out_subdir, "run_metrics.csv"),
+                      RUN_FIELDS)
+    save_json_atomic({
+        "experiment": "rq4_extended_evaluator_full_panel",
+        "description": (
+            "Full post-QC panel references for the frozen Random Forest and "
+            "the alternative evaluators of analysis A, computed on the same "
+            "development folds with the same preprocessing."
+        ),
+        "evaluators": per_evaluator,
+        "locked_test_accessed": False,
+    }, os.path.join(out_subdir, "summary.json"))
+    for name, stats in per_evaluator.items():
+        logger(f"[D] {name:3s} S_full = {stats['macro_f1_mean']:.4f} "
+               f"± {stats['macro_f1_std']:.4f}")
+    return records
+
+
+# ---------------------------------------------------------------------------
 # Aggregation / persistence
 # ---------------------------------------------------------------------------
 def _aggregate(records, group_keys=("analysis", "evaluator", "method", "K")):
@@ -478,7 +561,7 @@ def _write_csv_atomic(rows, path, fieldnames):
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--analysis", choices=["a", "b", "c", "all"], default="all")
+    parser.add_argument("--analysis", choices=["a", "b", "c", "d", "all"], default="all")
     parser.add_argument("--folds", type=int, nargs="+", default=[0, 1, 2])
     parser.add_argument("--ks-a", type=int, nargs="+", default=list(K_A))
     parser.add_argument("--ks-b", type=int, nargs="+", default=list(K_B))
@@ -511,10 +594,13 @@ def main(argv=None) -> int:
     if args.analysis in ("c", "all"):
         analysis_c(ed, args.folds, ks_c,
                    os.path.join(args.out_dir, "association"))
+    if args.analysis in ("d", "all"):
+        analysis_d(ed, args.folds,
+                   os.path.join(args.out_dir, "evaluator_full_panel"))
 
     if not records:
-        print("No A/B records produced; analysis C outputs (if requested) "
-              f"are under {os.path.join(args.out_dir, 'association')}.")
+        print("No A/B records produced; analyses C/D outputs (if requested) "
+              f"are under {args.out_dir}.")
         return 0
 
     aggregates = _aggregate(records)
