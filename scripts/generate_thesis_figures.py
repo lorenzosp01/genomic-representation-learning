@@ -13,6 +13,7 @@ Figures produced (batch 1):
     fig_rq3_panel_curves
     fig_rq4_jaccard
     fig_cross_species_rq1
+    fig_cross_species_panels
 
 Usage:
     uv run python scripts/generate_thesis_figures.py
@@ -406,7 +407,59 @@ def fig_cross_species_rq1():
 
 
 # ---------------------------------------------------------------------------
-# 7. Dataset overview: population structure + cohort sizes
+# 7. Cross-species marker-efficiency comparison (goat vs sheep)
+# ---------------------------------------------------------------------------
+def fig_cross_species_panels():
+    sources = [
+        ("Caprine (primary)", os.path.join(RESULTS, "rq3_marker_efficiency",
+                                           "summary.json")),
+        ("Ovine (validation)", os.path.join(RESULTS, "sheep_cross_species",
+                                            "rq3_marker_efficiency", "summary.json")),
+    ]
+    for _, path in sources:
+        if not os.path.exists(path):
+            warn(f"missing {path}; skipping fig_cross_species_panels")
+            return
+    fig, axes = plt.subplots(1, 2, figsize=(12.4, 4.4), sharey=True)
+    for ax, (species, path) in zip(axes, sources):
+        s = load_json(path)
+        aggs = s["aggregates"]
+        s_full = s["s_full"]["macro_f1_mean"]
+        for m in METHOD_ORDER:
+            K, mean, std = _series(aggs, m)
+            if not len(K):
+                continue
+            ret = mean / s_full
+            ax.errorbar(K, ret, yerr=std / s_full, fmt="o-",
+                        color=METHOD_COLORS[m], capsize=2.5, linewidth=1.8,
+                        markersize=4.5, label=METHOD_LABELS[m])
+            pm = s.get("p_min", {}).get(m, {}).get("0.05")
+            if pm is not None and pm in set(K.tolist()):
+                j = int(np.where(K == pm)[0][0])
+                ax.scatter([pm], [ret[j]], marker="*", s=130,
+                           color=METHOD_COLORS[m], edgecolor="black",
+                           linewidth=0.6, zorder=5)
+        K, rmean, rstd = _series(aggs, "random")
+        if len(K):
+            ax.fill_between(K, (rmean - rstd) / s_full, (rmean + rstd) / s_full,
+                            color="grey", alpha=0.18)
+            ax.plot(K, rmean / s_full, color="grey", linestyle="--",
+                    linewidth=1.2, label=METHOD_LABELS["random"])
+        ax.axhline(0.95, color="black", linestyle=":", linewidth=1.3,
+                   label=r"95% retention ($\epsilon_P=0.05$)")
+        ax.set_xscale("log")
+        ax.set_xticks([r["K"] for r in aggs if r["method"] == "fst"])
+        ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+        ax.set_xlabel("Panel size $K$ (SNPs)")
+        ax.set_title(f"{species}  ($S_\\mathrm{{full}}$ = {s_full:.4f})")
+    axes[0].set_ylabel(r"Retention $S(K)\,/\,S_\mathrm{full}$")
+    axes[0].legend(loc="lower right", fontsize=7.5)
+    fig.tight_layout()
+    save(fig, "fig_cross_species_panels")
+
+
+# ---------------------------------------------------------------------------
+# 8. Dataset overview: population structure + cohort sizes
 # ---------------------------------------------------------------------------
 def _breed_palette(n):
     base = (list(plt.get_cmap("tab20").colors)
@@ -486,7 +539,7 @@ def fig_dataset_cohort():
 
 
 # ---------------------------------------------------------------------------
-# 8. Learned latent spaces of the final goat models
+# 9. Learned latent spaces of the final goat models
 # ---------------------------------------------------------------------------
 def fig_rq1_latent_spaces():
     import torch
@@ -560,6 +613,7 @@ FIGURES = [
     fig_rq3_panel_curves,
     fig_rq4_jaccard,
     fig_cross_species_rq1,
+    fig_cross_species_panels,
 ]
 
 

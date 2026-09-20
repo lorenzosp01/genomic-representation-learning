@@ -668,9 +668,95 @@ minimum.
 % ---- END AUTO RQ2-MINI ----
 
 % ---- BEGIN AUTO RQ3-OVINE ----
-\todo{Ovine marker-efficiency and ranking comparison: results and the
-cross-species panel figure will be inserted when the ovine RQ3/RQ4 run
-completes.}
+\paragraph{Ovine marker efficiency and ranking comparison.}
+The marker-reduction protocol of
+Sections~\ref{sec:marker_efficiency_validation}--\ref{sec:marker_ranking_comparison}
+is repeated inside the ovine cohort, with every ranking reconstructed
+from ovine training individuals only and evaluated with the same
+Random Forest downstream protocol. The full-array reference is the
+ovine Random Forest, $S_{\mathrm{full}} = 0.9168 \pm 0.0163$, a much
+stronger baseline than the caprine $0.7189 \pm 0.0054$.
+Table~\ref{tab:cross_species_pmin} compares the operational minimum
+panel sizes of the two domains; Figure~\ref{fig:cross_species_panels}
+compares the retention curves, each normalised by its own
+$S_{\mathrm{full}}$ so that the shapes of the curves, rather than the
+absolute scores of two different classification problems, are
+confronted.
+
+Under $\epsilon_P=0.05$ the ovine Random Forest ranking is the most
+economical ($P_{\min}=100$), $F_{ST}$ and VMGP SHAP tie at $200$,
+contrastive Integrated Gradients requires $500$ and the random baseline
+$1000$. At the stricter $\epsilon_P=0.02$ the ordering is Random Forest
+$=200$, $F_{ST}=500$, SHAP $=1000$, and no IG panel qualifies: at
+$K=5000$ its mean Macro-F1 ($0.8977$) remains below the $98\%$
+threshold ($0.8985$). The family ordering of the caprine domain is
+therefore reproduced in the validation domain --- classical rankings
+and supervised attribution first, contrastive attribution last, random
+panels worst --- with SHAP catching up with $F_{ST}$ at the $5\%$
+tolerance.
+
+Two quantitative differences qualify the replication. First, the ovine
+panels saturate at larger sizes relative to their reference: in
+caprines the $F_{ST}$ panel at $K=200$ already matches the full-panel
+Random Forest ($0.7356$ versus $0.7189$), whereas in sheep the curves
+converge to $S_{\mathrm{full}}$ only in the $500$--$1000$ range and
+their best values ($F_{ST}$ $0.9252$ at $K=1000$, Random Forest
+$0.9244$ at $K=2000$) exceed it by less than one point. This mirrors
+the RQ1 cross-species result: the classical full-panel classifier is a
+much stronger competitor in the ovine domain, so the claim that a small
+panel matches the full array is weaker there. Second, the relative
+penalty of the learned attributions narrows: at $\epsilon_P=0.05$ the
+Integrated Gradients ranking needs ten times the Random Forest panel in
+goats ($2000$ versus $200$) but five times in sheep ($500$ versus
+$100$), and SHAP requires $2.5$ times the $F_{ST}$ panel in goats
+($500$ versus $200$) but no additional markers in sheep.
+
+At the identity level the Jaccard analysis replicates as well. Averaged
+over folds, the $F_{ST}$--Random Forest agreement grows from $19.6\%$
+($K=50$) to $21.2\%$ at both $K=200$ and $K=500$, against a chance
+level of $0.06$--$0.62\%$; this classical agreement is even higher than
+the caprine $8.8$--$17.8\%$. All remaining pairs stay below $2.8\%$, so
+the learned attributions identify largely disjoint marker sets in both
+species. As in the caprine analysis, low overlap does not imply
+disagreement about the biology: under strong linkage disequilibrium,
+distinct rankings can select interchangeable tags of the same
+population signal. The consistent cross-species pattern is that
+downstream utility orders the ranking families in the same way, while
+score-level identity does not.
+
+\begin{table}[ht]
+\centering
+\caption{Operational minimum panel size $P_{\min}$ per ranking family
+in the two domains under the pre-registered tolerances. ``---''
+indicates that no grid value qualified; the caprine columns reproduce
+Table~\ref{tab:rq4_pmin}.}
+\label{tab:cross_species_pmin}
+\begin{tabular}{lcccc}
+\hline
+ & \multicolumn{2}{c}{Caprine (primary)} & \multicolumn{2}{c}{Ovine (validation)} \\
+\cline{2-5}
+Method & $\epsilon_P=0.02$ & $\epsilon_P=0.05$ & $\epsilon_P=0.02$ & $\epsilon_P=0.05$ \\
+\hline
+$F_{ST}$ & $200$ & $200$ & $500$ & $200$ \\
+Random Forest & $200$ & $200$ & $200$ & $100$ \\
+VMGP SHAP & $500$ & $500$ & $1000$ & $200$ \\
+Contrastive IG & $5000$ & $2000$ & --- & $500$ \\
+Random & --- & --- & $5000$ & $1000$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{fig_cross_species_panels}
+  \caption{Marker efficiency in the two domains: mean Macro-F1 across
+  the three development folds, normalised by each domain's own
+  full-array reference $S_{\mathrm{full}}$; stars mark $P_{\min}$ at
+  $\epsilon_P=0.05$ and the dotted line is the $95\%$ retention
+  threshold. The ordering of the ranking families is preserved, while
+  the ovine curves saturate closer to their (stronger) reference.}
+  \label{fig:cross_species_panels}
+\end{figure}
 % ---- END AUTO RQ3-OVINE ----
 
 \section{Overall Discussion}
@@ -721,15 +807,20 @@ and recent cattle applications report accurate assignment with
 panels of $192$ markers \cite{ahmad2024cattleassigner}. The caprine
 curve also shows that the full panel is not an upper bound: a reduced
 panel can match or slightly exceed it, consistent with noise dilution
-in the $p\gg n$ regime. This advantage is nevertheless conditional on
-the frozen evaluator and on the protocol: panels were selected and
-evaluated inside the same development folds, and no external cohort
-was used to validate them.
+in the $p\gg n$ regime. In the ovine cohort the same ordering is
+reproduced under the $5\%$ tolerance with even smaller panels
+($100$--$200$ markers versus $500$ for contrastive IG), although the
+classical full-array reference is a much stronger competitor there, so
+the ovine panels saturate near it rather than exceeding it. This
+advantage is nevertheless conditional on the frozen evaluator and on
+the protocol: panels were selected and evaluated inside the same
+development folds, and no external cohort was used to validate them.
 
 The ranking comparison (RQ4) provides the second main finding: neural
 attributions are not competitive marker selectors for a different
 downstream model. $F_{ST}$ and Random Forest importance share a modest
-but strongly above-chance fraction of their top markers ($8.8$--$17.8\%$),
+but strongly above-chance fraction of their top markers ($8.8$--$17.8\%$
+in caprines, $19.6$--$21.2\%$ in ovines),
 while the neural rankings overlap each other and the classical ones by
 at most a few percent, close to the chance baseline at small panel
 sizes. This pattern is consistent with two documented phenomena:
