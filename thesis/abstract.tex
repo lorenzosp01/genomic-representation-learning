@@ -58,6 +58,8 @@ neural feature attribution, although informative for model inspection,
 does not translate automatically into a reliable marker-selection
 strategy: its rankings diverge from classical and tree-based importance
 and transfer less effectively to a Random Forest downstream classifier,
-while robustness analyses show that attribution-selected panels become
-the most marker-efficient when the panel is evaluated by the model
-family they explain or by a linear classifier.
+while robustness analyses show that the conclusion is both evaluator-
+and cohort-dependent: attribution-selected panels become the most
+marker-efficient under native or linear evaluators on the primary
+cohort, while the classical ordering is preserved in the validation
+cohort.

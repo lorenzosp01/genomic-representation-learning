@@ -550,7 +550,9 @@ with four train-only analyses on the primary caprine cohort: an
 evaluator-sensitivity study, a model-native evaluation in which the
 explained architecture is retrained on the panel, an extended
 classical baseline, and a valid-baseline study of the contrastive
-attributions. All analyses reuse the frozen folds and the cached
+attributions, plus a cross-species replication of the
+evaluator-sensitivity and association analyses on the ovine cohort.
+All analyses reuse the frozen folds and the cached
 protocol-v2 rankings; no locked-test record is read, and every model is
 fitted on the fold training partition only.
 
@@ -688,6 +690,51 @@ supervised read-out, and their ranking is unstable in the tail.
   \label{fig:rq4_valid_baseline_ig}
 \end{figure}
 
+\paragraph{Cross-species replication.}
+The evaluator-sensitivity and association analyses are repeated inside
+the ovine cohort, with its own folds, rankings and full-panel
+references (Figure~\ref{fig:rq4_evaluator_cross_species}). The ovine
+reference hierarchy mirrors the caprine one --- the frozen Random
+Forest is again the weakest evaluator on the complete panel ($0.9168$),
+logistic regression and the linear SVM reach $0.9613$ and $0.9648$
+and gradient boosting $0.9108$ --- but the ranking comparison does not
+invert. At $K=200$, where the families are still clearly separated,
+the two classical rankings lead under all four evaluators ($F_{ST}$ or
+Random Forest first, SHAP third, Integrated Gradients last), and the
+associated $P_{\min}$ values at the $5\%$ tolerance are $200$--$500$
+for the classical rankings against $500$ for SHAP under logistic
+regression and gradient boosting and $2000$ under the linear SVM. At
+$K=2000$ all four families converge within about $0.5$ Macro-F1 points
+under every evaluator, so no ordering claim is meaningful at that
+depth. The caprine SHAP reversal therefore does not replicate in the
+validation domain: the evaluator dependence is cohort-dependent, and
+the most plausible reading is that the reversal appears where the
+classical rankings leave more performance on the table (in caprines the
+frozen Random Forest reference is $0.719$ against $0.917$ in ovines,
+and the panel curves have much more headroom).
+
+The extended association baseline behaves similarly in the ovine
+cohort (Table~\ref{tab:rq4_association} reports the caprine values):
+the chi-square ranking reaches $P_{\min}=200$ at the $5\%$ tolerance
+and $500$ at the $2\%$ one, with a top-marker overlap with $F_{ST}$ of
+$40.3\%$, $49.8\%$ and $58.7\%$ at $K=50$, $200$ and $500$ (chance
+level $0.06$--$0.62\%$), $21$--$23\%$ with Random Forest importance and
+at most $2.5\%$ with the neural attributions. The classical family
+therefore replicates, although under the frozen evaluator the ovine
+Random Forest importance ranking is marginally more economical than the
+association test at the strict tolerance ($200$ versus $500$).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{fig_rq4_evaluator_cross_species}
+  \caption{Ranking comparison at $K=200$ under the frozen and
+  alternative evaluators, by cohort (mean over the three development
+  folds). In caprines the SHAP ranking leads under the three
+  alternative evaluators; in ovines the classical rankings lead under
+  all four, so the reversal is cohort-dependent.}
+  \label{fig:rq4_evaluator_cross_species}
+\end{figure}
+
 \paragraph{Synthesis.}
 Taken together, the analyses above qualify the answer to RQ4 rather
 than overturning it. Under the frozen protocol --- a Random Forest
@@ -705,7 +752,11 @@ retrained on the panel, SHAP-selected panels are the most
 marker-efficient family. The practical implication is that a ranking
 should be validated, and the marker panel chosen, against the
 classifier that will actually be deployed; universal transfer of a
-ranking across model families should not be assumed. These analyses are
+ranking across model families should not be assumed. The validation
+cohort qualifies the SHAP reversal: on sheep the classical ordering is
+preserved under all four evaluators, so the evaluator dependence
+observed in caprines is cohort-dependent rather than universal. These
+analyses are
 extensions of the frozen protocol and carry their own limitations: they
 cover the caprine cohort only, use a coarse panel grid, fix the
 alternative classifiers to standard untuned hyperparameters, and
@@ -1108,11 +1159,13 @@ the augmentation-invariance objective, an out-of-distribution
 Integrated Gradients baseline, and the mismatch between the explained
 neural models and the Random Forest evaluator. The robustness analyses
 of Section~\ref{sec:rq4_robustness} show that this last mismatch is
-consequential: when the panels are scored by logistic regression, a
-linear SVM or gradient boosting, or when the explained model itself is
-retrained on the panel, the SHAP-selected panels become the most
-marker-efficient family, while the Random Forest evaluator favours the
-rankings that share its inductive bias. The practical conclusion is
+consequential on the caprine cohort: when the panels are scored by
+logistic regression, a linear SVM or gradient boosting, or when the
+explained model itself is retrained on the panel, the SHAP-selected
+panels become the most marker-efficient family, while the Random
+Forest evaluator favours the rankings that share its inductive bias;
+the ovine replication preserves the classical ordering under every
+evaluator, so the effect is cohort-dependent. The practical conclusion is
 therefore twofold: attributions should be validated through downstream
 utility rather than interpreted as feature importance per se, and the
 evaluator used for that validation should match the model that will

@@ -791,6 +791,63 @@ def fig_rq4_valid_baseline_ig():
 
 
 # ---------------------------------------------------------------------------
+# 13. RQ4 robustness: evaluator sensitivity across cohorts (K=200)
+# ---------------------------------------------------------------------------
+def fig_rq4_evaluator_cross_species():
+    sources = [
+        ("Caprine (primary)",
+         os.path.join(RESULTS, "rq3_marker_efficiency", "aggregate_metrics.csv"),
+         os.path.join(RESULTS, "rq4_extended", "aggregate_metrics.csv")),
+        ("Ovine (validation)",
+         os.path.join(RESULTS, "sheep_cross_species", "rq3_marker_efficiency",
+                      "aggregate_metrics.csv"),
+         os.path.join(RESULTS, "sheep_cross_species", "rq4_extended",
+                      "aggregate_metrics.csv")),
+    ]
+    for _, frozen_path, alt_path in sources:
+        if not (os.path.exists(frozen_path) and os.path.exists(alt_path)):
+            warn("missing cross-species robustness artifacts; "
+                 "skipping fig_rq4_evaluator_cross_species")
+            return
+    evaluators = [("rf", "RF (frozen)"), ("lr", "Logistic reg."),
+                  ("svm", "Linear SVM"), ("gb", "Grad. boosting")]
+    panel_k = 200
+    fig, axes = plt.subplots(1, 2, figsize=(12.8, 4.6))
+    width = 0.19
+    for ax, (species, frozen_path, alt_path) in zip(axes, sources):
+        frozen = _load_aggregates_csv(frozen_path)
+        alt = [r for r in _load_aggregates_csv(alt_path)
+               if r["analysis"] == "A_evaluator"]
+        x = np.arange(len(evaluators))
+        for i, m in enumerate(METHOD_ORDER):
+            vals = []
+            for ev, _ in evaluators:
+                rows = frozen if ev == "rf" else [
+                    r for r in alt if r["evaluator"] == ev
+                ]
+                v = [r["macro_f1_mean"] for r in rows
+                     if r["method"] == m and r["K"] == panel_k]
+                vals.append(v[0] if v else np.nan)
+            ax.bar(x + (i - 1.5) * width, vals, width,
+                   color=METHOD_COLORS[m], label=METHOD_LABELS[m])
+        ax.set_xticks(x)
+        ax.set_xticklabels([lbl for _, lbl in evaluators])
+        ax.set_title(species)
+        ax.set_ylabel(f"Macro-F1 at $K={panel_k}$")
+        ax.margins(y=0.18)
+    from matplotlib.patches import Patch
+
+    handles = [Patch(facecolor=METHOD_COLORS[m], label=METHOD_LABELS[m])
+               for m in METHOD_ORDER]
+    fig.legend(handles=handles, loc="lower center", ncol=4, frameon=False,
+               fontsize=8)
+    fig.suptitle("Ranking comparison at $K=200$ under the frozen and "
+                 "alternative evaluators, by cohort", y=1.0)
+    fig.tight_layout(rect=[0, 0.10, 1, 0.95])
+    save(fig, "fig_rq4_evaluator_cross_species")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 FIGURES = [
@@ -804,6 +861,7 @@ FIGURES = [
     fig_rq4_evaluator_sensitivity,
     fig_rq4_native_retraining,
     fig_rq4_valid_baseline_ig,
+    fig_rq4_evaluator_cross_species,
     fig_cross_species_rq1,
     fig_cross_species_panels,
 ]
