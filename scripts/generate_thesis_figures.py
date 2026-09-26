@@ -602,6 +602,120 @@ def fig_rq1_latent_spaces():
 
 
 # ---------------------------------------------------------------------------
+# 10. RQ4 robustness: evaluator sensitivity (caprine)
+# ---------------------------------------------------------------------------
+def _load_aggregates_csv(path):
+    import csv
+
+    if not os.path.exists(path):
+        return []
+    rows = []
+    with open(path) as f:
+        for rec in csv.DictReader(f):
+            row = {"method": rec["method"], "K": int(float(rec["K"]))}
+            row["analysis"] = rec.get("analysis", "")
+            row["evaluator"] = rec.get("evaluator", "")
+            for metric in ("macro_f1", "balanced_accuracy", "accuracy"):
+                row[f"{metric}_mean"] = float(rec[f"{metric}_mean"])
+                row[f"{metric}_std"] = float(rec[f"{metric}_std"])
+            rows.append(row)
+    return rows
+
+
+def fig_rq4_evaluator_sensitivity():
+    frozen_path = os.path.join(RESULTS, "rq3_marker_efficiency",
+                               "aggregate_metrics.csv")
+    alt_path = os.path.join(RESULTS, "rq4_extended", "aggregate_metrics.csv")
+    d_path = os.path.join(RESULTS, "rq4_extended", "evaluator_full_panel",
+                          "summary.json")
+    if not (os.path.exists(frozen_path) and os.path.exists(alt_path)
+            and os.path.exists(d_path)):
+        warn("missing robustness artifacts; "
+             "skipping fig_rq4_evaluator_sensitivity")
+        return
+    frozen = _load_aggregates_csv(frozen_path)
+    alt = [r for r in _load_aggregates_csv(alt_path)
+           if r["analysis"] == "A_evaluator"]
+    refs = load_json(d_path)["evaluators"]
+    panels = [
+        ("rf", "Random Forest (frozen)", frozen),
+        ("lr", "Logistic regression", [r for r in alt if r["evaluator"] == "lr"]),
+        ("svm", "Linear SVM", [r for r in alt if r["evaluator"] == "svm"]),
+        ("gb", "Gradient boosting", [r for r in alt if r["evaluator"] == "gb"]),
+    ]
+    fig, axes = plt.subplots(2, 2, figsize=(12.6, 8.2))
+    for ax, (ev, title, rows) in zip(axes.ravel(), panels):
+        for m in METHOD_ORDER:
+            K, mean, std = _series(rows, m)
+            if not len(K):
+                continue
+            ax.errorbar(K, mean, yerr=std, fmt="o-", color=METHOD_COLORS[m],
+                        capsize=2.5, linewidth=1.8, markersize=4.5,
+                        label=METHOD_LABELS[m])
+        s_full = refs[ev]["macro_f1_mean"]
+        ax.axhline(s_full, color="black", linestyle="--", linewidth=1.3)
+        ax.set_xscale("log")
+        ax.set_xticks(sorted({r["K"] for r in rows}))
+        ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+        ax.set_xlabel("Panel size $K$ (SNPs)")
+        ax.set_ylabel("Macro-F1")
+        ax.set_title(f"{title}  ($S_\\mathrm{{full}}$ = {s_full:.4f})")
+    axes[0, 0].legend(loc="lower right", fontsize=7.5)
+    fig.suptitle("Evaluator sensitivity of the ranking comparison "
+                 "(caprine development folds)", y=1.0)
+    fig.tight_layout()
+    save(fig, "fig_rq4_evaluator_sensitivity")
+
+
+# ---------------------------------------------------------------------------
+# 11. RQ4 robustness: native retraining of the explained models
+# ---------------------------------------------------------------------------
+def fig_rq4_native_retraining():
+    path = os.path.join(RESULTS, "rq4_extended", "aggregate_metrics.csv")
+    if not os.path.exists(path):
+        warn("missing robustness artifacts; "
+             "skipping fig_rq4_native_retraining")
+        return
+    rows_all = _load_aggregates_csv(path)
+    panels = [
+        ("vmgp_retrained", "VMGP retrained on the panel"),
+        ("contrastive_retrained", "Contrastive model retrained on the panel"),
+    ]
+    fig, axes = plt.subplots(1, 2, figsize=(12.4, 4.4))
+    for ax, (ev, title) in zip(axes, panels):
+        rows = [r for r in rows_all
+                if r["analysis"] == "B_native" and r["evaluator"] == ev]
+        if not rows:
+            warn(f"no B records for {ev}; skipping fig_rq4_native_retraining")
+            return
+        for m in METHOD_ORDER:
+            K, mean, std = _series(rows, m)
+            if not len(K):
+                continue
+            ax.errorbar(K, mean, yerr=std, fmt="o-", color=METHOD_COLORS[m],
+                        capsize=2.5, linewidth=1.8, markersize=4.5,
+                        label=METHOD_LABELS[m])
+        full = [r for r in rows if r["method"] == "full_panel"]
+        if full:
+            s_full = float(np.mean([r["macro_f1_mean"] for r in full]))
+            ax.axhline(s_full, color="black", linestyle="--", linewidth=1.3)
+            ax.set_title(f"{title}  ($S_\\mathrm{{full}}$ = {s_full:.4f})")
+        else:
+            ax.set_title(title)
+        ax.set_xscale("log")
+        ax.set_xticks(sorted({r["K"] for r in rows
+                              if r["method"] != "full_panel"}))
+        ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+        ax.set_xlabel("Panel size $K$ (SNPs)")
+        ax.set_ylabel("Macro-F1")
+    axes[0].legend(loc="lower right", fontsize=7.5)
+    fig.suptitle("Model-native panel evaluation after retraining the explained "
+                 "architecture (caprine development folds)", y=1.0)
+    fig.tight_layout()
+    save(fig, "fig_rq4_native_retraining")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 FIGURES = [
@@ -612,6 +726,8 @@ FIGURES = [
     fig_rq2_learning_curve,
     fig_rq3_panel_curves,
     fig_rq4_jaccard,
+    fig_rq4_evaluator_sensitivity,
+    fig_rq4_native_retraining,
     fig_cross_species_rq1,
     fig_cross_species_panels,
 ]

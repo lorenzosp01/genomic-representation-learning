@@ -494,6 +494,8 @@ the same inductive bias as the evaluator. The experiment therefore
 compares transfer across model families rather than the intrinsic
 correctness of the attributions, and a different downstream evaluator
 could change the ranking of the methods.
+Section~\ref{sec:rq4_robustness} tests this prediction explicitly and
+confirms it.
 
 A final methodological remark concerns the difference between
 attribution and selection. The earlier notebook-based attribution
@@ -530,6 +532,227 @@ Random Forest & $200$ & $200$ & $0.7664$ & $2000$ \\
 VMGP SHAP & $500$ & $500$ & $0.7309$ & $5000$ \\
 Contrastive IG & $5000$ & $2000$ & $0.7072$ & $5000$ \\
 Random & --- & --- & $0.6790$ & $5000$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Robustness of the Marker-Selection Comparison}
+\label{sec:rq4_robustness}
+
+The comparison of Section~\ref{sec:marker_ranking_comparison} keeps the
+downstream evaluator fixed: every panel is scored by the same Random
+Forest, whichever ranking family produced it. The mechanistic reading
+proposed there --- in particular the possibility that the Random Forest
+importance ranking benefits from the same inductive bias as the
+evaluator --- predicts that the ordering of the families could change
+under a different downstream model. This section tests that prediction
+with three train-only analyses on the primary caprine cohort: an
+evaluator-sensitivity study, a model-native evaluation in which the
+explained architecture is retrained on the panel, and an extended
+classical baseline. All analyses reuse the frozen folds and the cached
+protocol-v2 rankings; no locked-test record is read, and every model is
+fitted on the fold training partition only.
+
+\paragraph{Evaluator sensitivity.}
+Three additional downstream classifiers are applied to the same panels
+on the same development folds: logistic regression and a linear SVM on
+standardised dosages, and gradient boosting, all with hyperparameters
+and seeds fixed before the run. Because the frozen full-panel reference
+$S_{\mathrm{full}} = 0.7189$ belongs to the Random Forest evaluator,
+each alternative evaluator is given its own reference on the complete
+post-QC panel: logistic regression reaches $0.9686$, the linear SVM
+$0.9656$ and gradient boosting $0.8633$, against $0.7189$ for the
+frozen Random Forest. The Random Forest is therefore by far the weakest
+of the four on the full marker space --- an expected consequence of the
+$p \gg n$ regime --- and its retention thresholds are correspondingly
+the easiest to satisfy.
+
+Figure~\ref{fig:rq4_evaluator_sensitivity} and
+Table~\ref{tab:rq4_evaluator_pmin} summarise the result. Under the
+frozen evaluator the ordering of
+Section~\ref{sec:marker_ranking_comparison} is reproduced: $F_{ST}$ and
+Random Forest importance are the most marker-efficient
+($P_{\min}=200$ at both tolerances), followed by SHAP ($500$) and
+Integrated Gradients ($2000$/$5000$). Under the three alternative
+evaluators the VMGP SHAP ranking becomes the most marker-efficient
+family: at $K=200$ it leads by $3.5$ points under logistic regression
+($0.8971 \pm 0.0094$ versus $0.8625 \pm 0.0302$ for $F_{ST}$) and by
+$5.0$ points under the linear SVM ($0.8324$ versus $0.7819$); at
+$K=2000$ it is the best ranking under all three evaluators, and under
+gradient boosting the $F_{ST}$, Random Forest and SHAP rankings are
+indistinguishable at $K=200$ ($0.789$--$0.795$) while Integrated
+Gradients remains about $8$ points behind. The associated $P_{\min}$
+values move accordingly: SHAP reaches the $5\%$ tolerance with $500$
+markers under every alternative evaluator, and it is the only family
+that can do so with $500$ markers under the strict $2\%$ tolerance
+(logistic regression); under gradient boosting only SHAP and Random
+Forest importance qualify within the grid ($2000$), and under the
+linear SVM no family reaches the strict tolerance at all (SHAP misses
+it by $0.0004$ at $K=2000$). The ranking comparison is therefore
+evaluator-dependent: the classical advantage measured in
+Section~\ref{sec:marker_ranking_comparison} is specific to the frozen
+Random Forest, which shares its inductive bias with the Random Forest
+importance ranking.
+
+\paragraph{Native retraining.}
+The second analysis asks a different question: do the top-ranked
+markers carry the signal for the model that the attribution actually
+describes? Every panel is re-evaluated by retraining the same
+architecture on the panel markers only, with the frozen RQ1
+hyperparameters, and scoring the fold validation partition with the
+breed head (VMGP) or with the $k=3$ nearest-neighbour classifier on the
+learned embeddings (contrastive).
+Figure~\ref{fig:rq4_native_retraining} and
+Table~\ref{tab:rq4_native_pmin} report the outcome. The full-input
+references are $0.9796 \pm 0.0039$ for the VMGP and $0.9320 \pm 0.0086$
+for the contrastive model. Once the VMGP is retrained on the panel, the
+SHAP ranking is again the most marker-efficient ($0.8864$ at $K=200$
+and $0.9447$ at $K=500$, versus $0.8677$ and $0.9229$ for $F_{ST}$),
+and it reaches the $5\%$ tolerance with $500$ markers while the
+classical and contrastive rankings need $2000$; at the strict tolerance
+$F_{ST}$ and SHAP are the only families that qualify (at $K=2000$),
+with Random Forest importance and Integrated Gradients missing it by
+less than $0.001$. Under the contrastive evaluator the panels remain
+much more marker-hungry --- the model approaches its $0.9320$
+full-input reference only in the thousands of markers --- but the SHAP
+panel is still the best at $K=2000$ ($0.9119$ versus $0.8981$ for
+$F_{ST}$, $0.8769$ for Random Forest and $0.8741$ for Integrated
+Gradients), and only SHAP and $F_{ST}$ reach the $5\%$ tolerance within
+the grid. These results support the transferability reading of RQ4: the
+attributions identify markers that are genuinely informative for the
+model they explain, and the frozen Random Forest penalises them because
+it does not exploit that signal.
+
+\paragraph{Extended classical association baseline.}
+Finally, the classical family is widened with a univariate chi-square
+test of independence between genotype and breed, computed on the
+training partition only --- the association statistic that plays the
+role of a GWAS-style test in a task whose outcome is the breed label.
+Under the frozen Random Forest evaluator it is the most economical
+ranking of all: with $100$ markers it reaches both tolerances
+($\epsilon_P=0.02$ and $\epsilon_P=0.05$), whereas $F_{ST}$ and Random
+Forest importance require $200$
+(Table~\ref{tab:rq4_association}). Its top-marker lists overlap
+strongly with $F_{ST}$ ($50.1\%$ at $K=50$, $52.9\%$ at $K=200$,
+$60.4\%$ at $K=500$, against a chance level of $0.05$--$0.54\%$),
+moderately with Random Forest importance ($12.5$--$20.0\%$) and
+essentially not at all with the neural attributions (at most $2.4\%$).
+The association test therefore closes the classical family ---
+label-aware univariate statistics and tree importance agree with each
+other and are the best choice under a Random Forest deployment --- and
+it reinforces the identity-level conclusion of
+Section~\ref{sec:marker_ranking_comparison}: the neural and the
+classical rankings select largely disjoint marker sets.
+
+\paragraph{Synthesis.}
+Taken together, the three analyses qualify the answer to RQ4 rather
+than overturning it. Under the frozen protocol --- a Random Forest
+downstream evaluator and transferability as the criterion --- classical
+univariate rankings are the most marker-efficient; the chi-square
+association test is the strongest of them, and the neural attributions
+are not competitive, with Integrated Gradients consistently the weakest
+learned attribution. Under a different deployment model the picture
+inverts for SHAP: when the panels are scored by logistic regression, a
+linear SVM or gradient boosting, or when the explained model itself is
+retrained on the panel, SHAP-selected panels are the most
+marker-efficient family. The practical implication is that a ranking
+should be validated, and the marker panel chosen, against the
+classifier that will actually be deployed; universal transfer of a
+ranking across model families should not be assumed. These analyses are
+extensions of the frozen protocol and carry their own limitations: they
+cover the caprine cohort only, use a coarse panel grid, fix the
+alternative classifiers to standard untuned hyperparameters, and
+evaluate panels on the development folds without a locked-test
+confirmation.
+
+\begin{table}[ht]
+\centering
+\caption{Operational minimum panel size per ranking family under the
+frozen Random Forest evaluator and under the alternative downstream
+classifiers of the robustness analysis (caprine cohort). Cells report
+$P_{\min}$ for $\epsilon_P=0.05$ / $\epsilon_P=0.02$; ``---'' means
+that no grid value qualified. The alternative evaluators use
+$K\in\{50,200,500,2000\}$ and their own full-panel references (bottom
+row); the Random Forest column reproduces the frozen grid and
+Table~\ref{tab:rq4_pmin}.}
+\label{tab:rq4_evaluator_pmin}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccc}
+\hline
+Method & RF (frozen) & Logistic reg. & Linear SVM & Grad. boosting \\
+\hline
+$F_{ST}$ & $200$/$200$ & $500$/$2000$ & $2000$/--- & $500$/--- \\
+Random Forest & $200$/$200$ & $500$/$2000$ & $2000$/--- & $500$/$2000$ \\
+VMGP SHAP & $500$/$500$ & $500$/$500$ & $500$/--- & $500$/$2000$ \\
+Contrastive IG & $2000$/$5000$ & $500$/$2000$ & $2000$/--- & $2000$/--- \\
+\hline
+$S_{\mathrm{full}}$ & $0.7189$ & $0.9686$ & $0.9656$ & $0.8633$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{fig_rq4_evaluator_sensitivity}
+  \caption{Evaluator sensitivity of the marker-selection comparison
+  (caprine development folds, mean $\pm$ standard deviation over the
+  three folds). Each panel is a downstream classifier with its own
+  full-panel reference (dashed); the frozen Random Forest is the only
+  evaluator under which the classical rankings dominate the learned
+  attributions.}
+  \label{fig:rq4_evaluator_sensitivity}
+\end{figure}
+
+\begin{table}[ht]
+\centering
+\caption{Operational minimum panel size per ranking family when the
+explained architecture is retrained on the panel markers only
+(caprine cohort; $K\in\{200,500,2000\}$). Cells report
+$P_{\min}(\epsilon_P=0.05)/P_{\min}(\epsilon_P=0.02)$ against each
+model's own full-input reference (bottom row).}
+\label{tab:rq4_native_pmin}
+\begin{tabular}{lcc}
+\hline
+Method & VMGP breed head & Contrastive KNN \\
+\hline
+$F_{ST}$ & $2000$/$2000$ & $2000$/--- \\
+Random Forest & $2000$/--- & ---/--- \\
+VMGP SHAP & $500$/$2000$ & $2000$/--- \\
+Contrastive IG & $2000$/--- & ---/--- \\
+\hline
+$S_{\mathrm{full}}$ (full input) & $0.9796$ & $0.9320$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{fig_rq4_native_retraining}
+  \caption{Model-native panel evaluation: the explained architecture
+  (VMGP breed head, left; contrastive embeddings with $k=3$ nearest
+  neighbours, right) is retrained from scratch on the panel markers
+  only, with frozen RQ1 hyperparameters. The dashed line is the same
+  model trained on the full post-QC panel. SHAP-selected panels are the
+  most marker-efficient under both architectures.}
+  \label{fig:rq4_native_retraining}
+\end{figure}
+
+\begin{table}[ht]
+\centering
+\caption{Extended chi-square association baseline under the frozen
+Random Forest evaluator (caprine cohort). The association ranking
+reaches $P_{\min}=100$ at both tolerances; the table reports its
+mean-over-folds Jaccard overlap with the four frozen ranking families
+at three panel sizes (chance level $0.05$--$0.54\%$).}
+\label{tab:rq4_association}
+\begin{tabular}{lcccc}
+\hline
+ & $F_{ST}$ & Random Forest & VMGP SHAP & Contrastive IG \\
+\hline
+$K=50$ & $50.1\%$ & $12.5\%$ & $0.0\%$ & $0.3\%$ \\
+$K=200$ & $52.9\%$ & $17.6\%$ & $0.3\%$ & $0.9\%$ \\
+$K=500$ & $60.4\%$ & $20.0\%$ & $0.8\%$ & $2.4\%$ \\
 \hline
 \end{tabular}
 \end{table}
@@ -816,11 +1039,13 @@ advantage is nevertheless conditional on the frozen evaluator and on
 the protocol: panels were selected and evaluated inside the same
 development folds, and no external cohort was used to validate them.
 
-The ranking comparison (RQ4) provides the second main finding: neural
-attributions are not competitive marker selectors for a different
-downstream model. $F_{ST}$ and Random Forest importance share a modest
+The ranking comparison (RQ4) provides the second main finding: under
+the frozen Random Forest evaluator, neural attributions are not
+competitive marker selectors for a different downstream model. $F_{ST}$
+and Random Forest importance share a modest
 but strongly above-chance fraction of their top markers ($8.8$--$17.8\%$
-in caprines, $19.6$--$21.2\%$ in ovines),
+in caprines, $19.6$--$21.2\%$ in ovines), the extended chi-square
+association baseline overlaps $F_{ST}$ by $50$--$60\%$,
 while the neural rankings overlap each other and the classical ones by
 at most a few percent, close to the chance baseline at small panel
 sizes. This pattern is consistent with two documented phenomena:
@@ -834,10 +1059,17 @@ Section~\ref{sec:marker_ranking_comparison} identifies plausible
 contributors: the extreme three-dimensional contrastive bottleneck,
 the augmentation-invariance objective, an out-of-distribution
 Integrated Gradients baseline, and the mismatch between the explained
-neural models and the Random Forest evaluator. The practical
-conclusion is not that attributions are useless, but that they should
-be validated through downstream utility rather than interpreted as
-feature importance per se.
+neural models and the Random Forest evaluator. The robustness analyses
+of Section~\ref{sec:rq4_robustness} show that this last mismatch is
+consequential: when the panels are scored by logistic regression, a
+linear SVM or gradient boosting, or when the explained model itself is
+retrained on the panel, the SHAP-selected panels become the most
+marker-efficient family, while the Random Forest evaluator favours the
+rankings that share its inductive bias. The practical conclusion is
+therefore twofold: attributions should be validated through downstream
+utility rather than interpreted as feature importance per se, and the
+evaluator used for that validation should match the model that will
+actually be deployed.
 
 Cross-species validation supports the generalization of the
 representation pipeline but qualifies its superiority. Both models

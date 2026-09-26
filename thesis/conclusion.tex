@@ -35,13 +35,18 @@ respectively. Second, a surprisingly small training population
 suffices: in the caprine cohort $N_{\min}=10$ individuals per breed
 retained $98.5\%$ of the reference performance, and in the ovine cohort
 the same sample size retained $98.6\%$. Third, the marker panel can be
-reduced by two orders of magnitude: $200$ $F_{ST}$-selected markers
-match the full post-QC panel under the frozen evaluator, while neural
-attributions require much larger panels ($500$ markers for SHAP and
+reduced by two orders of magnitude under the frozen Random Forest
+evaluator: $100$ markers selected by a chi-square association test, or
+$200$ selected by $F_{ST}$, match the full post-QC panel, while neural
+attributions require larger panels ($500$ markers for SHAP and
 $2000$--$5000$ for Integrated Gradients). Fourth, neural attribution is
-not a substitute for feature selection: the top-marker lists of the
-four families overlap little (mostly close to chance for the neural
-methods), and their downstream utility differs accordingly.
+not a substitute for feature selection under that evaluator: the
+top-marker lists of the four families overlap little (mostly close to
+chance for the neural methods), and their downstream utility differs
+accordingly. The robustness analyses qualify this conclusion: when the
+panels are evaluated by a linear or boosting classifier, or by
+retraining the explained model on the panel itself, SHAP-selected
+panels become the most marker-efficient family.
 Cross-species validation supports the representation pipeline but
 shows that its advantage over classical baselines is
 dataset-dependent.

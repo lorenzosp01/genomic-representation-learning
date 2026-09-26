@@ -55,6 +55,9 @@ performance is retained with ten training individuals per breed, and
 that marker panels can be reduced by two orders of magnitude while
 preserving the downstream classification signal. They also show that
 neural feature attribution, although informative for model inspection,
-is not by itself a reliable marker-selection strategy: its rankings
-diverge from classical and tree-based importance and transfer less
-effectively to an independent downstream classifier.
+does not translate automatically into a reliable marker-selection
+strategy: its rankings diverge from classical and tree-based importance
+and transfer less effectively to a Random Forest downstream classifier,
+while robustness analyses show that attribution-selected panels become
+the most marker-efficient when the panel is evaluated by the model
+family they explain or by a linear classifier.

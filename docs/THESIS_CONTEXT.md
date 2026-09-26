@@ -72,10 +72,12 @@ These rankings are compared with classical statistical and
 machine-learning approaches.
 
 The frozen comparison set is FST, Random Forest importance, VMGP SHAP and
-contrastive Integrated Gradients. A chi-square genotype x breed association
-test is additionally evaluated as an EXTENDED, non-frozen baseline under the
-same train-only rules (robustness analyses, caprine cohort only). It does not
-modify the pre-registered comparison.
+contrastive Integrated Gradients. Non-frozen robustness extensions are
+additionally reported for the caprine cohort under the same train-only rules:
+alternative downstream evaluators (logistic regression, linear SVM, gradient
+boosting), a native re-evaluation that retrains the explained model on the
+panel, and a chi-square genotype x breed association baseline. These
+extensions do not modify the pre-registered comparison.
 
 
 ## Genomic Terminology
