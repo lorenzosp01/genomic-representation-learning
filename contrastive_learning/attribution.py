@@ -34,6 +34,23 @@ from .evaluation import extract_embeddings, compute_metrics
 from .augmentation import GeneticAugmentation
 
 
+def _resolve_baseline(baseline, baseline_val, x_one_hot, device):
+    """Broadcast the IG reference to ``x_one_hot``'s shape.
+
+    ``baseline=None`` uses the constant ``baseline_val`` (the historical
+    behaviour); a tensor uses its values (shape ``(M, 4)``, ``(1, M, 4)`` or
+    ``(B, M, 4)``) expanded to the batch. This makes it possible to use a valid
+    genotype reference, such as the training-mean one-hot profile, instead of
+    the out-of-distribution zero vector.
+    """
+    if baseline is None:
+        return torch.full_like(x_one_hot, baseline_val)
+    base = baseline.to(device=device, dtype=x_one_hot.dtype)
+    if base.dim() == 2:
+        base = base.unsqueeze(0)
+    return base.expand_as(x_one_hot)
+
+
 class EncoderWithProbeMLP(nn.Module):
     """Probe-path wrapper: one-hot genotype -> encoder -> scaled embedding -> probe logits."""
 
@@ -160,13 +177,17 @@ def train_probe_mlp(best_Z, best_y, num_classes, device, *,
 
 
 def compute_ig_batched(model, X_snps, target_classes, device,
-                       baseline_val=0.0, n_steps=50, batch_size=32):
+                       baseline_val=0.0, n_steps=50, batch_size=32,
+                       baseline=None):
     """Probe-path Integrated Gradients (batched).
 
     ``model`` must return per-sample logits (``EncoderWithProbeMLP``).
-    ``target_classes`` is a LongTensor on ``device``. Baseline is a constant
-    tensor of ``baseline_val``. Per-SNP attribution is the L1 sum over the four
-    genotype channels.
+    ``target_classes`` is a LongTensor on ``device``. The IG reference is a
+    constant tensor of ``baseline_val`` unless ``baseline`` is given: a tensor
+    in the four-channel one-hot space (shape ``(M, 4)`` or broadcastable) used
+    as an explicit, valid genotype reference (e.g. the training-mean one-hot
+    profile). Per-SNP attribution is the L1 sum over the four genotype
+    channels.
     """
     N, M = X_snps.shape
     ig_all = np.zeros((N, M), dtype=np.float32)
@@ -181,12 +202,12 @@ def compute_ig_batched(model, X_snps, target_classes, device,
 
         with torch.no_grad():
             x_oh_b = GeneticAugmentation.one_hot_encode(x_batch).float()
-        baseline = torch.full_like(x_oh_b, baseline_val)
-        diff = x_oh_b - baseline
+        base = _resolve_baseline(baseline, baseline_val, x_oh_b, device)
+        diff = x_oh_b - base
 
         grads_list = []
         for alpha in alphas:
-            interp = (baseline + alpha * diff).requires_grad_(True)
+            interp = (base + alpha * diff).requires_grad_(True)
             scores = model(interp)
             score = scores[torch.arange(B, device=device), t_batch].sum()
             model.zero_grad()
@@ -263,12 +284,14 @@ def compute_centroid_ig_single(model, x_one_hot, target_class, device,
 
 
 def compute_centroid_ig_batched(model, X_snps, target_classes, device,
-                                n_steps=50, batch_size=32):
+                                n_steps=50, batch_size=32, baseline=None):
     """Centroid-path Integrated Gradients (batched).
 
     ``model`` is an ``EncoderToCentroid``; ``target_classes`` is a LongTensor on
-    ``device``. Baseline is zeros. Per-SNP attribution is the L1 sum over the
-    four genotype channels.
+    ``device``. The IG reference is the zero vector unless ``baseline`` is
+    given: a tensor in the four-channel one-hot space (shape ``(M, 4)`` or
+    broadcastable) used as an explicit, valid genotype reference. Per-SNP
+    attribution is the L1 sum over the four genotype channels.
     """
     N, M = X_snps.shape
     ig_all = np.zeros((N, M), dtype=np.float32)
@@ -283,12 +306,12 @@ def compute_centroid_ig_batched(model, X_snps, target_classes, device,
 
         with torch.no_grad():
             x_oh_b = GeneticAugmentation.one_hot_encode(x_batch).float()
-        baseline = torch.zeros_like(x_oh_b)
-        diff = x_oh_b - baseline
+        base = _resolve_baseline(baseline, 0.0, x_oh_b, device)
+        diff = x_oh_b - base
 
         grads_list = []
         for alpha in alphas:
-            interp = (baseline + alpha * diff).requires_grad_(True)
+            interp = (base + alpha * diff).requires_grad_(True)
             c_batch = model.centroids[t_batch]  # (B, 3)
             z = model.encoder(interp)  # (B, 3)
             score = (z * c_batch).sum(dim=1).sum()

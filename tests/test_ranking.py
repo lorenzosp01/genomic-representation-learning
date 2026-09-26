@@ -22,6 +22,8 @@ from genomic.ranking import (
     compute_marker_ranking,
     rank_chi2_association,
     rank_contrastive_ig,
+    rank_contrastive_ig_mean,
+    rank_contrastive_ig_probe,
     rank_fst,
     rank_random_forest,
     rank_vmgp_shap,
@@ -254,6 +256,72 @@ def test_rank_contrastive_ig_output_contract():
     )
     _assert_ranking_contract(result, "contrastive_ig", 8)
     assert (result.scores >= 0.0).all()
+
+
+def test_ig_batched_explicit_zero_baseline_matches_default():
+    from contrastive_learning.attribution import (
+        EncoderWithProbeMLP,
+        compute_ig_batched,
+    )
+    from contrastive_learning.model import ContrastiveGeneticModel
+
+    X, y = _synthetic(n_samples=12, n_features=6, n_classes=2, seed=5)
+    torch.manual_seed(0)
+    model = ContrastiveGeneticModel(n_markers=6, embedding_dim=3)
+    probe = nn.Sequential(nn.Linear(3, 4), nn.ReLU(), nn.Linear(4, 2))
+    wrapper = EncoderWithProbeMLP(
+        model.encoder, np.zeros(3, dtype=np.float32), np.ones(3, dtype=np.float32),
+        probe,
+    )
+    target = torch.as_tensor(y, dtype=torch.long)
+    device = torch.device("cpu")
+    default = compute_ig_batched(wrapper, X, target, device, n_steps=2, batch_size=4)
+    explicit = compute_ig_batched(
+        wrapper, X, target, device, n_steps=2, batch_size=4,
+        baseline=torch.zeros(6, 4),
+    )
+    assert np.allclose(default, explicit)
+
+
+def test_rank_contrastive_ig_mean_output_contract():
+    from contrastive_learning.model import ContrastiveGeneticModel
+
+    X, y = _synthetic(n_samples=30, n_features=8, n_classes=3, seed=1)
+    torch.manual_seed(0)
+    model = ContrastiveGeneticModel(n_markers=8, embedding_dim=3)
+
+    result = rank_contrastive_ig_mean(
+        model, X, y, n_steps=3, batch_size=8, device="cpu"
+    )
+    _assert_ranking_contract(result, "contrastive_ig_mean", 8)
+    assert (result.scores >= 0.0).all()
+
+
+def test_rank_contrastive_ig_probe_output_contract():
+    from contrastive_learning.model import ContrastiveGeneticModel
+
+    X, y = _synthetic(n_samples=30, n_features=8, n_classes=3, seed=1)
+    torch.manual_seed(0)
+    model = ContrastiveGeneticModel(n_markers=8, embedding_dim=3)
+
+    result = rank_contrastive_ig_probe(
+        model, X, y, n_steps=3, batch_size=8, device="cpu", probe_epochs=3
+    )
+    _assert_ranking_contract(result, "contrastive_ig_probe", 8)
+    assert (result.scores >= 0.0).all()
+
+
+def test_dispatcher_routes_contrastive_ig_probe():
+    from contrastive_learning.model import ContrastiveGeneticModel
+
+    X, y = _synthetic(n_samples=30, n_features=8, n_classes=3, seed=1)
+    torch.manual_seed(0)
+    model = ContrastiveGeneticModel(n_markers=8, embedding_dim=3)
+    result = compute_marker_ranking(
+        "contrastive_ig_probe", X, y, model=model,
+        n_steps=2, batch_size=8, device="cpu", probe_epochs=2,
+    )
+    _assert_ranking_contract(result, "contrastive_ig_probe", 8)
 
 
 # ---------------------------------------------------------------------------

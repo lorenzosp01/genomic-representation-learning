@@ -39,6 +39,15 @@ D) Full-panel references for the alternative evaluators. The frozen
    and stored under ``results/rq4_extended/evaluator_full_panel/``. They
    allow retention and ``P_min`` to be recomputed per evaluator.
 
+E) Valid-baseline Integrated Gradients (extended). Recomputes the frozen
+   centroid-path IG on the configured device as a control, and compares it
+   with two extended variants that replace the out-of-distribution zero
+   baseline by the training-mean one-hot profile: the centroid path
+   (``contrastive_ig_mean``) and a supervised probe path
+   (``contrastive_ig_probe``). Panels are evaluated with the frozen Random
+   Forest protocol and the overlap with the cached rankings is measured.
+   Outputs go to ``results/rq4_extended/probe_ig/``.
+
 Rankings are loaded from the cached protocol-v2 RQ3 scores; every panel is
 built and evaluated on the fold partitions only. Checkpoints produced by
 this script are deleted after each run to avoid clutter.
@@ -49,6 +58,7 @@ Usage:
     uv run python scripts/run_rq4_extended.py --analysis b   # only B
     uv run python scripts/run_rq4_extended.py --analysis c   # only C
     uv run python scripts/run_rq4_extended.py --analysis d   # only D
+    uv run python scripts/run_rq4_extended.py --analysis e   # only E
     uv run python scripts/run_rq4_extended.py --analysis b --ks-b 200 --vae-epochs 2 --con-epochs 2   # smoke
 """
 
@@ -89,14 +99,16 @@ K_B = (200, 500, 2000)
 K_C = (50, 100, 200, 500, 1000, 2000, 5000)
 ASSOCIATION_METHOD = "chi2_association"
 GOAT_RQ3_SUMMARY = os.path.join("results", "rq3_marker_efficiency", "summary.json")
+PROBE_METHODS = ("contrastive_ig", "contrastive_ig_mean", "contrastive_ig_probe")
 
 RUN_FIELDS = ["analysis", "fold", "method", "K", "evaluator",
               "macro_f1", "balanced_accuracy", "accuracy", "runtime_s"]
 
 
-def _load_ranked(method: str, fold: int) -> np.ndarray:
-    scores_path = os.path.join(RANKS_DIR, f"{method}_fold{fold}_scores.npy")
-    meta_path = os.path.join(RANKS_DIR, f"{method}_fold{fold}_meta.json")
+def _load_ranked(method: str, fold: int,
+                 rankings_dir: str = RANKS_DIR) -> np.ndarray:
+    scores_path = os.path.join(rankings_dir, f"{method}_fold{fold}_scores.npy")
+    meta_path = os.path.join(rankings_dir, f"{method}_fold{fold}_meta.json")
     if not (os.path.exists(scores_path) and os.path.exists(meta_path)):
         raise FileNotFoundError(f"missing cached ranking {scores_path}")
     scores = np.load(scores_path)
@@ -144,14 +156,14 @@ def _record(analysis, fold, method, k, evaluator, metrics, runtime):
 # ---------------------------------------------------------------------------
 # A. Evaluator sensitivity (panels refit with classical classifiers)
 # ---------------------------------------------------------------------------
-def analysis_a(ed, folds, ks, logger=print):
+def analysis_a(ed, folds, ks, rankings_dir: str = RANKS_DIR, logger=print):
     labels = np.arange(ed.n_classes, dtype=np.int64)
     clfs = _classifiers()
     records = []
     for k in folds:
         fd = ed.fold_data(k)
         logger(f"[A] fold {k}: train={fd.X_train.shape[0]} val={fd.X_val.shape[0]}")
-        rankings = {m: _load_ranked(m, k) for m in METHODS}
+        rankings = {m: _load_ranked(m, k, rankings_dir) for m in METHODS}
         for method in METHODS:
             for panel_k in ks:
                 idx = rankings[method][:panel_k]
@@ -348,7 +360,8 @@ def analysis_b(ed, folds, ks, *, accelerator=None, vae_epochs=200,
 # C. Extended classical association baseline (chi-square) under the frozen
 #    Random Forest downstream protocol
 # ---------------------------------------------------------------------------
-def analysis_c(ed, folds, ks, out_subdir, logger=print):
+def analysis_c(ed, folds, ks, out_subdir, rankings_dir: str = RANKS_DIR,
+               reference_summary: str = GOAT_RQ3_SUMMARY, logger=print):
     """Chi-square association ranking evaluated with the frozen RF protocol.
 
     The ranking is computed from ``(X_train, y_train)`` only; panels are
@@ -389,7 +402,7 @@ def analysis_c(ed, folds, ks, out_subdir, logger=print):
                    f"MacroF1={metrics['macro_f1']:.4f}")
 
     aggregates = _aggregate(records)
-    with open(GOAT_RQ3_SUMMARY) as f:
+    with open(reference_summary) as f:
         frozen_summary = json.load(f)
     s_full = float(frozen_summary["s_full"]["macro_f1_mean"])
     n_markers = float(np.mean(frozen_summary["s_full"]["n_markers"]))
@@ -410,7 +423,7 @@ def analysis_c(ed, folds, ks, out_subdir, logger=print):
             vals = []
             for k in folds:
                 other_scores = np.load(
-                    os.path.join(RANKS_DIR, f"{method}_fold{k}_scores.npy")
+                    os.path.join(rankings_dir, f"{method}_fold{k}_scores.npy")
                 )
                 other = np.argsort(-other_scores, kind="stable")
                 a = set(ranked_by_fold[int(k)][:panel_k].tolist())
@@ -528,6 +541,180 @@ def analysis_d(ed, folds, out_subdir, logger=print):
 
 
 # ---------------------------------------------------------------------------
+# E. Valid-baseline Integrated Gradients (extended attributions)
+# ---------------------------------------------------------------------------
+def _frozen_contrastive_checkpoint(rankings_dir: str, fold: int) -> str:
+    """Checkpoint used by the cached frozen ``contrastive_ig`` ranking."""
+    meta_path = os.path.join(rankings_dir, f"contrastive_ig_fold{fold}_meta.json")
+    if os.path.exists(meta_path):
+        with open(meta_path) as f:
+            meta = json.load(f)
+        ckpt = meta.get("checkpoint")
+        if ckpt and os.path.exists(ckpt):
+            return ckpt
+    matches = sorted(glob.glob(
+        f"checkpoints/rq1_fold{fold}/fold_{fold + 1}/epoch=*.ckpt"))
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"fold {fold}: cannot locate the frozen contrastive checkpoint "
+            f"(meta={meta_path}, glob matches={matches})"
+        )
+    return matches[0]
+
+
+def analysis_e(ed, folds, ks, out_subdir, *, rankings_dir: str = RANKS_DIR,
+               reference_summary: str = GOAT_RQ3_SUMMARY,
+               ig_steps: int = 50, ig_epochs: int = 300,
+               device: str | None = None, logger=print):
+    """Valid-baseline IG: centroid-mean and probe-path vs the frozen IG.
+
+    Runs three attributions per fold on the frozen fold checkpoint:
+    ``contrastive_ig`` (device control, recomputed), ``contrastive_ig_mean``
+    (centroid path with the training-mean one-hot baseline) and
+    ``contrastive_ig_probe`` (supervised probe path, same baseline). Every
+    ranking is evaluated with the frozen Random Forest protocol; the summary
+    stores $P_{\\min}$, the overlap with the cached frozen rankings and the
+    device-control consistency check.
+    """
+    import torch
+
+    from contrastive_learning.model import ContrastiveGeneticModel
+    from genomic.panel_evaluation import (
+        evaluate_panel,
+        minimum_panel_size,
+        retention_threshold,
+    )
+    from genomic.ranking import compute_marker_ranking
+
+    if device is None:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    labels = np.arange(ed.n_classes, dtype=np.int64)
+    records = []
+    ranked_by_fold = {}
+    for k in folds:
+        fd = ed.fold_data(k)
+        ckpt = _frozen_contrastive_checkpoint(rankings_dir, k)
+        logger(f"[E] fold {k}: checkpoint {ckpt}")
+        model = ContrastiveGeneticModel.load_from_checkpoint(
+            ckpt, map_location="cpu")
+        for method in PROBE_METHODS:
+            kwargs = {"n_steps": ig_steps, "batch_size": 32, "device": device}
+            if method == "contrastive_ig_probe":
+                kwargs["probe_epochs"] = ig_epochs
+            t0 = time.time()
+            result = compute_marker_ranking(
+                method, fd.X_train, fd.y_train, model=model, **kwargs)
+            ranked = result.ranked_indices
+            ranked_by_fold.setdefault(method, {})[int(k)] = ranked
+            logger(f"  {method} ranking in {time.time() - t0:.1f}s")
+            for panel_k in ks:
+                t0 = time.time()
+                metrics = evaluate_panel(
+                    fd.X_train, fd.y_train, fd.X_val, fd.y_val,
+                    ranked[:panel_k], n_classes=ed.n_classes,
+                )
+                records.append(_record("E_probe_ig", k, method, panel_k, "rf",
+                                       metrics, time.time() - t0))
+                logger(f"    {method:24s} K={panel_k:5d} "
+                       f"MacroF1={metrics['macro_f1']:.4f}")
+        del model
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    aggregates = _aggregate(records)
+    with open(reference_summary) as f:
+        frozen_summary = json.load(f)
+    s_full = float(frozen_summary["s_full"]["macro_f1_mean"])
+    n_markers = float(np.mean(frozen_summary["s_full"]["n_markers"]))
+    k_grid = sorted(int(k) for k in ks)
+    p_min = {
+        m: {f"{eps:g}": minimum_panel_size(
+                m, aggregates, s_full, epsilon=eps, k_grid=k_grid)
+            for eps in (0.02, 0.05)}
+        for m in PROBE_METHODS
+    }
+    thresholds = {
+        f"{eps:g}": retention_threshold(s_full, eps) for eps in (0.02, 0.05)
+    }
+
+    def _jaccard_sets(a_idx, b_idx, panel_k):
+        a = set(a_idx[:panel_k].tolist())
+        b = set(b_idx[:panel_k].tolist())
+        union = a | b
+        return len(a & b) / len(union) if union else 0.0
+
+    jaccard_frozen = {}
+    for panel_k in (50, 200, 500):
+        row = {}
+        for m in PROBE_METHODS:
+            for other in METHODS:
+                vals = []
+                for k in folds:
+                    other_scores = np.load(os.path.join(
+                        rankings_dir, f"{other}_fold{k}_scores.npy"))
+                    other_ranked = np.argsort(-other_scores, kind="stable")
+                    vals.append(_jaccard_sets(
+                        ranked_by_fold[m][int(k)], other_ranked, panel_k))
+                row[f"{m}_vs_{other}"] = 100.0 * float(np.mean(vals))
+        jaccard_frozen[f"K={panel_k}"] = row
+    consistency = {}
+    for panel_k in (50, 200, 500):
+        vals = []
+        for k in folds:
+            other_scores = np.load(os.path.join(
+                rankings_dir, f"contrastive_ig_fold{k}_scores.npy"))
+            cached = np.argsort(-other_scores, kind="stable")
+            vals.append(_jaccard_sets(
+                ranked_by_fold["contrastive_ig"][int(k)], cached, panel_k))
+        consistency[f"K={panel_k}"] = 100.0 * float(np.mean(vals))
+    mutual = {}
+    for panel_k in (50, 200, 500):
+        vals = []
+        for k in folds:
+            vals.append(_jaccard_sets(
+                ranked_by_fold["contrastive_ig_mean"][int(k)],
+                ranked_by_fold["contrastive_ig_probe"][int(k)], panel_k))
+        mutual[f"K={panel_k}"] = 100.0 * float(np.mean(vals))
+    chance = {
+        f"K={kk}": 100.0 * kk / (2.0 * n_markers - kk)
+        for kk in (50, 200, 500)
+    }
+
+    os.makedirs(out_subdir, exist_ok=True)
+    _write_csv_atomic(records, os.path.join(out_subdir, "run_metrics.csv"),
+                      RUN_FIELDS)
+    agg_fields = list(aggregates[0].keys()) if aggregates else []
+    _write_csv_atomic(aggregates,
+                      os.path.join(out_subdir, "aggregate_metrics.csv"),
+                      agg_fields)
+    save_json_atomic({
+        "experiment": "rq4_extended_valid_baseline_ig",
+        "methods": list(PROBE_METHODS),
+        "ig_steps": int(ig_steps),
+        "probe_epochs": int(ig_epochs),
+        "device": str(device),
+        "folds": [int(k) for k in folds],
+        "panel_sizes": k_grid,
+        "s_full": s_full,
+        "retention_thresholds": thresholds,
+        "p_min": p_min,
+        "jaccard_vs_frozen_mean_over_folds_pct": jaccard_frozen,
+        "device_control_recomputed_vs_cached_pct": consistency,
+        "mutual_mean_vs_probe_pct": mutual,
+        "chance_jaccard_pct": chance,
+        "locked_test_accessed": False,
+    }, os.path.join(out_subdir, "summary.json"))
+    logger(f"[E] p_min: {p_min}")
+    for label, row in jaccard_frozen.items():
+        logger(f"[E] {label}: " + ", ".join(f"{k}={v:.1f}%" for k, v in row.items()))
+    logger(f"[E] device control (recomputed vs cached): "
+           + ", ".join(f"{k}={v:.1f}%" for k, v in consistency.items()))
+    logger(f"[E] mutual mean vs probe: "
+           + ", ".join(f"{k}={v:.1f}%" for k, v in mutual.items()))
+    return records
+
+
+# ---------------------------------------------------------------------------
 # Aggregation / persistence
 # ---------------------------------------------------------------------------
 def _aggregate(records, group_keys=("analysis", "evaluator", "method", "K")):
@@ -561,31 +748,53 @@ def _write_csv_atomic(rows, path, fieldnames):
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--analysis", choices=["a", "b", "c", "d", "all"], default="all")
+    parser.add_argument("--analysis", choices=["a", "b", "c", "d", "e", "all"],
+                        default="all")
     parser.add_argument("--folds", type=int, nargs="+", default=[0, 1, 2])
     parser.add_argument("--ks-a", type=int, nargs="+", default=list(K_A))
     parser.add_argument("--ks-b", type=int, nargs="+", default=list(K_B))
     parser.add_argument("--ks-c", type=int, nargs="+", default=list(K_C))
+    parser.add_argument("--ks-e", type=int, nargs="+", default=list(K_C))
     parser.add_argument("--vae-epochs", type=int, default=200)
     parser.add_argument("--con-epochs", type=int, default=5000)
+    parser.add_argument("--ig-steps", type=int, default=50)
+    parser.add_argument("--ig-epochs", type=int, default=300)
     parser.add_argument("--device", default=None,
                         help="accelerator for the retraining ('gpu'/'cpu')")
     parser.add_argument("--out-dir", default=OUT_DIR)
+    parser.add_argument("--dataset-id", default=DATASET_ID)
+    parser.add_argument("--fam", default=FAM_PATH)
+    parser.add_argument("--bed", default=BED_PATH)
+    parser.add_argument("--bim", default=BIM_PATH)
+    parser.add_argument("--splits-dir", default=SPLITS_DIR)
+    parser.add_argument("--cohort-label", default=COHORT_LABEL)
+    parser.add_argument("--rankings-dir", default=RANKS_DIR)
+    parser.add_argument("--reference-summary", default=GOAT_RQ3_SUMMARY)
     args = parser.parse_args(argv)
 
-    split = load_split(DATASET_ID, 42, 42, FAM_PATH, out_dir=SPLITS_DIR,
-                       cohort_label=COHORT_LABEL)
-    ed = GenomicExperimentData.from_plink(split, BED_PATH, bim_path=BIM_PATH)
+    is_primary = args.dataset_id == DATASET_ID
+    if args.analysis == "b" and not is_primary:
+        raise SystemExit("analysis B (native retraining) is caprine-only: it "
+                         "uses the frozen caprine fold checkpoints.")
+    run_b = args.analysis in ("b", "all") and is_primary
+    if args.analysis == "all" and not is_primary:
+        print("[info] skipping analysis B (caprine-only) for this cohort.")
+
+    split = load_split(args.dataset_id, 42, 42, args.fam,
+                       out_dir=args.splits_dir, cohort_label=args.cohort_label)
+    ed = GenomicExperimentData.from_plink(split, args.bed, bim_path=args.bim)
     print(f"cohort: {ed.n_samples} rows, {ed.n_classes} breeds, "
           f"folds={args.folds}")
 
     ks_a = tuple(int(k) for k in args.ks_a)
     ks_b = tuple(int(k) for k in args.ks_b)
     ks_c = tuple(int(k) for k in args.ks_c)
+    ks_e = tuple(int(k) for k in args.ks_e)
     records = []
     if args.analysis in ("a", "all"):
-        records.extend(analysis_a(ed, args.folds, ks_a))
-    if args.analysis in ("b", "all"):
+        records.extend(analysis_a(ed, args.folds, ks_a,
+                                  rankings_dir=args.rankings_dir))
+    if run_b:
         records.extend(analysis_b(
             ed, args.folds, ks_b,
             accelerator=args.device,
@@ -593,13 +802,22 @@ def main(argv=None) -> int:
         ))
     if args.analysis in ("c", "all"):
         analysis_c(ed, args.folds, ks_c,
-                   os.path.join(args.out_dir, "association"))
+                   os.path.join(args.out_dir, "association"),
+                   rankings_dir=args.rankings_dir,
+                   reference_summary=args.reference_summary)
     if args.analysis in ("d", "all"):
         analysis_d(ed, args.folds,
                    os.path.join(args.out_dir, "evaluator_full_panel"))
+    if args.analysis in ("e", "all"):
+        analysis_e(ed, args.folds, ks_e,
+                   os.path.join(args.out_dir, "probe_ig"),
+                   rankings_dir=args.rankings_dir,
+                   reference_summary=args.reference_summary,
+                   ig_steps=args.ig_steps, ig_epochs=args.ig_epochs,
+                   device=args.device)
 
     if not records:
-        print("No A/B records produced; analyses C/D outputs (if requested) "
+        print("No A/B records produced; analyses C/D/E outputs (if requested) "
               f"are under {args.out_dir}.")
         return 0
 

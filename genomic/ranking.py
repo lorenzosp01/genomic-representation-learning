@@ -46,7 +46,11 @@ RANKING_METHODS: Tuple[str, ...] = (
 )
 
 #: extended (non-frozen) baselines evaluated under the same train-only rules
-EXTENDED_RANKING_METHODS: Tuple[str, ...] = ("chi2_association",)
+EXTENDED_RANKING_METHODS: Tuple[str, ...] = (
+    "chi2_association",
+    "contrastive_ig_mean",
+    "contrastive_ig_probe",
+)
 
 
 @dataclass
@@ -106,6 +110,29 @@ def _make_result(method: str, scores: np.ndarray) -> MarkerRankingResult:
     return MarkerRankingResult(
         method=method, scores=scores, ranked_indices=ranked_indices
     )
+
+
+def _check_contrastive_training(X_train: np.ndarray, y_train: np.ndarray):
+    """Validate train-only inputs for the contrastive attribution methods."""
+    X, y = _check_training_arrays(X_train, y_train)
+    y = np.asarray(y)
+    if not np.issubdtype(y.dtype, np.integer):
+        raise ValueError("y_train must contain integer breed labels.")
+    if y.size and y.min() < 0:
+        raise ValueError("y_train contains negative breed labels.")
+    n_classes = int(y.max()) + 1 if y.size else 0
+    return X, y, n_classes
+
+
+def _mean_one_hot_baseline(X: np.ndarray):
+    """Training-mean one-hot profile used as a valid IG reference ``(M, 4)``."""
+    import torch
+
+    from contrastive_learning.augmentation import GeneticAugmentation
+
+    with torch.no_grad():
+        x = torch.as_tensor(np.asarray(X), dtype=torch.float32)
+        return GeneticAugmentation.one_hot_encode(x).float().mean(dim=0)
 
 
 def _stratified_sample_indices(
@@ -336,13 +363,7 @@ def rank_contrastive_ig(
     if batch_size < 1:
         raise ValueError("batch_size must be >= 1.")
 
-    X, y = _check_training_arrays(X_train, y_train)
-    y = np.asarray(y)
-    if not np.issubdtype(y.dtype, np.integer):
-        raise ValueError("y_train must contain integer breed labels.")
-    if y.size and y.min() < 0:
-        raise ValueError("y_train contains negative breed labels.")
-    n_classes = int(y.max()) + 1 if y.size else 0
+    X, y, n_classes = _check_contrastive_training(X_train, y_train)
 
     dev = torch.device(device)
     model = model.to(dev)
@@ -367,10 +388,136 @@ def rank_contrastive_ig(
     return _make_result("contrastive_ig", scores)
 
 
+def rank_contrastive_ig_mean(
+    model,
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    n_steps: int = 50,
+    batch_size: int = 32,
+    device: str = "cpu",
+) -> MarkerRankingResult:
+    """Centroid-path IG with a valid (training-mean) baseline (extended).
+
+    Same centroid-path attribution as :func:`rank_contrastive_ig`, but the IG
+    reference is the mean one-hot profile of the fold's training partition
+    instead of the zero vector, which does not correspond to any genotype
+    configuration. The comparison isolates the effect of the baseline on the
+    ranking, since the embedding, the centroids and the aggregation are
+    identical.
+    """
+    import torch
+
+    from contrastive_learning.attribution import (
+        EncoderToCentroid,
+        aggregate_attributions,
+        compute_breed_centroids,
+        compute_centroid_ig_batched,
+    )
+    from contrastive_learning.evaluation import extract_embeddings
+
+    if n_steps < 1:
+        raise ValueError("n_steps must be >= 1.")
+    if batch_size < 1:
+        raise ValueError("batch_size must be >= 1.")
+
+    X, y, n_classes = _check_contrastive_training(X_train, y_train)
+
+    dev = torch.device(device)
+    model = model.to(dev)
+    model.eval()
+
+    embeddings = extract_embeddings(model, X)
+    centroids = compute_breed_centroids(embeddings, y, n_classes)
+    wrapper = EncoderToCentroid(
+        model.encoder, torch.as_tensor(centroids, dtype=torch.float32)
+    ).to(dev)
+
+    baseline = _mean_one_hot_baseline(X)
+    target_classes = torch.as_tensor(y, dtype=torch.long, device=dev)
+    ig_all = compute_centroid_ig_batched(
+        wrapper,
+        X,
+        target_classes,
+        dev,
+        n_steps=n_steps,
+        batch_size=batch_size,
+        baseline=baseline,
+    )
+    scores, _ = aggregate_attributions(ig_all, y, n_classes)
+    return _make_result("contrastive_ig_mean", scores)
+
+
+def rank_contrastive_ig_probe(
+    model,
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    n_steps: int = 50,
+    batch_size: int = 32,
+    device: str = "cpu",
+    probe_epochs: int = 300,
+    random_state: int = 42,
+) -> MarkerRankingResult:
+    """Probe-path IG with a valid (training-mean) baseline (extended).
+
+    A supervised MLP probe is trained on the fold's training embeddings with a
+    deterministic internal split (``random_state``), the IG reference is the
+    mean one-hot training profile, and per-SNP scores are aggregated per-breed
+    with equal weight (as in :func:`rank_contrastive_ig`). This combines a
+    supervised read-out of the embedding space with a reference that
+    corresponds to a plausible genotype profile.
+    """
+    import torch
+
+    from contrastive_learning.attribution import (
+        EncoderWithProbeMLP,
+        aggregate_attributions,
+        compute_ig_batched,
+        train_probe_mlp,
+    )
+    from contrastive_learning.evaluation import extract_embeddings
+
+    if n_steps < 1:
+        raise ValueError("n_steps must be >= 1.")
+    if batch_size < 1:
+        raise ValueError("batch_size must be >= 1.")
+    if probe_epochs < 1:
+        raise ValueError("probe_epochs must be >= 1.")
+
+    X, y, n_classes = _check_contrastive_training(X_train, y_train)
+
+    dev = torch.device(device)
+    torch.manual_seed(int(random_state))
+    model = model.to(dev)
+    model.eval()
+
+    embeddings = extract_embeddings(model, X)
+    probe, scaler, _ = train_probe_mlp(
+        embeddings, y, n_classes, dev, epochs=int(probe_epochs)
+    )
+    wrapper = EncoderWithProbeMLP(
+        model.encoder, scaler.mean_, scaler.scale_, probe
+    ).to(dev)
+
+    baseline = _mean_one_hot_baseline(X)
+    target_classes = torch.as_tensor(y, dtype=torch.long, device=dev)
+    ig_all = compute_ig_batched(
+        wrapper,
+        X,
+        target_classes,
+        dev,
+        n_steps=n_steps,
+        batch_size=batch_size,
+        baseline=baseline,
+    )
+    scores, _ = aggregate_attributions(ig_all, y, n_classes)
+    return _make_result("contrastive_ig_probe", scores)
+
+
 # ---------------------------------------------------------------------------
 # Dispatcher
 # ---------------------------------------------------------------------------
-_MODEL_METHODS = ("vmgp_shap", "contrastive_ig")
+_MODEL_METHODS = ("vmgp_shap", "contrastive_ig", "contrastive_ig_mean",
+                  "contrastive_ig_probe")
 
 _DISPATCH: Dict[str, object] = {
     "fst": rank_fst,
@@ -378,6 +525,8 @@ _DISPATCH: Dict[str, object] = {
     "chi2_association": rank_chi2_association,
     "vmgp_shap": rank_vmgp_shap,
     "contrastive_ig": rank_contrastive_ig,
+    "contrastive_ig_mean": rank_contrastive_ig_mean,
+    "contrastive_ig_probe": rank_contrastive_ig_probe,
 }
 
 
