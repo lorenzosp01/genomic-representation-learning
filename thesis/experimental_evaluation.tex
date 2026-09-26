@@ -546,10 +546,11 @@ proposed there --- in particular the possibility that the Random Forest
 importance ranking benefits from the same inductive bias as the
 evaluator --- predicts that the ordering of the families could change
 under a different downstream model. This section tests that prediction
-with three train-only analyses on the primary caprine cohort: an
+with four train-only analyses on the primary caprine cohort: an
 evaluator-sensitivity study, a model-native evaluation in which the
-explained architecture is retrained on the panel, and an extended
-classical baseline. All analyses reuse the frozen folds and the cached
+explained architecture is retrained on the panel, an extended
+classical baseline, and a valid-baseline study of the contrastive
+attributions. All analyses reuse the frozen folds and the cached
 protocol-v2 rankings; no locked-test record is read, and every model is
 fitted on the fold training partition only.
 
@@ -644,14 +645,60 @@ it reinforces the identity-level conclusion of
 Section~\ref{sec:marker_ranking_comparison}: the neural and the
 classical rankings select largely disjoint marker sets.
 
+\paragraph{Valid-baseline Integrated Gradients.}
+The mechanistic discussion of
+Section~\ref{sec:marker_ranking_comparison} suggested that the weakness
+of the contrastive attribution could be an artefact of its reference:
+the zero vector of the four-channel one-hot space does not correspond to
+any genotype. The hypothesis is testable directly. Recomputing the
+centroid-path IG with the settings of the frozen protocol reproduces
+the cached ranking exactly in its top $500$ markers (Jaccard $100\%$ at
+$K=50$, $200$ and $500$) but drifts beyond that depth, so the tail of
+the ranking is itself unstable and the recomputed control reaches the
+$5\%$ tolerance at $K=1000$ against $2000$ for the cached run. Two
+extended variants are then compared under the identical recomputed
+protocol: a centroid-path IG whose baseline is the mean one-hot profile
+of the training partition --- a valid genotype reference inside the data
+distribution --- and a probe-path IG that attributes the output of a
+supervised MLP probe trained on the training embeddings, again from the
+mean baseline. As shown in Figure~\ref{fig:rq4_valid_baseline_ig},
+neither variant restores competitiveness: at the $5\%$ tolerance the
+zero-baseline control qualifies at $K=1000$ while the valid baseline and
+the probe path require $2000$; at the $2\%$ tolerance only the control
+qualifies ($K=5000$), with the probe missing the threshold by $0.0001$
+at that size. The two variants overlap each other by about $30\%$ and
+remain almost disjoint from the frozen rankings (at most $1.8\%$
+against a chance level of $0.54\%$ at $K=500$). The
+out-of-distribution-baseline explanation is therefore not supported by
+the data: under the frozen evaluator the contrastive attributions remain
+the weakest learned selector even with a valid reference and a
+supervised read-out, and their ranking is unstable in the tail.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{fig_rq4_valid_baseline_ig}
+  \caption{Valid-baseline Integrated Gradients under the frozen Random
+  Forest evaluator. Left: mean Macro-F1 over the three development
+  folds for the recomputed zero-baseline control and the two extended
+  variants, with the frozen $F_{ST}$ and SHAP curves as references and
+  the full-panel line (dotted); right: mean-over-folds Jaccard overlap
+  with the frozen rankings at $K=500$ (chance $0.54\%$). Neither a valid
+  baseline nor a supervised probe read-out improves the contrastive
+  attribution.}
+  \label{fig:rq4_valid_baseline_ig}
+\end{figure}
+
 \paragraph{Synthesis.}
-Taken together, the three analyses qualify the answer to RQ4 rather
+Taken together, the analyses above qualify the answer to RQ4 rather
 than overturning it. Under the frozen protocol --- a Random Forest
 downstream evaluator and transferability as the criterion --- classical
 univariate rankings are the most marker-efficient; the chi-square
 association test is the strongest of them, and the neural attributions
 are not competitive, with Integrated Gradients consistently the weakest
-learned attribution. Under a different deployment model the picture
+learned attribution; for Integrated Gradients neither a valid
+training-mean baseline nor a supervised probe read-out restores
+competitiveness, which rules out the out-of-distribution baseline as
+the main explanation. Under a different deployment model the picture
 inverts for SHAP: when the panels are scored by logistic regression, a
 linear SVM or gradient boosting, or when the explained model itself is
 retrained on the panel, SHAP-selected panels are the most

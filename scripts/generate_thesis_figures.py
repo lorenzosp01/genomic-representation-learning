@@ -716,6 +716,81 @@ def fig_rq4_native_retraining():
 
 
 # ---------------------------------------------------------------------------
+# 12. RQ4 robustness: valid-baseline Integrated Gradients
+# ---------------------------------------------------------------------------
+def fig_rq4_valid_baseline_ig():
+    agg_path = os.path.join(RESULTS, "rq4_extended", "probe_ig",
+                            "aggregate_metrics.csv")
+    summary_path = os.path.join(RESULTS, "rq4_extended", "probe_ig",
+                                "summary.json")
+    ref_path = os.path.join(RESULTS, "rq4_extended", "evaluator_full_panel",
+                            "summary.json")
+    if not (os.path.exists(agg_path) and os.path.exists(summary_path)
+            and os.path.exists(ref_path)):
+        warn("missing probe-IG artifacts; skipping fig_rq4_valid_baseline_ig")
+        return
+    rows = _load_aggregates_csv(agg_path)
+    frozen = _load_aggregates_csv(
+        os.path.join(RESULTS, "rq3_marker_efficiency", "aggregate_metrics.csv"))
+    s_full = load_json(ref_path)["evaluators"]["rf"]["macro_f1_mean"]
+
+    fig, (ax, ax2) = plt.subplots(1, 2, figsize=(12.8, 4.6))
+
+    variants = [
+        ("contrastive_ig", "IG zero baseline (control)", "#d62728", "-"),
+        ("contrastive_ig_mean", "IG valid baseline", "#9467bd", "--"),
+        ("contrastive_ig_probe", "IG probe path, valid baseline", "#8c564b", "-."),
+    ]
+    for method, label, color, style in variants:
+        K, mean, std = _series(rows, method)
+        if not len(K):
+            continue
+        ax.errorbar(K, mean, yerr=std, fmt="o", linestyle=style, color=color,
+                    capsize=2.5, linewidth=1.8, markersize=4.5, label=label)
+    for ref in ("fst", "vmgp_shap"):
+        K, mean, _ = _series(frozen, ref)
+        if len(K):
+            ax.plot(K, mean, linestyle="--", color=METHOD_COLORS[ref],
+                    linewidth=1.3,
+                    label=f"{METHOD_LABELS[ref]} (frozen reference)")
+    ax.axhline(s_full, color="black", linestyle=":", linewidth=1.2)
+    ax.set_xscale("log")
+    ax.set_xticks(sorted({r["K"] for r in rows}))
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    ax.set_xlabel("Panel size $K$ (SNPs)")
+    ax.set_ylabel("Macro-F1")
+    ax.legend(loc="lower right", fontsize=7)
+
+    s = load_json(summary_path)
+    targets = [("contrastive_ig", "frozen IG"), ("fst", "$F_{ST}$"),
+               ("random_forest", "Rand. Forest"), ("vmgp_shap", "VMGP SHAP")]
+    x = np.arange(len(targets))
+    width = 0.38
+    row = s["jaccard_vs_frozen_mean_over_folds_pct"]["K=500"]
+    for off, (variant, label, color) in zip(
+        (-width / 2, width / 2),
+        (("contrastive_ig_mean", "valid baseline", "#9467bd"),
+         ("contrastive_ig_probe", "probe path", "#8c564b")),
+    ):
+        vals = [row.get(f"{variant}_vs_{target}", 0.0) for target, _ in targets]
+        ax2.bar(x + off, vals, width, color=color, label=label)
+    chance = s["chance_jaccard_pct"]["K=500"]
+    ax2.axhline(chance, color="grey", linestyle=":", linewidth=1.2)
+    ax2.annotate(f"chance {chance:.2f}%", xy=(len(targets) - 1, chance),
+                 xytext=(len(targets) - 1.35, chance + 0.8), fontsize=7,
+                 color="dimgrey")
+    ax2.set_xticks(x)
+    ax2.set_xticklabels([lbl for _, lbl in targets])
+    ax2.set_ylabel("Jaccard overlap at $K=500$ (%)")
+    ax2.legend(loc="upper right", fontsize=7.5)
+
+    fig.suptitle("Valid-baseline Integrated Gradients under the frozen "
+                 "Random Forest evaluator", y=1.0)
+    fig.tight_layout()
+    save(fig, "fig_rq4_valid_baseline_ig")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 FIGURES = [
@@ -728,6 +803,7 @@ FIGURES = [
     fig_rq4_jaccard,
     fig_rq4_evaluator_sensitivity,
     fig_rq4_native_retraining,
+    fig_rq4_valid_baseline_ig,
     fig_cross_species_rq1,
     fig_cross_species_panels,
 ]

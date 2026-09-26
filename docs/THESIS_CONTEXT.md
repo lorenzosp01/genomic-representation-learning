@@ -76,8 +76,9 @@ contrastive Integrated Gradients. Non-frozen robustness extensions are
 additionally reported for the caprine cohort under the same train-only rules:
 alternative downstream evaluators (logistic regression, linear SVM, gradient
 boosting), a native re-evaluation that retrains the explained model on the
-panel, and a chi-square genotype x breed association baseline. These
-extensions do not modify the pre-registered comparison.
+panel, a chi-square genotype x breed association baseline, and valid-baseline
+Integrated Gradients variants (training-mean reference and supervised probe
+path). These extensions do not modify the pre-registered comparison.
 
 
 ## Genomic Terminology
