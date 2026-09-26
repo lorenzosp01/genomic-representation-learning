@@ -124,6 +124,12 @@ The locked-test scores must be treated as final descriptive results.
 They are not a second opportunity to select another latent dimension,
 change the epoch budget, or revise preprocessing.
 
+The locked test is reserved for this final model evaluation. The
+marker-efficiency, ranking-comparison and robustness analyses of this
+chapter are development-only by protocol: their panels and rankings are
+constructed and evaluated inside the development folds and are not
+confirmed on these individuals, nor on any external cohort.
+
 For the two final models, the preprocessor fitted on all development
 individuals retained $46{,}441$ markers. The epoch budgets derived from
 the median development best-checkpoint epoch were
@@ -578,21 +584,25 @@ Random Forest importance are the most marker-efficient
 ($P_{\min}=200$ at both tolerances), followed by SHAP ($500$) and
 Integrated Gradients ($2000$/$5000$). Under the three alternative
 evaluators the VMGP SHAP ranking becomes the most marker-efficient
-family: at $K=200$ it leads by $3.5$ points under logistic regression
+family. At $K=200$ it leads by $3.5$ points under logistic regression
 ($0.8971 \pm 0.0094$ versus $0.8625 \pm 0.0302$ for $F_{ST}$) and by
-$5.0$ points under the linear SVM ($0.8324$ versus $0.7819$); at
-$K=2000$ it is the best ranking under all three evaluators, and under
+$5.0$ points under the linear SVM ($0.8324$ versus $0.7819$), and at
+$K=2000$ it is the best ranking under all three evaluators; under
 gradient boosting the $F_{ST}$, Random Forest and SHAP rankings are
 indistinguishable at $K=200$ ($0.789$--$0.795$) while Integrated
-Gradients remains about $8$ points behind. The associated $P_{\min}$
-values move accordingly: SHAP reaches the $5\%$ tolerance with $500$
-markers under every alternative evaluator, and it is the only family
-that can do so with $500$ markers under the strict $2\%$ tolerance
-(logistic regression); under gradient boosting only SHAP and Random
-Forest importance qualify within the grid ($2000$), and under the
-linear SVM no family reaches the strict tolerance at all (SHAP misses
-it by $0.0004$ at $K=2000$). The ranking comparison is therefore
-evaluator-dependent: the classical advantage measured in
+Gradients remains about $8$ points behind. The refined panel grid
+sharpens the associated $P_{\min}$ values: SHAP reaches the $5\%$
+tolerance with $300$ markers under logistic regression (the other
+families need $500$) and with $500$ under the linear SVM, where the
+alternatives require $750$ ($F_{ST}$) or $2000$ (Random Forest
+importance and Integrated Gradients); under gradient boosting SHAP and
+Random Forest importance qualify at $500$ and $F_{ST}$ is marginally
+ahead at this tolerance ($300$). At the strict $2\%$ tolerance SHAP is
+the only family that qualifies under the linear SVM ($5000$), and it
+matches or beats every classical result under logistic regression
+($500$ against $1000$--$2000$) and gradient boosting ($2000$, as Random
+Forest importance, against $5000$ for $F_{ST}$). The ranking comparison
+is therefore evaluator-dependent: the classical advantage measured in
 Section~\ref{sec:marker_ranking_comparison} is specific to the frozen
 Random Forest, which shares its inductive bias with the Random Forest
 importance ranking.
@@ -749,7 +759,8 @@ the main explanation. Under a different deployment model the picture
 inverts for SHAP: when the panels are scored by logistic regression, a
 linear SVM or gradient boosting, or when the explained model itself is
 retrained on the panel, SHAP-selected panels are the most
-marker-efficient family. The practical implication is that a ranking
+marker-efficient family for the two linear evaluators and the joint-best
+at the strict tolerance under gradient boosting. The practical implication is that a ranking
 should be validated, and the marker panel chosen, against the
 classifier that will actually be deployed; universal transfer of a
 ranking across model families should not be assumed. The validation
@@ -770,9 +781,9 @@ frozen Random Forest evaluator and under the alternative downstream
 classifiers of the robustness analysis (caprine cohort). Cells report
 $P_{\min}$ for $\epsilon_P=0.05$ / $\epsilon_P=0.02$; ``---'' means
 that no grid value qualified. The alternative evaluators use
-$K\in\{50,200,500,2000\}$ and their own full-panel references (bottom
-row); the Random Forest column reproduces the frozen grid and
-Table~\ref{tab:rq4_pmin}.}
+$K\in\{50,100,200,300,500,750,1000,2000,5000\}$ and their own
+full-panel references (bottom row); the Random Forest column reproduces
+the frozen grid and Table~\ref{tab:rq4_pmin}.}
 \label{tab:rq4_evaluator_pmin}
 \small
 \setlength{\tabcolsep}{4pt}
@@ -780,10 +791,10 @@ Table~\ref{tab:rq4_pmin}.}
 \hline
 Method & RF (frozen) & Logistic reg. & Linear SVM & Grad. boosting \\
 \hline
-$F_{ST}$ & $200$/$200$ & $500$/$2000$ & $2000$/--- & $500$/--- \\
+$F_{ST}$ & $200$/$200$ & $500$/$1000$ & $750$/--- & $300$/$5000$ \\
 Random Forest & $200$/$200$ & $500$/$2000$ & $2000$/--- & $500$/$2000$ \\
-VMGP SHAP & $500$/$500$ & $500$/$500$ & $500$/--- & $500$/$2000$ \\
-Contrastive IG & $2000$/$5000$ & $500$/$2000$ & $2000$/--- & $2000$/--- \\
+VMGP SHAP & $500$/$500$ & $300$/$500$ & $500$/$5000$ & $500$/$2000$ \\
+Contrastive IG & $2000$/$5000$ & $500$/$1000$ & $2000$/--- & $2000$/--- \\
 \hline
 $S_{\mathrm{full}}$ & $0.7189$ & $0.9686$ & $0.9656$ & $0.8633$ \\
 \hline

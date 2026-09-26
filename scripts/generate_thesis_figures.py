@@ -636,6 +636,14 @@ def fig_rq4_evaluator_sensitivity():
     frozen = _load_aggregates_csv(frozen_path)
     alt = [r for r in _load_aggregates_csv(alt_path)
            if r["analysis"] == "A_evaluator"]
+    fine_path = os.path.join(RESULTS, "rq4_extended", "fine_grid",
+                             "aggregate_metrics.csv")
+    if os.path.exists(fine_path):
+        seen = {(r["evaluator"], r["method"], r["K"]) for r in alt}
+        fine = [r for r in _load_aggregates_csv(fine_path)
+                if r["analysis"] == "A_evaluator"
+                and (r["evaluator"], r["method"], r["K"]) not in seen]
+        alt = alt + fine
     refs = load_json(d_path)["evaluators"]
     panels = [
         ("rf", "Random Forest (frozen)", frozen),
@@ -655,8 +663,9 @@ def fig_rq4_evaluator_sensitivity():
         s_full = refs[ev]["macro_f1_mean"]
         ax.axhline(s_full, color="black", linestyle="--", linewidth=1.3)
         ax.set_xscale("log")
-        ax.set_xticks(sorted({r["K"] for r in rows}))
+        ax.set_xticks([50, 100, 200, 500, 1000, 2000, 5000])
         ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+        ax.minorticks_off()
         ax.set_xlabel("Panel size $K$ (SNPs)")
         ax.set_ylabel("Macro-F1")
         ax.set_title(f"{title}  ($S_\\mathrm{{full}}$ = {s_full:.4f})")
