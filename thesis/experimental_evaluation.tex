@@ -16,9 +16,9 @@ chapter then compares alternative ways of choosing those markers and
 finally considers whether the main methodological observations can be
 reproduced in an independent ovine domain.
 
-All numbers reported in this chapter come from frozen protocol-v2
-runs: development cross-validation over the three fixed folds, a
-single locked-test evaluation for the final models, and ranking or
+All numbers reported in this chapter come from runs of the frozen
+protocol: development cross-validation over the three fixed folds, a
+single held-out test evaluation for the final models, and ranking or
 panel experiments whose selection rules were fixed before the results
 were inspected.
 
@@ -27,12 +27,12 @@ were inspected.
 
 The first evaluation establishes the reference classification
 problem. Both representation-learning approaches receive the same
-ADAPTmap cohort, the same development folds, and the same fold-specific
+ADAPTmap cohort, the same cross-validation folds, and the same fold-specific
 train-fitted preprocessing. The difference begins only after the
 shared genomic matrix has been constructed.
 
 For the variational approach, development includes the comparison of
-the predefined latent dimensions. The configuration is selected
+the pre-specified latent dimensions. The configuration is selected
 according to mean Macro-F1 across all three folds, with Balanced
 Accuracy and Accuracy used only as tie-breakers.
 
@@ -60,12 +60,12 @@ labels.
 \centering
 \caption{Breed-classification performance of the two learned genomic
 representations. Cross-validation results are reported as mean
-$\pm$ standard deviation across the three development folds, while
-the locked-test results correspond to the final models trained on the
+$\pm$ standard deviation across the three cross-validation folds, while
+the held-out test results correspond to the final models trained on the
 complete development set. The Random Forest row is the classical
 full-panel baseline computed on the same folds; it is reused as
 $S_{\mathrm{full}}$ in the marker-efficiency experiment and was not
-evaluated on the locked test.}
+evaluated on the held-out test.}
 \label{tab:rq1_final_comparison}
 \begin{tabular}{lccc}
 \hline
@@ -86,12 +86,12 @@ Random Forest, development CV
 & $0.7151 \pm 0.0022$
 & $0.8338 \pm 0.0022$ \\
 
-VMGP, locked test
+VMGP, held-out test
 & $\mathbf{0.9703}$
 & $\mathbf{0.9716}$
 & $\mathbf{0.9765}$ \\
 
-Contrastive, locked test
+Contrastive, held-out test
 & $0.9496$
 & $0.9574$
 & $0.9671$ \\
@@ -99,11 +99,11 @@ Contrastive, locked test
 \end{tabular}
 \end{table}
 
-\subsection{Final Evaluation on the Locked Test Set}
+\subsection{Final Evaluation on the Held-Out Test Set}
 \label{sec:locked_test_evaluation}
 
 Cross-validation answers a development question: which configuration
-should be carried forward? The locked test has a different purpose.
+should be carried forward? The held-out test set has a different purpose.
 It estimates how the already fixed models behave on individuals that
 were not used for preprocessing design, model selection, early
 stopping, or hyperparameter decisions.
@@ -111,23 +111,23 @@ stopping, or hyperparameter decisions.
 For final training, a new preprocessor is fitted on all development
 individuals. Each selected model is then trained for the fixed
 $E_{\mathrm{final}}$ determined from the median best checkpoint epoch
-across development folds. Only after both requested final models have
-finished training is the locked test transformed with the frozen
+across cross-validation folds. Only after both requested final models have
+finished training is the held-out test transformed with the frozen
 development preprocessor.
 
 For the variational model, breed logits are evaluated directly. For
 the contrastive model, deterministic development embeddings are used
-to fit the final $k=3$ nearest-neighbor classifier and the locked test
+to fit the final $k=3$ nearest-neighbor classifier and the held-out test
 embeddings are then classified once.
 
-The locked-test scores must be treated as final descriptive results.
+The held-out test scores must be treated as final descriptive results.
 They are not a second opportunity to select another latent dimension,
 change the epoch budget, or revise preprocessing.
 
-The locked test is reserved for this final model evaluation. The
+The held-out test set is reserved for this final model evaluation. The
 marker-efficiency, ranking-comparison and robustness analyses of this
 chapter are development-only by protocol: their panels and rankings are
-constructed and evaluated inside the development folds and are not
+constructed and evaluated inside the cross-validation folds and are not
 confirmed on these individuals, nor on any external cohort.
 
 For the two final models, the preprocessor fitted on all development
@@ -135,16 +135,16 @@ individuals retained $46{,}441$ markers. The epoch budgets derived from
 the median development best-checkpoint epoch were
 $E_{\mathrm{final}}=168$ for the variational model and
 $E_{\mathrm{final}}=1216$ for the contrastive model. After both final
-training runs had completed, the locked test ($426$ individuals) was
+training runs had completed, the held-out test set ($426$ individuals) was
 transformed once with the frozen development preprocessor and evaluated
 once; no retraining, epoch change, preprocessing revision or model
 selection followed the test evaluation.
 
-The locked-test results are consistent with development
+The held-out test results are consistent with development
 cross-validation. The variational model moves from
 $0.9796 \pm 0.0032$ to $0.9703$ (a decrease of $0.93$ points), while
 the contrastive model improves from $0.9320 \pm 0.0070$ to $0.9496$
-($+1.76$ points). Under the same development folds, the classical
+($+1.76$ points). Under the same cross-validation folds, the classical
 full-panel Random Forest reaches $0.7189 \pm 0.0054$ Macro-F1, so the
 learned representations clearly outperform a classical classifier on
 the complete marker panel in cross-validation ($+0.26$ and $+0.21$
@@ -153,7 +153,7 @@ Macro-F1 respectively).
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\textwidth]{fig_rq1_confusion_locked}
-  \caption{Locked-test confusion matrices (row-normalized) for the two
+  \caption{Held-out test confusion matrices (row-normalized) for the two
   learned representations. Tick labels are canonical class indices in
   the alphabetical breed order of Table~\ref{tab:adaptmap_breed_mapping};
   the weakest breed SEA is index $29$. For each model all but six of the
@@ -190,7 +190,7 @@ experiment keeps the VMGP-inspired model selected during development
 ($d=96$) strictly frozen in its architecture, loss weights, and optimization
 protocol. As detailed in Section~\ref{sec:sample_size_protocol}, the analysis
 is restricted to a cohort of 15 breeds that possess at least 30 training
-individuals in each development fold. We evaluate training sizes of
+individuals in each cross-validation fold. We evaluate training sizes of
 $N \in \{5, 10, 15, 20, 25, 30\}$ individuals per breed, corresponding to
 total training sets ranging from $75$ to $450$ animals.
 
@@ -198,7 +198,7 @@ Because all data-dependent preprocessing steps---marker missingness filtering,
 minor allele frequency filtering, genotype-mode imputation, and LD
 pruning---are refitted solely on the sampled training animals, the experiment
 evaluates end-to-end sample scarcity rather than the robustness of the
-neural network alone. Across the three development folds and the five nested
+neural network alone. Across the three cross-validation folds and the five nested
 sampling replicates ($\mathcal{R}=\{42, 43, 44, 45, 46\}$), each value of
 $N$ is evaluated through 15 empirical measurements on unchanged held-out
 validation sets.
@@ -213,7 +213,7 @@ at $N=30$ ($S_{\mathrm{ref}} = 0.9692$).
 \caption{Breed-classification performance of the frozen VMGP model ($d=96$)
 across different training sample sizes per breed ($N$) on the 15-breed cohort.
 Values represent the mean $\pm$ standard deviation across 15 measurements
-(3 development folds $\times$ 5 nested sampling replicates). Retained
+(3 cross-validation folds $\times$ 5 nested sampling replicates). Retained
 performance is expressed relative to the reference condition at $N=30$
 ($S_{\mathrm{ref}} = 0.9692$).}
 \label{tab:rq2_sample_efficiency_results}
@@ -411,7 +411,7 @@ $\epsilon_P=0.02$ threshold.
 \begin{table}[ht]
 \centering
 \caption{Marker-efficiency results at selected panel sizes: mean
-Macro-F1 $\pm$ standard deviation across the three development folds
+Macro-F1 $\pm$ standard deviation across the three cross-validation folds
 (IG: Integrated Gradients). The random row aggregates five random
 subsets per fold ($15$ observations). The full-panel reference is
 $S_{\mathrm{full}} = 0.7189 \pm 0.0054$.}
@@ -559,12 +559,12 @@ classical baseline, and a valid-baseline study of the contrastive
 attributions, plus a cross-species replication of the
 evaluator-sensitivity and association analyses on the ovine cohort.
 All analyses reuse the frozen folds and the cached
-protocol-v2 rankings; no locked-test record is read, and every model is
+rankings of the frozen protocol; no held-out test record is read, and every model is
 fitted on the fold training partition only.
 
 \paragraph{Evaluator sensitivity.}
 Three additional downstream classifiers are applied to the same panels
-on the same development folds: logistic regression and a linear SVM on
+on the same cross-validation folds: logistic regression and a linear SVM on
 standardised dosages, and gradient boosting, all with hyperparameters
 and seeds fixed before the run. Because the frozen full-panel reference
 $S_{\mathrm{full}} = 0.7189$ belongs to the Random Forest evaluator,
@@ -613,7 +613,7 @@ markers carry the signal for the model that the attribution actually
 describes? Every panel is re-evaluated by retraining the same
 architecture on the panel markers only, with the frozen RQ1
 hyperparameters, and scoring the fold validation partition with the
-breed head (VMGP) or with the $k=3$ nearest-neighbour classifier on the
+breed head (VMGP) or with the $k=3$ nearest-neighbor classifier on the
 learned embeddings (contrastive).
 Figure~\ref{fig:rq4_native_retraining} and
 Table~\ref{tab:rq4_native_pmin} report the outcome. The full-input
@@ -625,8 +625,8 @@ and it reaches the $5\%$ tolerance with $500$ markers while the
 classical and contrastive rankings need $2000$; at the strict tolerance
 $F_{ST}$ and SHAP are the only families that qualify (at $K=2000$),
 with Random Forest importance and Integrated Gradients missing it by
-less than $0.001$. Under the contrastive evaluator the panels remain
-much more marker-hungry --- the model approaches its $0.9320$
+less than $0.001$. Under the contrastive evaluator the panels require
+substantially more markers --- the model approaches its $0.9320$
 full-input reference only in the thousands of markers --- but the SHAP
 panel is still the best at $K=2000$ ($0.9119$ versus $0.8981$ for
 $F_{ST}$, $0.8769$ for Random Forest and $0.8741$ for Integrated
@@ -719,9 +719,10 @@ under every evaluator, so no ordering claim is meaningful at that
 depth. The caprine SHAP reversal therefore does not replicate in the
 validation domain: the evaluator dependence is cohort-dependent, and
 the most plausible reading is that the reversal appears where the
-classical rankings leave more performance on the table (in caprines the
-frozen Random Forest reference is $0.719$ against $0.917$ in ovines,
-and the panel curves have much more headroom).
+classical rankings leave a larger margin for improvement: the frozen
+Random Forest reference is $0.719$ in caprines against $0.917$ in
+ovines, and the caprine panel curves remain farther from their
+full-panel reference.
 
 The extended association baseline behaves similarly in the ovine
 cohort (Table~\ref{tab:rq4_association} reports the caprine values):
@@ -771,7 +772,7 @@ analyses are
 extensions of the frozen protocol and carry their own limitations: they
 cover the caprine cohort only, use a coarse panel grid, fix the
 alternative classifiers to standard untuned hyperparameters, and
-evaluate panels on the development folds without a locked-test
+evaluate panels on the cross-validation folds without a held-out test
 confirmation.
 
 \begin{table}[ht]
@@ -805,7 +806,7 @@ $S_{\mathrm{full}}$ & $0.7189$ & $0.9686$ & $0.9656$ & $0.8633$ \\
   \centering
   \includegraphics[width=\textwidth]{fig_rq4_evaluator_sensitivity}
   \caption{Evaluator sensitivity of the marker-selection comparison
-  (caprine development folds, mean $\pm$ standard deviation over the
+  (caprine cross-validation folds, mean $\pm$ standard deviation over the
   three folds). Each panel is a downstream classifier with its own
   full-panel reference (dashed); the frozen Random Forest is the only
   evaluator under which the classical rankings dominate the learned
@@ -823,7 +824,7 @@ model's own full-input reference (bottom row).}
 \label{tab:rq4_native_pmin}
 \begin{tabular}{lcc}
 \hline
-Method & VMGP breed head & Contrastive KNN \\
+Method & VMGP breed head & Contrastive $k$-NN \\
 \hline
 $F_{ST}$ & $2000$/$2000$ & $2000$/--- \\
 Random Forest & $2000$/--- & ---/--- \\
@@ -889,11 +890,11 @@ Within the ovine domain the pipeline is repeated independently: the
 ovine split is frozen before any model is trained, every preprocessor
 is fitted on ovine training individuals only, the caprine fold-specific
 panels are never reused, and the same fractions and seeds produce a
-development set of $1585$ individuals, a locked test of $278$
-individuals and three development folds over the $28$ retained breeds
+development set of $1585$ individuals, a held-out test set of $278$
+individuals and three cross-validation folds over the $28$ retained breeds
 (Section~\ref{subsec:sheep_hapmap_dataset}). The same downstream
 protocol is applied: three-fold development cross-validation and one
-final training run per model, followed by a single locked-test
+final training run per model, followed by a single held-out test
 evaluation.
 
 Table~\ref{tab:cross_species_rq1} and
@@ -905,14 +906,14 @@ results.
 \caption{Breed classification in the two domains (Macro-F1). Goat
 values come from the primary cohort, sheep values from the independent
 ovine cohort. Cross-validation entries are mean $\pm$ standard
-deviation over the three development folds; locked-test entries are
+deviation over the three cross-validation folds; held-out test entries are
 single evaluations of the final models. The goat Random Forest was not
-evaluated on the locked test: its development-CV value is the
+evaluated on the held-out test: its development-CV value is the
 $S_{\mathrm{full}}$ reference of RQ3.}
 \label{tab:cross_species_rq1}
 \begin{tabular}{lcccc}
 \hline
-Method & Goat CV & Goat locked & Sheep CV & Sheep locked \\
+Method & Goat CV & Goat test & Sheep CV & Sheep test \\
 \hline
 Random Forest & $0.7189 \pm 0.0054$ & --- & $0.9168 \pm 0.0163$ & $0.9330$ \\
 VMGP $d=96$ & $0.9796 \pm 0.0032$ & $0.9703$ & $0.9616 \pm 0.0133$ & $0.9555$ \\
@@ -924,18 +925,18 @@ Contrastive emb$=3$ & $0.9320 \pm 0.0070$ & $0.9496$ & $0.9160 \pm 0.0174$ & $0.
 Three observations follow. First, both learned representations remain
 strongly discriminative on an independent ovine cohort without any
 species-specific hyperparameter tuning: the transferred VMGP reaches
-$0.9555$ Macro-F1 on the ovine locked test and the contrastive model
+$0.9555$ Macro-F1 on the ovine held-out test and the contrastive model
 $0.9148$. Second, the advantage of the learned representations over
 the classical full-panel Random Forest is much smaller in the
 validation domain. Under development cross-validation the VMGP exceeds
 the Random Forest by $26.1$ points in goats but only $4.5$ points in
-sheep, and on the ovine locked test the Random Forest ($0.9330$) lies
+sheep, and on the ovine held-out test the Random Forest ($0.9330$) lies
 between the two learned models. Third, the self-supervised
 contrastive representation does not outperform the classical baseline
-on the ovine locked test ($0.9148$ versus $0.9330$), whereas on the
+on the ovine held-out test ($0.9148$ versus $0.9330$), whereas on the
 caprine cohort it did ($0.9496$ versus a development-CV Random Forest
 reference of $0.7189$; the goat Random Forest was not evaluated on the
-locked test, so that comparison remains indicative).
+held-out test, so that comparison remains indicative).
 
 The cross-species evidence therefore supports the claim that compact
 genomic representations generalize across species, but qualifies the
@@ -951,7 +952,7 @@ datasets.
   \centering
   \includegraphics[width=\textwidth]{fig_cross_species_rq1}
   \caption{Cross-species comparison of RQ1. Left: development
-  cross-validation Macro-F1 per method; right: locked-test Macro-F1
+  cross-validation Macro-F1 per method; right: held-out test Macro-F1
   where available. The gap between the learned representations and the
   classical Random Forest shrinks dramatically from the caprine to the
   ovine domain.}
@@ -975,7 +976,7 @@ datasets.
 \paragraph{Ovine sample efficiency.}
 The bounded mini-sweep (Section~\ref{sec:minimum_requirements}) evaluates
 $N\in\{5, 10, 15\}$ individuals per breed with three subsampling seeds and
-three development folds, fitting a fresh preprocessor for every run.
+three cross-validation folds, fitting a fresh preprocessor for every run.
 Retention is measured against the full-sample ovine VMGP baseline
 ($S_{\mathrm{full}} = 0.9616$). Across the 9 observations per sample
 size, $N=5$: Macro-F1 $0.9273 \pm 0.0093$, retention $96.4 \pm 1.0\%$; $N=10$: Macro-F1 $0.9481 \pm 0.0075$, retention $98.6 \pm 0.8\%$; $N=15$: Macro-F1 $0.9531 \pm 0.0058$, retention $99.1 \pm 0.6\%$. At $N=10$ the ovine retention ($98.6\%$) already parallels the caprine result, where $N_{\min}=10$ retained $98.5\%$ of the reference. As in the caprine domain, most of the full-sample
@@ -1082,7 +1083,7 @@ Random & --- & --- & $5000$ & $1000$ \\
   \centering
   \includegraphics[width=\textwidth]{fig_cross_species_panels}
   \caption{Marker efficiency in the two domains: mean Macro-F1 across
-  the three development folds, normalised by each domain's own
+  the three cross-validation folds, normalised by each domain's own
   full-array reference $S_{\mathrm{full}}$; stars mark $P_{\min}$ at
   $\epsilon_P=0.05$ and the dotted line is the $95\%$ retention
   threshold. The ordering of the ranking families is preserved, while
@@ -1114,7 +1115,7 @@ the variational model is optimized for the same objective that is
 later evaluated, whereas the contrastive model must recover breed
 structure without labels. The result that matters is that the
 self-supervised space remains strongly discriminative ($0.9496$ and
-$0.9148$ Macro-F1 on the two locked tests), supporting the hypothesis
+$0.9148$ Macro-F1 on the two held-out test sets), supporting the hypothesis
 that population structure is a dominant, recoverable signal in these
 genotype matrices.
 
@@ -1146,7 +1147,7 @@ classical full-array reference is a much stronger competitor there, so
 the ovine panels saturate near it rather than exceeding it. This
 advantage is nevertheless conditional on the frozen evaluator and on
 the protocol: panels were selected and evaluated inside the same
-development folds, and no external cohort was used to validate them.
+cross-validation folds, and no external cohort was used to validate them.
 
 The ranking comparison (RQ4) provides the second main finding: under
 the frozen Random Forest evaluator, neural attributions are not
@@ -1187,7 +1188,7 @@ representation pipeline but qualifies its superiority. Both models
 transfer to the ovine cohort without species-specific tuning;
 however, the classical full-panel Random Forest becomes a much
 stronger competitor on sheep, and the self-supervised representation
-no longer beats it on the locked test. This is consistent with
+no longer beats it on the held-out test. This is consistent with
 reports that classical and relationship-based methods remain
 competitive for breed assignment depending on the dataset
 \cite{wilmot2023genomic}, and reinforces the methodological reading:
@@ -1196,5 +1197,4 @@ the two species. The main limits of the study are the finite cohorts
 ($34$ and $28$ breeds, with tens of individuals per breed), a single
 marker array per species, a single downstream evaluator, and reduced
 panels that were not validated on external cohorts. The protocol,
-ranking definitions and evaluation rules were fixed before the locked
-tests were opened.
+ranking definitions and evaluation rules were fixed before the held-out test sets were opened.

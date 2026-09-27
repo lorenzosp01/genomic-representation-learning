@@ -113,7 +113,7 @@ before a global marker ranking is obtained.
 
 The important methodological point is that the ranking must be
 constructed using only the training information available inside the
-current experimental partition. The locked test set cannot be used as
+current experimental partition. The held-out test set cannot be used as
 the SHAP background, for attribution aggregation, or for deciding
 which markers should be retained.
 
@@ -223,7 +223,7 @@ subsets.
 The full post-QC panel remains the reference point. The purpose of RQ3
 is not to maximize performance at any cost, but to identify how
 aggressively the marker set can be reduced while retaining a
-predefined fraction of the full-panel classification performance.
+pre-specified fraction of the full-panel classification performance.
 
 The definitive grid is $K \in \{50, 100, 200, 500, 1000, 2000, 5000\}$,
 fixed before inspecting any downstream result. The primary retention
@@ -241,7 +241,7 @@ downstream validation is no longer independent.
 For this reason, every ranking considered in the thesis must be fitted
 or constructed inside the relevant training partition. The validation
 partition is used only to evaluate the reduced panel that results from
-that ranking. The locked test remains unavailable throughout
+that ranking. The held-out test set remains unavailable throughout
 marker-ranking development.
 
 This requirement applies equally to apparently ``classical'' methods
@@ -254,7 +254,7 @@ information boundary.
 
 Two complementary questions can be asked about a marker ranking.
 
-The first is \emph{stability}: do different development folds or
+The first is \emph{stability}: do different cross-validation folds or
 sampling replicates tend to identify similar high-ranked markers? This
 can be investigated using overlap measures or rank correlations.
 

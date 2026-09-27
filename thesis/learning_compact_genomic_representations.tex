@@ -51,7 +51,7 @@ genomic representation.
 \section{A Variational Approach to Genotype Representation}
 \label{sec:vmgp_architecture}
 
-The first model follows the variational autoencoder paradigm
+The first model follows the variational autoencoder (VAE) paradigm
 \cite{kingma2013auto, rezende2014stochastic} and is inspired by VMGP
 \cite{zhao2025vmgp}. The original VMGP formulation was developed for
 plant genomic prediction. Here, its architectural ideas are adapted to
@@ -218,7 +218,7 @@ candidate sizes are considered during development,
     d\in\{32,64,96,128\}.
 \end{equation}
 
-The choice among them is made only from the three development folds
+The choice among them is made only from the three cross-validation folds
 using the selection rule defined in Section~\ref{sec:rq1_protocol}.
 The purpose of separating the candidate definition from its evaluation
 is to avoid rewriting the architecture around the outcome of the
@@ -416,12 +416,12 @@ centroid-based geometry of the reference implementation.
 \subsection{From a Self-Supervised Space to Breed Prediction}
 
 The contrastive model does not contain a supervised breed head. Once
-training for a development fold is complete, deterministic embeddings
+training for a cross-validation fold is complete, deterministic embeddings
 are extracted separately for the training and validation individuals.
 
 A $k$-nearest-neighbor classifier with $k=3$ is then fitted using only
 the training embeddings and training breed labels. The validation
-embeddings are classified using this fitted KNN.
+embeddings are classified using this fitted $k$-NN.
 
 This two-stage procedure is important for interpretation. A successful
 breed prediction does not mean that the contrastive loss was trained
@@ -471,11 +471,11 @@ resulting latent spaces.
 Cross-validation is used for development and configuration selection.
 Once a configuration has been fixed, the purpose of final training is
 different: all development individuals should contribute to the model
-that will be evaluated on the locked test.
+that will be evaluated on the held-out test.
 
 For a selected configuration, let $e_1^{*}$, $e_2^{*}$, and
 $e_3^{*}$ denote the one-based epochs of the minimum-validation-loss
-checkpoints observed in the three development folds. The final
+checkpoints observed in the three cross-validation folds. The final
 training duration is defined as
 
 \begin{equation}
@@ -497,12 +497,12 @@ epochs.
 
 There is no validation split, no early stopping, and no checkpoint
 selection based on held-out outcomes during this stage. Only after
-final training has finished is the locked test transformed with the
+final training has finished is the held-out test transformed with the
 already fitted development preprocessor and evaluated once.
 
-For the contrastive model, the final KNN is fitted on the
+For the contrastive model, the final $k$-NN is fitted on the
 deterministic embeddings of the complete development set and then
-applied to the locked-test embeddings.
+applied to the held-out test embeddings.
 
 The numerical values selected during development are intentionally
 reported with the experimental evaluation rather than embedded in the

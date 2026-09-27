@@ -83,13 +83,13 @@ SNP50 BeadChip, with $49{,}034$ markers retained after the consortium
 quality filtering. The distributed PED/MAP files were converted to
 PLINK binary with \texttt{plink --sheep --make-bed}.
 
-Individual eligibility follows the same Protocol-v2 rule as the primary
+Individual eligibility follows the same pre-specified eligibility rule as the primary
 domain: animals with genotype missingness greater than or equal to
 $0.10$ are excluded. All $2819$ animals pass this filter (maximum
 missingness $1.99\%$). Among the remaining individuals, breeds
 represented by at least $30$ eligible animals are retained, yielding a
 frozen ovine cohort of $28$ breeds and $1863$ animals. The cohort is
-partitioned into $1585$ development and $278$ locked-test individuals
+partitioned into $1585$ development and $278$ held-out test individuals
 using the same $85/15$ fractions and the same seeds ($42/42$) as the
 caprine domain.
 
@@ -154,7 +154,7 @@ with no missing values. This matrix is the common input from which the
 variational and contrastive models construct their model-specific
 representations.
 
-\section{Development Data and the Locked Test Set}
+\section{Development Data and the Held-Out Test Set}
 \label{sec:data_partitioning}
 
 The $2863$ eligible ADAPTmap individuals are divided into two
@@ -165,9 +165,9 @@ configuration, cross-validation, preprocessing decisions,
 training-control choices, and marker-ranking development must take
 place inside this set.
 
-The remaining $426$ individuals form the \emph{locked test set}. They
-are excluded from model development and are used only after the
-configuration of a final model has already been fixed. This
+The remaining $426$ individuals form the \emph{held-out test set}. It is
+excluded from model development and is opened only once, after the
+configuration of the final models has already been fixed. This
 distinction is important: a test set can provide an unbiased estimate
 of final generalization only if its outcomes are not used to make
 subsequent modeling decisions \cite{ambroise2002selection}.
@@ -298,7 +298,7 @@ For breed classification, the complete post-QC genomic representation
 is used as the reference setting. For sample efficiency, the selected
 VMGP configuration is held fixed while the number of training
 individuals per breed is reduced; the corresponding 15-breed
-validation population remains unchanged within each development fold.
+validation population remains unchanged within each cross-validation fold.
 For marker efficiency, the input panel is progressively reduced using
 a ranking constructed only from legitimate training information.
 Finally, different marker-ranking methods are compared by evaluating the downstream panels that they
@@ -315,7 +315,7 @@ breed-discriminative structure?
 \label{sec:rq1_protocol}
 
 For RQ1, scalar classification metrics are computed on each of the
-three development folds. The primary model-selection metric is
+three cross-validation folds. The primary model-selection metric is
 macro-averaged F1.
 
 Configurations are selected using the following fixed rule:
@@ -358,7 +358,7 @@ available data or by changes in model configuration.
 A controlled comparison also requires the classification task itself
 to remain unchanged as the training population is reduced. The RQ2
 cohort is therefore restricted to breeds for which at least $30$
-training individuals are available in every predefined development
+training individuals are available in every pre-specified development
 fold. The value $30$ corresponds to the largest per-breed training
 population considered in the experiment.
 
@@ -397,7 +397,7 @@ the learning curve are evaluated against the same validation
 population within a fold.
 
 A new genomic preprocessor is fitted independently for every
-combination of development fold, sampling replicate, and sample size.
+combination of cross-validation fold, sampling replicate, and sample size.
 Only the selected $15N$ training individuals are used to estimate its
 state. The fitted preprocessor is then applied to both the sampled
 training population and the unchanged validation population.
@@ -425,7 +425,7 @@ therefore partly reflect an accidental choice of animals rather than
 the general effect of sample size.
 
 To reduce this dependence, the sampling procedure is repeated using
-five predefined random seeds,
+five pre-specified random seeds,
 
 \begin{equation}
     \mathcal{R}
@@ -434,7 +434,7 @@ five predefined random seeds,
     \label{eq:rq2_replicate_seeds}
 \end{equation}
 
-For every development fold and replicate, a deterministic random
+For every cross-validation fold and replicate, a deterministic random
 ordering of the available training individuals is generated separately
 for each breed. Sample-size conditions are derived from the same
 ordering in nested form,
@@ -466,7 +466,7 @@ pipeline. The number five is not intended as a universal statistical
 requirement. The purpose of repeated subsampling is instead to avoid
 drawing conclusions from a single arbitrary selection of animals.
 
-Together with the three predefined development folds, the five
+Together with the three pre-specified cross-validation folds, the five
 sampling replicates provide
 
 \begin{equation}
@@ -489,7 +489,7 @@ remove a different proportion of the available training population for
 different values of $N$, which would be undesirable when the number of
 available individuals is itself the experimental variable.
 
-Throughout this experiment, the locked test set remains completely
+Throughout this experiment, the held-out test set remains completely
 outside the RQ2 data path. It is neither used for sampling nor
 transformed by any RQ2-specific preprocessing state.
 
@@ -529,8 +529,8 @@ Because the canonical breed mapping is identical across folds,
 class-specific quantities remain directly interpretable.
 
 The RQ2 sample-efficiency analysis additionally includes the five
-predefined subsampling replicates. For each value of
-$N\in\mathcal{N}$, the three development folds and five sampling
+pre-specified subsampling replicates. For each value of
+$N\in\mathcal{N}$, the three cross-validation folds and five sampling
 replicates therefore yield 15 performance measurements.
 
 Macro-F1, Balanced Accuracy, and Accuracy are summarized using their
@@ -567,7 +567,7 @@ defined as
 \end{equation}
 
 Similarly, if $S(N')$ denotes the score obtained using $N'$ training
-individuals per breed and $S_{\mathrm{reference}}$ is the predefined
+individuals per breed and $S_{\mathrm{reference}}$ is the pre-specified
 reference score,
 
 \begin{equation}
@@ -594,7 +594,7 @@ fixed 15-breed sample-efficiency task. Let
 \end{equation}
 
 denote the mean Macro-F1 obtained at $N=30$ across the three
-development folds and five subsampling replicates.
+cross-validation folds and five subsampling replicates.
 
 Before inspecting the definitive sample-efficiency curve, the
 retained-performance tolerance was fixed as
