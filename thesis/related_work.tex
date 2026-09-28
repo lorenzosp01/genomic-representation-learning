@@ -254,23 +254,20 @@ Previous work provides strong foundations for population
 differentiation, reduced-marker selection, genomic prediction,
 representation learning, and model interpretation. What is less
 common is to evaluate these components together under the same data
-partitions and the same definition of held-out generalization.
+partitions, the same leakage constraints, and the same definition of
+held-out generalization. In particular, marker rankings derived from
+learned representations are seldom judged by the downstream performance
+of the panels they produce, with preprocessing and ranking construction
+controlled for leakage in the same way as the classification models.
+The present thesis addresses this gap by connecting the four questions
+of Section~\ref{sec:research_questions} within one evaluation
+framework.
 
-The present thesis connects four levels of analysis. First, it studies
-whether high-dimensional genomic profiles can support reliable breed
-classification. Second, it asks how the answer changes when fewer
-individuals are available for training. Third, it evaluates whether
-the same task can be performed using smaller genomic panels. Finally,
-it compares different ways of deciding which markers should be
-retained.
-
-This common framework is important because a marker-ranking method
-should not be judged only by the values of its importance scores. Its
-practical usefulness depends on what happens when the corresponding
-reduced panel is used for downstream classification. Similarly, a
-representation-learning model should not be judged only by the
-geometry of its latent space, but also by whether that representation
-supports the questions the thesis is trying to answer.
+The framework is designed so that a marker-ranking method is judged
+by the downstream performance of the panel it produces, not by the
+scale of its importance scores, and a learned representation is judged
+by the classification questions it supports, not only by the geometry
+of its latent space.
 
 The following chapters therefore move from data preparation to
 representation learning, from representation learning to marker

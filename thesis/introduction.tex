@@ -192,6 +192,25 @@ framework for studying how training sample size, learned
 representation, and marker-panel size interact in livestock breed
 classification.
 
+The contribution of the work is methodological and experimental.
+Breed classification, representation learning, SNP ranking, and
+reduced-panel evaluation are integrated into a single leakage-controlled
+protocol: every data-dependent transformation is fitted on training
+individuals only, the same partitions are used for every method, and the
+learned models are evaluated once on a held-out test set. Within this
+protocol, sample efficiency and marker efficiency are treated as
+separate experimental dimensions, and the rankings produced by
+classical statistics, tree importance, and neural attributions are
+compared through the downstream panels they generate. The thesis also
+examines the stability of these conclusions across evaluation choices:
+the ranking analysis is repeated with alternative downstream classifiers
+and by retraining the explained model on the panel, and the same
+pipeline is validated on an independent ovine cohort. No new model
+family is proposed; the contribution is a common evaluation protocol
+for these methods, together with evidence about where their marker
+rankings agree, where they diverge, and how sensitive those conclusions
+are to the evaluation choices.
+
 \section{Research Questions}
 \label{sec:research_questions}
 

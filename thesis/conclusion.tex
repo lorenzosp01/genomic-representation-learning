@@ -19,28 +19,32 @@ Finally, classical population-genetics statistics, machine-learning
 feature importance, and neural attribution methods are used to move
 from the learned representations back to individual markers.
 
-The value of the framework is not tied to a single score or a single
-model. Its main purpose is to make several questions comparable under
-the same experimental assumptions: how reliably breeds can be
-distinguished, how the task changes when fewer animals are available,
-how aggressively the SNP panel can be reduced, and whether different
-marker-ranking strategies preserve the same downstream information.
+The same framework is used for all four questions: the manipulated
+factors --- the number of training individuals or the number of markers
+--- are varied under controlled preprocessing and data-partitioning
+rules. This makes the following comparisons meaningful: how reliably
+breeds can be distinguished, how the task changes when fewer animals
+are available, how aggressively the SNP panel can be reduced, and
+whether different marker-ranking strategies preserve the same
+downstream information.
 
-The final evidence can be summarized in four points. First, compact
-genomic representations classify livestock breeds very accurately
-without species-specific tuning: Macro-F1 $0.9703$ and $0.9496$ on the
-caprine held-out test and $0.9555$ and $0.9148$ on the independent ovine
-held-out test for the supervised and self-supervised models
-respectively. Second, a surprisingly small training population
-suffices: in the caprine cohort $N_{\min}=10$ individuals per breed
-retained $98.5\%$ of the reference performance, and in the ovine cohort
-the same sample size retained $98.6\%$. Third, the marker panel can be
-reduced by two orders of magnitude under the frozen Random Forest
-evaluator: $100$ markers selected by a chi-square association test, or
-$200$ selected by $F_{ST}$, match the full post-QC panel, while neural
-attributions require larger panels ($500$ markers for SHAP and
-$2000$--$5000$ for Integrated Gradients). Fourth, neural attribution is
-not a substitute for feature selection under that evaluator: the
+The final evidence can be summarized in four points. RQ1 (breed
+classification). Compact genomic representations classify livestock
+breeds very accurately without species-specific tuning: Macro-F1
+$0.9703$ and $0.9496$ on the caprine held-out test and $0.9555$ and
+$0.9148$ on the independent ovine held-out test for the supervised and
+self-supervised models respectively. RQ2 (sample efficiency). A
+surprisingly small training population suffices: in the caprine cohort
+$N_{\min}=10$ individuals per breed retained $98.5\%$ of the reference
+performance, and in the ovine cohort the same sample size retained
+$98.6\%$. RQ3 (marker efficiency). The marker panel can be reduced by
+two orders of magnitude under the frozen Random Forest evaluator: $100$
+markers selected by a chi-square association test, or $200$ selected by
+$F_{ST}$, match the full post-QC panel, while neural attributions
+require larger panels ($500$ markers for SHAP and $2000$--$5000$ for
+Integrated Gradients). RQ4 (marker-selection strategy). Neural
+attribution is not a substitute for feature selection under that
+evaluator: the
 top-marker lists of the four families overlap little (mostly close to
 chance for the neural methods), and their downstream utility differs
 accordingly. The robustness analyses qualify this conclusion: on the caprine
@@ -126,7 +130,7 @@ distributions, linkage-disequilibrium structure, and within-breed
 genomic diversity. Particular care would be required when very few
 real animals are available, since a generative model trained on an
 extremely limited population could reproduce close variants of the
-observed individuals rather than learn a representative genomic
+observed individuals instead of learning a representative genomic
 distribution.
 
 The sample-efficiency analysis developed in this thesis provides a
