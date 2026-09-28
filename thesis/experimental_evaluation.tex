@@ -542,6 +542,35 @@ Random & --- & --- & $0.6790$ & $5000$ \\
 \end{tabular}
 \end{table}
 
+A complementary descriptive view is obtained by projecting the frozen
+rankings back onto the genome.
+Figure~\ref{fig:rq4_genomic_landscape} maps the fold-0 $F_{ST}$ and
+VMGP SHAP scores of every retained marker to its position along the
+assembled chromosomes, with the markers of the operational panels of
+Table~\ref{tab:rq4_pmin} highlighted. The figure is descriptive: it
+shows where the computationally most relevant markers are located, not
+why they are relevant. Two cautions follow from its construction.
+First, the two score scales are method-specific and not comparable
+across panels. Second, neighbouring markers can be correlated through
+linkage disequilibrium, so visually prominent regions should not be
+read as independent biological signals; no gene-level or causal
+interpretation is attached to this visualization. Unplaced markers
+(chromosome~0) and markers without a valid genomic position are
+excluded.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=\textwidth]{fig_rq4_genomic_landscape}
+  \caption{Computational marker relevance versus genomic position
+  (caprine fold 0; chromosomes ordered numerically, unplaced markers
+  excluded). Left: $F_{ST}$; right: VMGP SHAP. Markers of the
+  operational panels of Table~\ref{tab:rq4_pmin} are highlighted
+  ($K=200$ and $K=500$, respectively). Scores are method-specific and
+  not comparable across panels; adjacent markers may be correlated
+  through linkage disequilibrium.}
+  \label{fig:rq4_genomic_landscape}
+\end{figure}
+
 \section{Robustness of the Marker-Selection Comparison}
 \label{sec:rq4_robustness}
 

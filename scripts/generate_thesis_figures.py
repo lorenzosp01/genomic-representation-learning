@@ -12,6 +12,7 @@ Figures produced (batch 1):
     fig_rq2_learning_curve
     fig_rq3_panel_curves
     fig_rq4_jaccard
+    fig_rq4_genomic_landscape
     fig_cross_species_rq1
     fig_cross_species_panels
 
@@ -857,6 +858,81 @@ def fig_rq4_evaluator_cross_species():
 
 
 # ---------------------------------------------------------------------------
+# 14. RQ4 genomic landscape: marker relevance versus genomic position
+# ---------------------------------------------------------------------------
+def fig_rq4_genomic_landscape():
+    """Map the frozen fold-0 rankings onto the assembled caprine chromosomes.
+
+    Descriptive only: the cached FST and VMGP SHAP scores of fold 0 are
+    plotted against the genomic position of every retained marker, recovered
+    from the fold's retained-marker metadata (chromosome and position columns
+    of the PLINK ``.bim``). Unplaced markers (chromosome 0) and zero positions
+    are excluded, chromosomes are ordered numerically and the operational
+    panels of Table 6.4 are highlighted (FST ``K=200``, SHAP ``K=500``). No
+    test-set record is read, no gene annotation is attached and no biological
+    or causal interpretation is implied.
+    """
+    import numpy as np
+
+    _, ed = _species_dataset("goat")
+    fd = ed.fold_data(0)
+    meta = fd.retained_snp_metadata
+    if meta is None:
+        warn("no retained SNP metadata; skipping fig_rq4_genomic_landscape")
+        return
+    chrom = np.asarray(meta["chromosome"], dtype=np.int64)
+    pos = np.asarray(meta["position"], dtype=np.int64)
+    valid = (chrom > 0) & (pos > 0)
+    if not np.any(valid):
+        warn("no plottable markers; skipping fig_rq4_genomic_landscape")
+        return
+
+    chrom_order = sorted(int(c) for c in np.unique(chrom) if c > 0)
+    gap = 5_000_000
+    offsets, mids, cursor = {}, [], 0
+    for c in chrom_order:
+        mask = chrom == c
+        cmax = int(pos[mask].max()) if np.any(mask) else 0
+        offsets[c] = cursor
+        mids.append((c, cursor + cmax / 2.0))
+        cursor += cmax + gap
+
+    x_all = np.array([offsets[int(c)] + int(p)
+                      for c, p in zip(chrom[valid], pos[valid])],
+                     dtype=np.float64)
+    panels = [("fst", 200), ("vmgp_shap", 500)]
+    fig, axes = plt.subplots(1, 2, figsize=(12.8, 4.4))
+    for ax, (method, k) in zip(axes, panels):
+        scores = np.load(os.path.join(RESULTS, "rq3_marker_efficiency",
+                                      "rankings", f"{method}_fold0_scores.npy"))
+        if scores.shape[0] != chrom.shape[0]:
+            warn(f"{method}: score/metadata length mismatch; skipping")
+            return
+        ranked = np.argsort(-scores, kind="stable")[:k]
+        ranked = ranked[valid[ranked]]
+        x_top = np.array([offsets[int(c)] + int(p)
+                          for c, p in zip(chrom[ranked], pos[ranked])],
+                         dtype=np.float64)
+        ax.scatter(x_all, scores[valid], s=3, color="lightgrey", linewidths=0,
+                   rasterized=True, zorder=1)
+        ax.scatter(x_top, scores[ranked], s=16, color=METHOD_COLORS[method],
+                   edgecolor="black", linewidth=0.3, zorder=3,
+                   label=f"operational panel ($K={k}$ of Table 6.4)")
+        ax.set_xticks([m for _, m in mids])
+        ax.set_xticklabels([str(c) for c, _ in mids], fontsize=6)
+        ax.set_xlabel("Chromosome (cumulative position)")
+        ax.set_ylabel("Marker score (method-specific)")
+        if float(np.max(scores[valid])) < 0.01:
+            ax.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+        ax.set_title(f"{METHOD_LABELS[method]} (caprine fold 0)")
+        ax.legend(loc="upper right", fontsize=7.5, markerscale=1.6)
+    fig.suptitle("Computational marker relevance versus genomic position",
+                 y=1.0)
+    fig.tight_layout()
+    save(fig, "fig_rq4_genomic_landscape")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 FIGURES = [
@@ -867,6 +943,7 @@ FIGURES = [
     fig_rq2_learning_curve,
     fig_rq3_panel_curves,
     fig_rq4_jaccard,
+    fig_rq4_genomic_landscape,
     fig_rq4_evaluator_sensitivity,
     fig_rq4_native_retraining,
     fig_rq4_valid_baseline_ig,
