@@ -1,6 +1,4 @@
 """Genetic encoder mapping SNP profiles onto a unit 3-sphere (Thor & Nettelblad 2025).
-
-Extracted verbatim from the contrastive notebooks.
 """
 
 import torch

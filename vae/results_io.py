@@ -1,8 +1,8 @@
 """Incremental experiment-result persistence helpers.
 
-Extracted from ``vae/vae_training.ipynb``. These functions serialise a list of
-experiment-result dictionaries to JSON, converting NumPy scalars to native
-Python types, so results can be recovered after a crash.
+These functions serialise a list of experiment-result dictionaries to JSON,
+converting NumPy scalars to native Python types, so results can be recovered
+after a crash.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ def save_results_incrementally(
 
     Converts NumPy scalars (and lists/tuples of them) to native Python types
     before serialisation. Prints a confirmation line, matching the original
-    notebook behaviour.
+    behaviour.
     """
     path = Path(path)
     clean_results: List[dict] = []

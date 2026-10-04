@@ -32,7 +32,7 @@ therefore not only to obtain a classifier, but to understand how
 classification performance changes when either the number of training
 individuals or the number of genomic markers is progressively reduced.
 
-\section{From Genomes to Genotype Matrices}
+\section{From genomes to genotype matrices}
 \label{sec:from_genomes_to_matrices}
 
 A genome is organized into chromosomes. A \emph{locus} identifies a
@@ -71,11 +71,11 @@ non-random associations between alleles at different loci, meaning
 that groups of nearby markers may carry partially redundant
 information \cite{slatkin2008linkage, pritchard2001linkage}.
 
-The combination of high dimensionality, correlation, and limited
-sample size is one of the central motivations for the computational
-approach developed in this thesis.
+The combination of high dimensionality, correlated markers, and
+limited sample size motivates the approach followed in the remainder
+of the thesis.
 
-\section{The Problem of Learning with Many Markers and Few Individuals}
+\section{The problem of learning with many markers and few individuals}
 \label{sec:high_dimensional_genomic_learning}
 
 A straightforward breed-classification problem can be described as
@@ -103,7 +103,7 @@ number of markers instead changes the representation available to the
 classifier. The experimental framework introduced later in this
 thesis therefore treats the two dimensions separately.
 
-\section{Learning Compact Genomic Representations}
+\section{Learning compact genomic representations}
 \label{sec:representation_learning}
 
 Representation learning replaces direct reasoning in the original
@@ -113,38 +113,28 @@ here, the goal is to map a vector containing tens of thousands of SNP
 dosages to a substantially smaller latent representation while
 preserving information that remains useful for breed discrimination.
 
-Two different perspectives are explored.
+Two complementary perspectives are explored. The first is a
+variational approach inspired by the Variational Multi-view Genomics
+Predictor (VMGP) \cite{zhao2025vmgp}, trained to reconstruct the
+original genotype profile while predicting breed identity:
+reconstruction encourages the latent variables to retain information
+about the input, while supervision shapes them toward
+breed-discriminative structure. The second perspective is
+self-supervised: a contrastive model receives different perturbed
+views of the same individual and organizes them in a normalized,
+low-dimensional hyperspherical space without breed labels, and
+classification is performed afterwards from the learned embeddings.
+The two objectives therefore impose different assumptions on what a
+useful representation should contain: the variational model is guided
+directly by the target task, whereas the contrastive model tests
+whether population structure emerges without breed supervision.
 
-The first is a variational approach inspired by the Variational
-Multi-view Genomics Predictor (VMGP) \cite{zhao2025vmgp}. The model is
-trained to reconstruct the original genotype profile while
-simultaneously predicting breed identity. The reconstruction objective
-encourages the latent variables to retain information about the input,
-whereas the supervised classification objective explicitly encourages
-breed-discriminative structure.
-
-The second perspective is self-supervised. Instead of using breed
-labels while the representation is learned, a contrastive model
-receives different perturbed views of the same individual and learns
-to organize them in a normalized, low-dimensional hyperspherical
-space. Breed classification is performed only afterwards, using the
-learned embeddings.
-
-These two approaches do not make the same assumptions. The
-variational model is directly guided by the target classification
-task, while the contrastive model asks whether population structure
-can emerge from the genomic profiles without direct breed
-supervision. Their comparison is therefore useful not only as a model
-benchmark, but also as a comparison between two different ways of
-defining what a useful genomic representation should contain.
-
-\section{From Prediction to Marker Interpretation}
+\section{From prediction to marker interpretation}
 \label{sec:black_box_xai}
 
-A model that predicts breed identity accurately is useful, but it does
-not automatically explain which markers support that prediction. This
-limitation is particularly important when the objective extends
-beyond classification and includes genomic marker reduction.
+Accurate breed prediction does not by itself reveal which markers
+support the decision, which matters when the task also includes
+genomic marker reduction.
 
 Classical population genetics already provides interpretable
 quantities for describing differentiation between populations. The
@@ -163,13 +153,13 @@ considered in this thesis are SHAP, based on Shapley-value principles
 Gradients, which integrates gradients along a path between a baseline
 and the observed input \cite{sundararajan2017axiomatic}.
 
-The purpose of using these methods is not to claim that a large
-attribution score establishes biological causality. Instead, the
-attributions are treated as computational relevance signals from
-which global SNP rankings can be constructed and then tested through
-reduced marker panels.
+These methods are not used to claim that a large attribution score
+establishes biological causality; the attribution scores are treated
+instead as computational relevance signals from which global SNP
+rankings can be constructed and then tested through reduced marker
+panels.
 
-\section{Biological and Practical Motivation}
+\section{Biological and practical motivation}
 \label{sec:biological_economic_impact}
 
 Reliable breed assignment has applications in livestock biodiversity
@@ -178,19 +168,17 @@ characterization, and authentication of products of animal origin
 \cite{groeneveld2010diversity, dalvit2007traceability,
       dimauro2013canonical}.
 
-These applications motivate an analysis that goes beyond obtaining a
-single high-performing classifier. In practical settings it is useful
-to understand how much data are needed, whether a high-density array
-is necessary for every task, and whether a compact group of markers
-can preserve the relevant population information.
+These applications motivate questions that go beyond the performance
+of a single classifier: how much data are needed, whether a
+high-density array is necessary for the task, and whether a compact
+group of markers can preserve the relevant population information.
 
-The work presented here should therefore be understood as a
-computational investigation of these trade-offs. It does not claim to
-directly produce a commercial diagnostic chip or a definitive
-biological set of causal loci. Rather, it develops an experimental
-framework for studying how training sample size, learned
-representation, and marker-panel size interact in livestock breed
-classification.
+The work presented here is therefore a computational investigation of
+these trade-offs. It does not claim to produce a commercial diagnostic
+chip or a definitive set of causal biological loci; rather, it
+develops an experimental framework for studying how training sample
+size, learned representation, and marker-panel size interact in
+livestock breed classification.
 
 The contribution of the work is methodological and experimental.
 Breed classification, representation learning, SNP ranking, and
@@ -211,7 +199,13 @@ for these methods, together with evidence about where their marker
 rankings agree, where they diverge, and how sensitive those conclusions
 are to the evaluation choices.
 
-\section{Research Questions}
+\paragraph{Code availability.}
+The complete experimental pipeline, including the frozen split
+configurations, the model implementations, and the scripts that
+reproduce the analyses reported in this thesis, is available at
+\url{https://github.com/lorenzosp01/genomic-dataset-reduction}.
+
+\section{Research questions}
 \label{sec:research_questions}
 
 The thesis is organized around four research questions.
@@ -249,40 +243,31 @@ whether the behavior of the pipeline remains meaningful in a different
 livestock species, not to assume that the same SNP loci should be
 informative in goats and sheep.
 
-\section{Thesis Organization}
+\section{Thesis organization}
 \label{sec:thesis_organization}
 
 The remainder of the thesis follows a progressive structure.
-
 Chapter~\ref{chap:related_work} reviews previous work on population
 genomics, breed assignment, genomic dimensionality reduction,
 representation learning, and model interpretability.
-
-Chapter~\ref{chap:experimental_framework} introduces the datasets and
-the experimental framework used throughout the thesis. Particular
-attention is given to cohort construction, quality control, data
-splitting, leakage prevention, and the distinction between development
-data and the final held-out test set.
-
+Chapter~\ref{chap:experimental_framework} describes the datasets and
+the experimental framework, with particular attention to cohort
+construction, quality control, data splitting, leakage prevention, and
+the distinction between development data and the held-out test set.
 Chapter~\ref{chap:representations} develops the two learned genomic
-representations. The variational and contrastive approaches are
-introduced from their motivations to their concrete architectures,
-objectives, and training procedures.
+representations, from the motivations of the variational and
+contrastive approaches to their concrete architectures, objectives,
+and training procedures.
 
 Chapter~\ref{chap:feature_importance} moves from representation
-learning to marker interpretation. It describes how classical
+learning to marker interpretation, describing how classical
 statistics, machine-learning importance, and neural attributions can
 be transformed into global SNP rankings and reduced genomic panels.
-
-Chapter~\ref{chap:evaluation} brings the individual components
-together in the experimental evaluation. Rather than presenting the
-work as a sequence of isolated benchmark tables, the chapter follows
-the questions that motivated the thesis: breed classification, sample
-scarcity, marker reduction, marker-selection strategy, and
-cross-species validation.
-
-Finally, Chapter~\ref{chap:conclusion} summarizes the conclusions,
-limitations, practical implications, and possible extensions of the
-work.
+Chapter~\ref{chap:evaluation} brings the components together and
+follows the questions that motivated the work: breed classification,
+sample scarcity, marker reduction, marker-selection strategy, and
+cross-species validation. Chapter~\ref{chap:conclusion} summarizes the
+conclusions, limitations, practical implications, and possible
+extensions of the work.
 
 \input{figures/fig_thesis_overview.tex}

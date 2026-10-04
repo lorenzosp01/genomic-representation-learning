@@ -1,20 +1,16 @@
-\chapter{Related Work}
+\chapter{Related work}
 \label{chap:related_work}
 
-The problem addressed in this thesis lies at the intersection of
-population genetics, livestock breed classification, genomic feature
-selection, representation learning, and model interpretability. These
-areas have developed with different objectives and terminology, but
-they meet naturally when the goal is to learn from high-dimensional
-SNP profiles and then reduce them to a smaller set of informative
-markers.
+The problem lies at the intersection of population genetics, livestock
+breed classification, genomic feature selection, representation
+learning, and model interpretability. These areas developed around
+different objectives, but they meet naturally when high-density SNP
+profiles are used both for classification and for marker reduction.
 
-This chapter reviews the main ideas needed to position the work. The
-intention is not to identify a single method as the established
-solution, but to understand which assumptions each family of methods
-makes and why comparing them under a common protocol is useful.
+The review focuses on the assumptions behind each family of methods
+and on why a comparison under a common protocol is useful.
 
-\section{Population Genomics and SNP-Based Characterization}
+\section{Population genomics and SNP-based characterization}
 \label{sec:pop_genetics_snps}
 
 SNPs are among the most widely used molecular markers for describing
@@ -24,24 +20,23 @@ possible to measure many thousands of loci simultaneously and have
 become important tools in livestock population genetics
 \cite{georges2019livestock, sorbolini2016signatures}.
 
-Population-genomic data have a structure that differs from many
-standard machine-learning benchmarks. The number of measured markers
+Population-genomic data differ from many standard machine-learning
+benchmarks. The number of measured markers
 can be far larger than the number of individuals, producing the
-$p\gg n$ setting \cite{saeys2007feature, chafai2023mlanimal}. At the
-same time, LD creates correlation among loci
-\cite{slatkin2008linkage, pritchard2001linkage}. A high-density SNP
-vector should therefore not be interpreted as a collection of
-statistically independent features.
+$p\gg n$ setting \cite{saeys2007feature, chafai2023mlanimal}. LD also
+creates correlation among loci
+\cite{slatkin2008linkage, pritchard2001linkage}, so a high-density SNP
+vector should not be treated as a collection of statistically
+independent features.
 
-This matters for both prediction and interpretation. A classifier may
-exploit groups of correlated markers jointly, while a marker-ranking
-method may assign relevance to one representative of a larger
-correlated genomic region. For this reason, dimensionality reduction
-in genomics is not only a question of removing variables; it is also a
-question of determining which genomic information can be discarded
-without losing the population structure relevant to the task.
+A classifier may exploit groups of correlated markers jointly, while a
+marker-ranking method may assign relevance to one representative of a
+larger correlated genomic region. Dimensionality reduction in genomics
+therefore involves more than removing variables; it also requires
+determining which genomic information can be discarded without losing
+the population structure relevant to the task.
 
-\section{Breed Assignment and Genetic Traceability}
+\section{Breed assignment and genetic traceability}
 \label{sec:breed_classification_selection}
 
 Breed assignment aims to infer the population of origin of an
@@ -58,13 +53,12 @@ considered ovine populations and showed how reduced marker sets could
 be used for breed and geographic assignment
 \cite{dimauro2015sheep}.
 
-These studies are important for the present thesis because they treat
-marker reduction as a supervised population-discrimination problem.
-The objective is not simply to identify loci associated with an
-arbitrary phenotype, but to preserve the information required to
-distinguish predefined populations.
+These studies treat marker reduction as a supervised
+population-discrimination problem: the objective is not to identify
+loci associated with an arbitrary phenotype, but to preserve the
+information required to distinguish predefined populations.
 
-\section{From Single-Marker Statistics to Multivariate Analysis}
+\section{From single-marker statistics to multivariate analysis}
 \label{sec:classical_marker_discovery}
 
 A classical way to study population differentiation is to examine
@@ -94,7 +88,7 @@ GWAS framework for cattle explicitly studied how the behavior of
 genomic analysis changes as the number of available animals increases
 \cite{manca2020multivariate}. The target problem in that work is
 genotype--phenotype association, not breed classification, so its
-numerical results are not transferred to the present thesis. Its
+numerical results are not transferred here. Its
 methodological lesson is nevertheless useful: sample size can change
 the relative behavior of genomic methods and should therefore be
 treated as an experimental factor rather than as a fixed property of
@@ -102,7 +96,7 @@ a dataset.
 
 \input{figures/fig_inductive_bias_comparison.tex}
 
-\section{Machine Learning for Genomic Prediction and Feature Ranking}
+\section{Machine learning for genomic prediction and feature ranking}
 \label{sec:ml_genomics}
 
 Machine-learning methods provide a different way to exploit joint
@@ -120,9 +114,9 @@ reference rather than as an unquestioned ground truth.
 
 A neighboring research area is genomic selection, where genome-wide
 markers are used to predict quantitative traits or breeding values
-\cite{meuwissen2001prediction}. Although this thesis addresses breed
-classification rather than continuous trait prediction, genomic
-selection faces many of the same computational difficulties: many
+\cite{meuwissen2001prediction}. The focus is breed classification
+rather than continuous trait prediction, but genomic selection faces
+many of the same computational difficulties: many
 correlated markers, limited sample sizes, and the need to generalize
 beyond the available individuals
 \cite{georges2019livestock, chafai2023mlanimal}.
@@ -158,13 +152,13 @@ genomic methods may change as the number of available animals
 increases \cite{manca2020multivariate}. Although their study concerns
 genotype--phenotype association rather than breed assignment, it
 provides a methodological precedent for treating training-population
-size as an explicit experimental variable. In the present thesis, this
-idea is transferred to breed classification and is investigated through
-the controlled sample-efficiency experiment described in
+size as an explicit experimental variable. The same idea is transferred
+here to breed classification and investigated through the controlled
+sample-efficiency experiment described in
 Section~\ref{sec:sample_size_protocol}.
 
 
-\section{Deep Genomic Representation Learning}
+\section{Deep genomic representation learning}
 \label{sec:deep_learning_fundamentals}
 
 Deep learning provides an alternative to working directly in the
@@ -180,7 +174,7 @@ variable and regularizing its distribution
 \cite{kingma2013auto, rezende2014stochastic}.
 
 The Variational Multi-view Genomics Predictor (VMGP) is especially
-relevant to this thesis \cite{zhao2025vmgp}. It combines variational
+relevant here \cite{zhao2025vmgp}. It combines variational
 genomic representation learning with prediction objectives. Its
 original application concerns plant genomic prediction, so the
 present work uses VMGP as an architectural inspiration rather than
@@ -207,14 +201,14 @@ Chapter~\ref{chap:representations}.
 
 \input{figures/fig_generative_contrastive_topologies.tex}
 
-\section{Explainable Artificial Intelligence for Genomic Features}
+\section{Explainable artificial intelligence for genomic features}
 \label{sec:explainable_ai_paradigms}
 
 Deep models are flexible non-linear predictors, but their internal
 decisions are not immediately interpretable
 \cite{guidotti2018survey, arrieta2020explainable}. Post-hoc XAI
-methods attempt to estimate how strongly input features contribute to
-a model output.
+methods attempt to estimate how input features contribute to a model
+output.
 
 SHAP \cite{lundberg2017unified} builds additive feature attributions
 from Shapley-value principles \cite{shapley1953value}. Its appeal is
@@ -242,12 +236,12 @@ the attribution of feature $i$ is
 \end{equation}
 
 For genomic data, neither SHAP nor Integrated Gradients directly
-produces a universal SNP panel. They first provide sample-level or
-output-specific attributions. A separate aggregation procedure is
-required to transform those local values into a global marker ranking.
+produces a universal SNP panel. The methods first provide sample-level or
+output-specific attributions, which are then aggregated into a global
+marker ranking.
 This distinction is central to Chapter~\ref{chap:feature_importance}.
 
-\section{Positioning of This Thesis}
+\section{Positioning of this thesis}
 \label{sec:research_gap}
 
 Previous work provides strong foundations for population
@@ -269,6 +263,6 @@ scale of its importance scores, and a learned representation is judged
 by the classification questions it supports, not only by the geometry
 of its latent space.
 
-The following chapters therefore move from data preparation to
-representation learning, from representation learning to marker
-interpretation, and only then to the complete experimental evaluation.
+The remaining chapters follow that sequence: data preparation,
+representation learning, marker interpretation, and finally the
+complete experimental evaluation.

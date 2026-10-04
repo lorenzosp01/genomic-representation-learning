@@ -1,7 +1,7 @@
 """Feature-attribution (Integrated Gradients) for the contrastive model.
 
-Extracted from the contrastive notebooks. Two distinct attribution paths are
-provided and are intentionally kept separate:
+Two distinct attribution paths are provided and are intentionally kept
+separate:
 
 * **Probe path** — a supervised MLP probe is trained on the encoder embeddings
   and IG is computed on the target-breed logit.
@@ -90,7 +90,7 @@ class EncoderToCentroid(nn.Module):
 def select_best_checkpoint(dm, pattern):
     """Select the checkpoint with the best KNN@3 accuracy over the dataset.
 
-    Mirrors the notebook's selection loop. Returns ``(best_ckpt, best_acc,
+    Mirrors the original selection loop. Returns ``(best_ckpt, best_acc,
     best_fold_idx)`` where ``best_fold_idx`` is derived from the checkpoint
     filename (``fold_N``). This index is required by the probe pipeline, whose
     embeddings are taken from the selected fold's validation partition.

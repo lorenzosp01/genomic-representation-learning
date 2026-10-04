@@ -22,44 +22,39 @@ contrastive model that learns from different augmented views of the
 same genomic profile without using breed labels in its
 representation-learning objective.
 
-The work is organized around four connected questions. First, it
-investigates breed classification from high-dimensional SNP profiles.
-Second, it studies how classification changes when the number of
-training individuals per breed is reduced. Third, it considers how far
-the genomic panel can be reduced while retaining most of its
-predictive information. Finally, it examines whether marker rankings
+Four connected questions organize the work: how accurately breeds can
+be classified from high-dimensional SNP profiles; how that
+performance changes when fewer training individuals per breed are
+available; how far the genomic panel can be reduced while retaining
+most of its predictive information; and whether marker rankings
 derived from learned representations and explainability methods
-provide useful reduced panels when compared with classical
-population-genetics and machine-learning approaches.
+produce useful reduced panels relative to classical population-genetics
+and machine-learning approaches.
 
 The primary experimental domain is the caprine ADAPTmap dataset. A
 strict separation between model development and final evaluation is
 used throughout the work: preprocessing and model selection are
 performed only on development data, while a held-out test partition is
-kept outside the development process. An independent ovine Sheep
-HapMap dataset is considered as a second domain for cross-species
-methodological validation. The aim of this second evaluation is not to
-assume that the same loci must be informative in goats and sheep, but
-to study whether the overall behavior of the computational methodology
-remains consistent across two different livestock genomic settings.
+kept outside the development process. An independent Sheep HapMap
+dataset provides a second domain for cross-species methodological
+validation. This evaluation does not assume that the same loci are
+informative in goats and sheep; it tests whether the behavior of the
+methodology is consistent across two different livestock genomic
+settings.
 
-Rather than treating classification, dimensionality reduction, and
-marker interpretation as independent problems, the thesis connects
-them within a common experimental framework. The resulting study is
-intended to clarify how representation learning can be used not only
-to predict breed identity, but also to reason about sample scarcity,
-genomic dimensionality, and the construction of compact marker panels.
+The thesis treats classification, dimensionality reduction, and
+marker interpretation as connected parts of the same problem: compact
+representations are evaluated for breed classification and then used as
+the basis for marker-level attribution and reduced-panel analysis.
 The experiments show that compact representations classify breeds with
 high accuracy in two independent livestock domains, that most of that
 performance is retained with ten training individuals per breed, and
 that marker panels can be reduced by two orders of magnitude while
-preserving the downstream classification signal. They also show that
-neural feature attribution, although informative for model inspection,
+preserving the downstream classification signal. Neural feature attribution, although informative for model inspection,
 does not translate automatically into a reliable marker-selection
 strategy: its rankings diverge from classical and tree-based importance
-and transfer less effectively to a Random Forest downstream classifier,
-while robustness analyses show that the conclusion is both evaluator-
-and cohort-dependent: attribution-selected panels become the most
-marker-efficient under native or linear evaluators on the primary
-cohort, while the classical ordering is preserved in the validation
-cohort.
+and transfer less effectively to a Random Forest downstream classifier.
+The robustness analyses qualify this result: attribution-selected
+panels become the most marker-efficient under native or linear
+evaluators on the primary cohort, while the classical ordering is
+preserved in the validation cohort.

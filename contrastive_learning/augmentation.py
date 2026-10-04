@@ -1,7 +1,6 @@
 """Genetic augmentation (Thor & Nettelblad 2025).
 
-Extracted verbatim from the contrastive notebooks. Allele flip → mask →
-4-channel one-hot encoding.
+Allele flip → mask → 4-channel one-hot encoding.
 """
 
 import torch

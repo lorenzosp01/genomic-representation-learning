@@ -1,7 +1,7 @@
 """Equivalence tests for the contrastive attribution extraction.
 
 These verify that ``contrastive_learning/attribution.py`` reproduces the exact
-notebook behaviour on small deterministic fixtures (no full training).
+original behaviour on small deterministic fixtures (no full training).
 """
 
 import numpy as np

@@ -1,4 +1,4 @@
-\chapter{Genomic Data and Experimental Framework}
+\chapter{Genomic data and experimental framework}
 \label{chap:experimental_framework}
 % Backward-compatible label for older references.
 \label{chap:methods}
@@ -16,7 +16,7 @@ from held-out individuals is allowed to influence them. For this
 reason, the experimental protocol is treated as part of the method
 rather than as a final implementation detail.
 
-\section{Genomic Datasets}
+\section{Genomic datasets}
 \label{sec:genomic_datasets_preprocessing}
 
 The thesis considers two independent livestock genomic domains.
@@ -33,7 +33,7 @@ not assumed to have the same role across species. Instead, each domain
 is processed as a separate classification problem with its own cohort,
 label mapping, preprocessing fit, marker panel, and data partition.
 
-\subsection{Primary Caprine Domain: ADAPTmap}
+\subsection{Primary caprine domain: ADAPTmap}
 \label{subsec:adaptmap_dataset}
 
 ADAPTmap was developed to characterize worldwide goat genetic
@@ -60,7 +60,7 @@ rule}. It should not be confused with the sample-size question studied
 later in the thesis. RQ2 deliberately constructs a separate controlled
 experiment in which the amount of training data per breed is varied.
 
-\subsection{Independent Ovine Domain: Sheep HapMap}
+\subsection{Independent ovine domain: Sheep HapMap}
 \label{subsec:sheep_hapmap_dataset}
 
 The Sheep HapMap domain is used to investigate whether the behavior of
@@ -104,7 +104,7 @@ caprine domain.
   \label{fig:dataset_cohort}
 \end{figure}
 
-\section{From Raw Genotypes to Model Input}
+\section{From raw genotypes to model input}
 \label{sec:genotype_preprocessing}
 
 Raw genotype matrices require quality control before they can be used
@@ -154,7 +154,7 @@ with no missing values. This matrix is the common input from which the
 variational and contrastive models construct their model-specific
 representations.
 
-\section{Development Data and the Held-Out Test Set}
+\section{Development data and the held-out test set}
 \label{sec:data_partitioning}
 
 The $2863$ eligible ADAPTmap individuals are divided into two
@@ -198,7 +198,7 @@ panels contain $46442$, $46402$, and $46444$ SNPs. These values are
 properties of the fold-specific preprocessing fit, not fixed
 dimensions imposed on the raw data.
 
-\section{A Common Label Space}
+\section{A common label space}
 \label{sec:canonical_labels}
 
 For a task containing $C$ breeds, textual breed identifiers are
@@ -209,11 +209,8 @@ mapped deterministically to dense class indices
 \end{equation}
 
 The same canonical mapping is used by all models evaluated on the same
-task cohort. For the primary ADAPTmap classification task, the $34$
-retained breeds are
-
-For the primary ADAPTmap classification task, the frozen cohort
-contains $34$ breeds. Throughout the thesis, breed names are used in
+task cohort. For the primary ADAPTmap classification task, the frozen
+cohort contains $34$ breeds. Throughout the thesis, breed names are used in
 the narrative text, while the original ADAPTmap identifiers are
 retained when compact labels are required, for example in confusion
 matrices or computational artifacts. The correspondence is reported
@@ -287,7 +284,7 @@ It makes fold-level per-class recall and confusion matrices directly
 comparable and allows them to be interpreted without remapping class
 indices after every experiment.
 
-\section{The Development Questions as Controlled Experiments}
+\section{The development questions as controlled experiments}
 \label{sec:experimental_design}
 
 The thesis studies several questions using the same general data
@@ -300,7 +297,7 @@ VMGP configuration is held fixed while the number of training
 individuals per breed is reduced; the corresponding 15-breed
 validation population remains unchanged within each cross-validation fold.
 For marker efficiency, the input panel is progressively reduced using
-a ranking constructed only from legitimate training information.
+a ranking constructed from the training partition only.
 Finally, different marker-ranking methods are compared by evaluating the downstream panels that they
 produce.
 
@@ -311,7 +308,7 @@ breed-discriminative structure?
 
 \input{figures/fig_experimental_design.tex}
 
-\section{Cross-Validation and Model Selection}
+\section{Cross-validation and model selection}
 \label{sec:rq1_protocol}
 
 For RQ1, scalar classification metrics are computed on each of the
@@ -337,7 +334,7 @@ reported as the final cross-validation result. A configuration is
 characterized by its behavior across all three held-out development
 partitions.
 
-\section{Studying Sample Scarcity}
+\section{Studying sample scarcity}
 \label{sec:sample_size_protocol}
 
 RQ2 asks how breed-classification performance changes when fewer
@@ -493,7 +490,7 @@ Throughout this experiment, the held-out test set remains completely
 outside the RQ2 data path. It is neither used for sampling nor
 transformed by any RQ2-specific preprocessing state.
 
-\section{Evaluation Metrics}
+\section{Evaluation metrics}
 \label{sec:evaluation_metrics}
 
 No single metric describes every aspect of a multiclass classifier.
@@ -539,12 +536,12 @@ measurements. Macro-F1 remains the primary quantity used to interpret
 the sample-efficiency curve and to determine the operational minimum
 training-population size.
 
-\section{Defining ``Minimum'' Before Looking at the Curves}
+\section{Defining ``minimum'' before looking at the curves}
 \label{sec:minimum_requirements}
 
 The terms ``minimum number of individuals'' and ``minimum number of
 markers'' can become ambiguous if the threshold is chosen only after
-looking at experimental curves. For this reason, the thesis uses an
+looking at experimental curves. The thesis therefore uses an
 operational retained-performance definition.
 
 Let $S_{\mathrm{full}}$ be the Macro-F1 obtained using the complete

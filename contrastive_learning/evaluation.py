@@ -1,6 +1,4 @@
 """Evaluation utilities for the contrastive model.
-
-Extracted verbatim from the contrastive notebooks.
 """
 
 import numpy as np

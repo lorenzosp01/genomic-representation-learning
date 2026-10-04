@@ -1,6 +1,4 @@
 """Contrastive genetic model (Thor & Nettelblad 2025).
-
-Extracted verbatim from the contrastive notebooks.
 """
 
 import torch

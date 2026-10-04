@@ -1,4 +1,4 @@
-\chapter{Learning Compact Genomic Representations}
+\chapter{Learning compact genomic representations}
 \label{chap:representations}
 \label{chap:latent_representations}
 
@@ -19,7 +19,7 @@ The purpose of the chapter is to explain the models and the reasoning
 behind their design. Their quantitative comparison is deliberately
 deferred to Chapter~\ref{chap:evaluation}.
 
-\section{Why Learn a Latent Genomic Space?}
+\section{Why learn a latent genomic space?}
 \label{sec:why_latent_genomics}
 
 Using the complete genomic vector directly has an intuitive advantage:
@@ -48,7 +48,7 @@ i.e. an inductive bias \cite{mitchell1980need}, and the two objectives
 below differ precisely in the assumptions they impose on a useful
 genomic representation.
 
-\section{A Variational Approach to Genotype Representation}
+\section{A variational approach to genotype representation}
 \label{sec:vmgp_architecture}
 
 The first model follows the variational autoencoder (VAE) paradigm
@@ -80,7 +80,7 @@ diagonal Gaussian posterior,
     \in\mathbb{R}^{d}.
 \end{equation}
 
-\subsection{Sampling and Reconstruction}
+\subsection{Sampling and reconstruction}
 
 During training, a latent vector is sampled using the
 reparameterization trick,
@@ -121,11 +121,11 @@ At evaluation time, the stochastic sampling step is removed and the
 deterministic posterior mean $\boldsymbol{\mu}$ is used as the
 representation.
 
-\subsection{Breed Prediction from the Latent Mean}
+\subsection{Breed prediction from the latent mean}
 
 Reconstruction alone does not guarantee that the latent space will
 organize individuals in a way that is convenient for breed
-classification. For this reason, a supervised head receives the
+classification. A supervised head therefore receives the
 posterior mean and maps it through
 
 \begin{equation}
@@ -144,7 +144,7 @@ Using the posterior mean rather than a stochastic sample for breed
 prediction also gives the classifier a deterministic representation
 on which to operate.
 
-\subsection{Joint Reconstruction and Classification Objective}
+\subsection{Joint reconstruction and classification objective}
 
 The reconstruction term combines element-wise mean squared error with
 a small KL regularizer,
@@ -207,7 +207,7 @@ reconstruction term. The implementation is not treated as an active
 $\beta$-VAE, and no auxiliary continent, casein, or aptitude
 prediction head contributes to the training loss.
 
-\subsection{How Large Should the Variational Representation Be?}
+\subsection{How large should the variational representation be?}
 
 A latent representation should be small enough to provide meaningful
 compression but large enough to preserve the structure required by the
@@ -232,7 +232,7 @@ before fold-level classification metrics are computed.
 
 \input{figures/fig_vmgp_architecture.tex}
 
-\section{A Self-Supervised Contrastive Approach}
+\section{A self-supervised contrastive approach}
 \label{sec:contrastive_model}
 
 The second model starts from a different question. Instead of telling
@@ -246,7 +246,7 @@ a genomic augmentation operator, a convolutional encoder, normalization
 onto a hypersphere, and a centroid N-pair objective. Breed labels do not
 enter the contrastive training loss.
 
-\subsection{Genomic Views and Data Augmentation}
+\subsection{Genomic views and data augmentation}
 
 The shared preprocessing pipeline produces dosage states $0$, $1$,
 and $2$. For contrastive learning, these states are represented
@@ -289,7 +289,7 @@ The augmentation is intentionally disabled during deterministic
 evaluation. At that point the fourth channel is zero and the embedding
 is derived from the unperturbed post-QC genotype profile.
 
-\subsection{Encoder and Hyperspherical Embedding}
+\subsection{Encoder and hyperspherical embedding}
 
 The categorical tensor has shape $(B,4,P)$ and is processed by two
 one-dimensional convolutions,
@@ -339,7 +339,7 @@ representation is a deliberate part of the contrastive design rather
 than a value selected from the same grid used by the variational
 model.
 
-\subsection{Centroid N-Pair Learning}
+\subsection{Centroid N-pair learning}
 
 For an anchor $\mathbf{z}_i$, a positive view $\mathbf{z}_i^{+}$, and
 a negative embedding $\mathbf{z}_{ij}^{-}$, the implemented objective
@@ -413,7 +413,7 @@ The batch loss is the mean of $\ell_i$. This objective is different
 from NT-Xent: it does not use a temperature parameter and retains the
 centroid-based geometry of the reference implementation.
 
-\subsection{From a Self-Supervised Space to Breed Prediction}
+\subsection{From a self-supervised space to breed prediction}
 
 The contrastive model does not contain a supervised breed head. Once
 training for a cross-validation fold is complete, deterministic embeddings
@@ -442,7 +442,7 @@ evaluation.
 
 \input{figures/fig_contrastive_architecture.tex}
 
-\section{Two Different Views of the Same Genomic Problem}
+\section{Two different views of the same genomic problem}
 \label{sec:two_views_genomic_problem}
 
 The two models deliberately solve different learning problems.
@@ -465,7 +465,7 @@ representation-learning questions, and the evaluation chapter
 considers both predictive performance and the properties of the
 resulting latent spaces.
 
-\section{Final Development Training}
+\section{Final development training}
 \label{sec:final_training_protocol}
 
 Cross-validation is used for development and configuration selection.

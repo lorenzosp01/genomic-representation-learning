@@ -1,7 +1,7 @@
 """Equivalence tests for the contrastive core extraction.
 
-These verify that the classes/functions moved out of the contrastive notebooks
-preserve the exact notebook behaviour, without running full model training.
+These verify that the extracted classes/functions preserve the exact original
+behaviour, without running full model training.
 """
 
 from types import SimpleNamespace

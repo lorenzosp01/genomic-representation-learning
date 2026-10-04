@@ -1,7 +1,6 @@
 """Centroid-based N-pair loss (Thor & Nettelblad 2025, Eq. 3–6).
 
-Extracted verbatim from the contrastive notebooks. The sum over negatives is
-inside the log, faithful to the paper.
+The sum over negatives is inside the log, faithful to the paper.
 """
 
 import numpy as np

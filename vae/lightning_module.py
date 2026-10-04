@@ -82,7 +82,7 @@ class VMGP_LightningSystem(pl.LightningModule):
         return self.model(x)
 
     def configure_optimizers(self):
-        # Adam semplice come nel notebook funzionante
+        # Adam semplice come nella configurazione di riferimento
         return torch.optim.Adam(self.parameters(), lr=self.hparams.lr)
 
     def _common_step(self, batch, batch_idx, stage):
@@ -112,7 +112,7 @@ class VMGP_LightningSystem(pl.LightningModule):
         # KL divergence: -0.5 * Σ(1 + log(σ²) - μ² - σ²)
         kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         kl_loss /= x.size(0)  # Normalize by batch size
-        loss_rec = mse_loss + 0.0001 * kl_loss  # KL weight 0.0001 come nel notebook funzionante
+        loss_rec = mse_loss + 0.0001 * kl_loss  # KL weight 0.0001 come nella configurazione di riferimento
         self.log(f'{stage}_kl_loss', kl_loss, prog_bar=False)
         
         # --- Loss Predizione (Multiple Tasks) ---

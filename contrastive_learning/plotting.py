@@ -1,7 +1,7 @@
 """Plotting helpers for the contrastive model.
 
-Extracted from the contrastive notebooks: breed distribution, Equal Earth /
-unit-sphere embedding projection, and KNN@3 confusion matrix.
+Breed distribution, Equal Earth / unit-sphere embedding projection, and
+KNN@3 confusion matrix.
 """
 
 import numpy as np

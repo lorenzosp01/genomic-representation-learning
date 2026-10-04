@@ -1,8 +1,7 @@
 \chapter{Conclusions}
 \label{chap:conclusion}
 
-This thesis is motivated by a simple difficulty of modern genomic
-analysis: obtaining more markers does not necessarily mean that every
+Obtaining more markers does not necessarily mean that every
 marker, or every available individual, contributes equally to a
 classification problem. Livestock SNP datasets can contain tens of
 thousands of correlated variables while the number of genotyped
@@ -10,23 +9,18 @@ animals remains comparatively small. The work therefore approaches
 breed classification as a problem of learning, compression, and
 interpretation at the same time.
 
-The methodology developed throughout the thesis connects these three
-levels. A leakage-safe genomic pipeline first defines which
-information is available during development. Variational and
-self-supervised contrastive models then provide two different ways of
-constructing compact representations of complete genotype profiles.
-Finally, classical population-genetics statistics, machine-learning
-feature importance, and neural attribution methods are used to move
-from the learned representations back to individual markers.
+The methodology connects these three levels. A leakage-safe genomic
+pipeline defines which information is available during development;
+variational and self-supervised contrastive models provide two ways of
+constructing compact representations of complete genotype profiles;
+classical population-genetics statistics, machine-learning feature
+importance, and neural attribution methods then move from the learned
+representations back to individual markers.
 
-The same framework is used for all four questions: the manipulated
-factors --- the number of training individuals or the number of markers
---- are varied under controlled preprocessing and data-partitioning
-rules. This makes the following comparisons meaningful: how reliably
-breeds can be distinguished, how the task changes when fewer animals
-are available, how aggressively the SNP panel can be reduced, and
-whether different marker-ranking strategies preserve the same
-downstream information.
+The four questions share the same preprocessing and data-partitioning
+rules, while the manipulated factor changes from one experiment to the
+next: the number of training individuals for sample efficiency and the
+number of markers for panel reduction.
 
 The final evidence can be summarized in four points. RQ1 (breed
 classification). Compact genomic representations classify livestock
@@ -34,7 +28,7 @@ breeds very accurately without species-specific tuning: Macro-F1
 $0.9703$ and $0.9496$ on the caprine held-out test and $0.9555$ and
 $0.9148$ on the independent ovine held-out test for the supervised and
 self-supervised models respectively. RQ2 (sample efficiency). A
-surprisingly small training population suffices: in the caprine cohort
+small training population suffices: in the caprine cohort
 $N_{\min}=10$ individuals per breed retained $98.5\%$ of the reference
 performance, and in the ovine cohort the same sample size retained
 $98.6\%$. RQ3 (marker efficiency). The marker panel can be reduced by
@@ -59,46 +53,44 @@ dataset-dependent.
 
 \section*{Limitations}
 
-The conclusions of the thesis must be interpreted within the
-boundaries of the available data and protocol.
+These conclusions are bounded by the available data and the
+experimental protocol.
 
-First, breed classification is not equivalent to discovering causal
+Breed classification is not equivalent to discovering causal
 biological variants. A SNP can be useful for population discrimination
 because it tags population structure or correlates with other loci,
 without being a functional cause of breed identity.
 
-Second, marker importance in high-LD genomic data is not necessarily
-unique. Several correlated markers may carry interchangeable
-predictive information, so disagreement between rankings does not
+Marker importance is also not unique in high-LD genomic data.
+Several correlated markers may carry interchangeable predictive
+information, so disagreement between rankings does not
 automatically imply that one method is incorrect.
 
-Third, the number and distribution of genotyped individuals constrain
-what can be concluded about sample efficiency. The operational
-training-population threshold identified in this thesis depends on the
-selected breeds, their genomic diversity, marker density,
-preprocessing pipeline, learning architecture, and retained-performance
-criterion. Consequently, the resulting value of $N_{\min}$ should not
-be interpreted as a universal biological minimum number of animals
-required for breed classification.
+The number and distribution of genotyped individuals constrain what
+can be concluded about sample efficiency. The operational threshold
+identified here depends on the selected breeds, their genomic
+diversity, marker density, preprocessing pipeline, learning
+architecture, and retained-performance criterion; the resulting value
+of $N_{\min}$ should not be interpreted as a universal biological
+minimum number of animals required for breed classification.
 
-Finally, cross-species validation is methodological. ADAPTmap and
-Sheep HapMap represent different species, marker spaces, and
-classification problems. The value of the second domain lies in
-testing whether the behavior of the methodology is reproducible, not
-in expecting identical important loci or directly comparable raw
-scores.
+The cross-species analysis is also methodological. ADAPTmap and
+Sheep HapMap differ in species, marker space, and classification
+problem; the second domain tests whether the behavior of the pipeline
+can be reproduced in another livestock setting, and it does not assume
+identical informative loci or directly comparable raw scores.
 
-\section*{Future Work}
+\section*{Future work}
 
-Several extensions follow naturally from the framework.
+Several extensions could strengthen the current study.
 
-A first direction is biological annotation of the most stable and
-predictive SNPs. Connecting computational rankings to genes,
+Biological annotation of the most stable and predictive SNPs is a
+natural next step. Connecting computational rankings to genes,
 regulatory regions, and known population-history signals would help
 distinguish predictive markers from biologically interpretable
 candidates.
 
-A second direction is to study ranking uncertainty more explicitly.
+Ranking uncertainty could be studied more explicitly.
 Bootstrap procedures, repeated sampling, and methods that operate on
 LD blocks rather than individual SNPs could provide a more realistic
 view of feature importance when correlated markers are
@@ -110,14 +102,13 @@ regularization strategies or multi-view genomic information, while
 the contrastive model could be studied with augmentation policies that
 are designed more explicitly around biological invariances.
 
-A further direction is open-set breed assignment: instead of assuming
-that every query individual belongs to one of the reference breeds,
-the model could be asked to reject individuals that do not, using the
-geometry of the learned sphere or the reconstruction error as a
-rejection score.
+Open-set breed assignment is a further extension: the model could be
+asked to reject individuals that do not belong to any reference breed,
+using the geometry of the learned sphere or the reconstruction error
+as a rejection score.
 
-A further direction concerns synthetic genomic data generation for
-data-scarce populations. Generative models could in principle be used
+Synthetic genomic data generation for data-scarce populations is
+another possible extension. Generative models could in principle be used
 to augment breeds represented by only a small number of real
 individuals and to investigate whether synthetic genotype profiles can
 recover part of the classification performance lost under severe
@@ -133,25 +124,24 @@ extremely limited population could reproduce close variants of the
 observed individuals instead of learning a representative genomic
 distribution.
 
-The sample-efficiency analysis developed in this thesis provides a
-natural basis for such future work. Once the range in which
+The sample-efficiency analysis provides a basis for such future work. Once the range in which
 classification performance deteriorates has been identified, synthetic
 augmentation could be evaluated specifically in that data-scarce
 regime by comparing models trained on real individuals alone with
 models trained on the same real individuals supplemented by synthetic
 genomic profiles.
 
-Finally, the reduced-panel analysis could be moved closer to an
+The reduced-panel analysis could also be moved closer to an
 applied traceability setting. Independent external cohorts, additional
 breeds, and genotyping platforms with different marker densities would
 provide stronger evidence about how well a computationally selected
 panel transfers outside the datasets used during model development.
 
-\section*{Practical Impact}
+\section*{Practical impact}
 
-The practical motivation of this work is the possibility of replacing
-an unnecessarily large genomic representation with a smaller one
-without losing the information needed for a defined task. If reliable
+A practical motivation is the possibility of replacing an
+unnecessarily large genomic representation with a smaller one without
+losing the information needed for a defined task. If reliable
 reduced panels can be identified reproducibly, they may provide a
 computational starting point for more economical breed-assignment or
 traceability workflows.
@@ -163,3 +153,20 @@ contribution of the thesis is therefore best viewed as a
 methodological bridge between high-density genomic data, modern
 representation learning, and the design of compact, testable genomic
 subsets.
+
+The complete experimental pipeline that implements the protocol
+described in this thesis, together with the frozen configurations and
+the evaluation scripts, is available at
+\url{https://github.com/lorenzosp01/genomic-dataset-reduction}.
+
+\section*{AI usage statement}
+
+Generative AI tools were used during the preparation of this thesis as
+assistive instruments for software development and for the linguistic
+and editorial revision of the manuscript. All scientific decisions,
+the experimental design, the data analysis, and the interpretation of
+the results were made by the author, who reviewed and verified every
+AI-assisted output and takes full responsibility for the content of
+the thesis.
+% TODO(author): confirm the exact scope of AI assistance and the tool
+% names before submission.

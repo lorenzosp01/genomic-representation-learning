@@ -1,20 +1,18 @@
-\chapter{Experimental Evaluation}
+\chapter{Experimental evaluation}
 \label{chap:evaluation}
 % Backward-compatible label for older references.
 \label{chap:experiments}
 
-The previous chapters introduced the data protocol, the two learned
-genomic representations, and the framework used to construct marker
-rankings. This chapter brings those components together.
+The previous chapters defined the data protocol, the two learned
+genomic representations, and the procedures used to construct marker
+rankings; this chapter brings the components together.
 
 The organization follows the questions that motivated the thesis
-rather than the order in which scripts were executed. The first
-section asks whether the complete genomic representation supports
-breed classification. The following sections progressively remove
-information: first training individuals and then genomic markers. The
-chapter then compares alternative ways of choosing those markers and
-finally considers whether the main methodological observations can be
-reproduced in an independent ovine domain.
+rather than the order in which scripts were executed: the analysis
+begins with breed classification on the complete representation, then
+reduces the training population and the marker panel, compares the
+resulting ranking strategies, and repeats the main analyses in an
+independent ovine domain.
 
 All numbers reported in this chapter come from runs of the frozen
 protocol: development cross-validation over the three fixed folds, a
@@ -22,14 +20,14 @@ single held-out test evaluation for the final models, and ranking or
 panel experiments whose selection rules were fixed before the results
 were inspected.
 
-\section{Breed Classification from the Complete Genomic Representation}
+\section{Breed classification from the complete genomic representation}
 \label{sec:breed_classification_evaluation}
 
 The first evaluation establishes the reference classification
-problem. Both representation-learning approaches receive the same
-ADAPTmap cohort, the same cross-validation folds, and the same fold-specific
-train-fitted preprocessing. The difference begins only after the
-shared genomic matrix has been constructed.
+problem. Both representation-learning approaches use the same
+ADAPTmap cohort, cross-validation folds, and fold-specific
+train-fitted preprocessing; they differ only in the representation-learning
+procedure.
 
 For the variational approach, development includes the comparison of
 the pre-specified latent dimensions. The configuration is selected
@@ -99,14 +97,14 @@ Contrastive, held-out test
 \end{tabular}
 \end{table}
 
-\subsection{Final Evaluation on the Held-Out Test Set}
+\subsection{Final evaluation on the held-out test set}
 \label{sec:locked_test_evaluation}
 
 Cross-validation answers a development question: which configuration
-should be carried forward? The held-out test set has a different purpose.
-It estimates how the already fixed models behave on individuals that
-were not used for preprocessing design, model selection, early
-stopping, or hyperparameter decisions.
+should be carried forward? The held-out test set serves a different
+purpose, estimating how the fixed models behave on individuals that were not used for
+preprocessing design, model selection, early stopping, or
+hyperparameter decisions.
 
 For final training, a new preprocessor is fitted on all development
 individuals. Each selected model is then trained for the fixed
@@ -120,9 +118,9 @@ the contrastive model, deterministic development embeddings are used
 to fit the final $k=3$ nearest-neighbor classifier and the held-out test
 embeddings are then classified once.
 
-The held-out test scores must be treated as final descriptive results.
-They are not a second opportunity to select another latent dimension,
-change the epoch budget, or revise preprocessing.
+The held-out test scores are final descriptive results: they provide
+no second opportunity to select a latent dimension, change the epoch
+budget, or revise preprocessing.
 
 The held-out test set is reserved for this final model evaluation. The
 marker-efficiency, ranking-comparison and robustness analyses of this
@@ -142,13 +140,14 @@ selection followed the test evaluation.
 
 The held-out test results are consistent with development
 cross-validation. The variational model moves from
-$0.9796 \pm 0.0032$ to $0.9703$ (a decrease of $0.93$ points), while
-the contrastive model improves from $0.9320 \pm 0.0070$ to $0.9496$
-($+1.76$ points). Under the same cross-validation folds, the classical
-full-panel Random Forest reaches $0.7189 \pm 0.0054$ Macro-F1, so the
-learned representations clearly outperform a classical classifier on
-the complete marker panel in cross-validation ($+0.26$ and $+0.21$
-Macro-F1 respectively).
+$0.9796 \pm 0.0032$ to $0.9703$, a decrease of $0.93$ points, while
+the contrastive model improves from $0.9320 \pm 0.0070$ to $0.9496$,
+an increase of $1.76$ points. Under the same cross-validation folds,
+the classical full-panel Random Forest reaches $0.7189 \pm 0.0054$
+Macro-F1, so the learned representations outperform a classical
+classifier on the complete marker panel in cross-validation, by $26.1$
+and $21.3$ Macro-F1 points for the variational and contrastive models
+respectively.
 
 \begin{figure}[ht]
   \centering
@@ -173,17 +172,15 @@ Macro-F1 respectively).
   \label{fig:rq1_latent_spaces}
 \end{figure}
 
-\section{Learning with Fewer Individuals}
+\section{Learning with fewer individuals}
 \label{sec:sample_scarcity_validation}
 
-The complete-cohort experiment demonstrates that the learned genomic
+The complete-cohort experiment shows that the learned genomic
 representations achieve high breed-classification performance when the
-entire development population is available. In practical applications,
-however, reference populations are frequently constrained by genotyping
-costs or by the limited numerical size of local and endangered breeds.
-An important methodological question is therefore how classification
-generalization behaves when the number of available training individuals
-per breed is systematically restricted.
+full development population is available. The next question is how this
+generalization changes when fewer training individuals per breed are
+available, as may occur when reference populations are limited by
+genotyping costs or by the small size of local and endangered breeds.
 
 To examine this behavior under controlled conditions, the sample-efficiency
 experiment keeps the VMGP-inspired model selected during development
@@ -242,13 +239,13 @@ $N$ & Total Training Animals & Macro-F1 & Balanced Accuracy & Accuracy & Retaine
   \label{fig:rq2_learning_curve}
 \end{figure}
 
-\subsection{Observations on the Learning Trajectory}
+\subsection{Observations on the learning trajectory}
 
-The empirical learning trajectory (Figure~\ref{fig:rq2_learning_curve})
-displays two prominent characteristics across the evaluated range:
+The empirical learning trajectory in Figure~\ref{fig:rq2_learning_curve}
+has two main features:
 
 \begin{enumerate}
-    \item \textbf{Transition from $N=5$ to $N=10$:}
+    \item \textbf{From $N=5$ to $N=10$:}
     At $N=5$ (75 training animals in total across 15 classes), the model
     achieves a mean Macro-F1 of $0.9048$ with a standard deviation of
     $0.0337$. The dispersion across replicates is noticeably higher in this
@@ -258,9 +255,9 @@ displays two prominent characteristics across the evaluated range:
     produces the largest single gain observed across the experiment, with
     mean Macro-F1 rising by $5.01$ percentage points to $0.9549$.
     Concurrently, the standard deviation decreases to $0.0099$, reflecting a
-    substantially more consistent outcome across sampling replicates and folds.
+    more consistent outcome across sampling replicates and folds.
 
-    \item \textbf{Plateau behavior beyond $N=10$:}
+    \item \textbf{Beyond $N=10$:}
     For sample sizes above $N=10$, additional training individuals yield
     progressively smaller performance gains. Increasing the training set
     from $N=10$ (150 animals) to the reference setting of $N=30$ (450 animals)
@@ -271,11 +268,11 @@ displays two prominent characteristics across the evaluated range:
     close to $0.01$.
 \end{enumerate}
 
-\subsection{Identification of the Operational Minimum Sample Size}
+\subsection{Identification of the operational minimum sample size}
 
-As defined in Section~\ref{sec:minimum_requirements}, the operational
-minimum sample size $N_{\min}$ is the smallest value of $N \in \mathcal{N}$
-satisfying
+Under the definition in Section~\ref{sec:minimum_requirements}, the
+operational minimum sample size $N_{\min}$ is the smallest value of
+$N\in\mathcal{N}$ satisfying
 
 \begin{equation}
     \overline{F_1^{\mathrm{macro}}}(N)
@@ -283,9 +280,9 @@ satisfying
     (1 - \epsilon_N) S_{\mathrm{ref}},
 \end{equation}
 
-where the reference score is $S_{\mathrm{ref}} = \overline{F_1^{\mathrm{macro}}}(30) = 0.9692$
-and the tolerance parameter was frozen at $\epsilon_N = 0.02$ prior to the
-analysis. This yields an operational threshold of
+where $S_{\mathrm{ref}} = \overline{F_1^{\mathrm{macro}}}(30) = 0.9692$
+and the tolerance parameter was fixed at $\epsilon_N=0.02$ before the
+analysis. The resulting retention threshold is
 
 \begin{equation}
     0.98 \times 0.969223 = 0.949838.
@@ -306,12 +303,12 @@ size is therefore identified as
     N_{\min} = 10.
 \end{equation}
 
-\subsection{Discussion and Methodological Limitations}
+\subsection{Discussion and methodological limitations}
 
-The observed plateau suggests that, within this experimental setup, most of
-the predictive population structure captured by the pipeline can be acquired
-with relatively few training animals per breed. However, interpreting these
-findings requires several methodological cautions:
+The observed plateau suggests that most of the predictive population
+structure captured by the pipeline is acquired with relatively few
+training animals per breed in this experimental setup. Three limitations
+qualify this interpretation:
 
 \begin{itemize}
     \item \textbf{Confounded sources of sample scarcity:}
@@ -339,18 +336,17 @@ findings requires several methodological cautions:
     pipeline under reduced data availability.
 \end{itemize}
 
-\section{Learning with Fewer Genomic Markers}
+\section{Learning with fewer genomic markers}
 \label{sec:marker_efficiency_validation}
 
-The next experiment changes the other side of the high-dimensional
-problem. Instead of reducing the number of individuals, it reduces the
-number of available SNPs.
+The next experiment reduces the number of available SNPs while keeping
+the training population fixed.
 
 Starting from a global ranking constructed inside the training
-partition, nested panels are evaluated from very small subsets toward
-the complete post-QC genomic representation. The central question is
-whether most of the classification information is concentrated in a
-relatively small portion of the high-density array.
+partition, nested panels are evaluated from very small subsets up to
+the complete post-QC representation. The question is how much of the
+classification information is concentrated in a relatively small
+portion of the high-density array.
 
 A useful result is not necessarily a reduced panel that improves
 classification. If a much smaller panel preserves nearly the same
@@ -367,15 +363,15 @@ size). Figure~\ref{fig:rq3_panel_curves} shows the resulting curves and
 Table~\ref{tab:rq3_selected_k} reports the aggregate values at selected
 panel sizes.
 
-Three regimes are visible. At very small panels ($K=50$) no method
-exceeds $0.61$ Macro-F1 and all are far below the full panel. In the
-intermediate range the two classical rankings separate from the neural
-attributions: at $K=200$, $F_{ST}$ reaches $0.7356$ and Random Forest
-$0.7277$, against $0.6523$ for SHAP and $0.6271$ for Integrated
-Gradients. Beyond $K=500$ the curves plateau: Random Forest peaks at
-$0.7664$ ($K=2000$) and $F_{ST}$ at $0.7602$ ($K=1000$), while SHAP and
-Integrated Gradients keep improving slowly and remain below the
-full-panel reference ($0.7309$ and $0.7072$ at $K=5000$).
+At $K=50$ no method exceeds $0.61$ Macro-F1, and all remain well below
+the full-panel reference. By $K=200$ the two classical rankings have
+separated from the neural attributions: $F_{ST}$ reaches $0.7356$ and
+Random Forest $0.7277$, against $0.6523$ for SHAP and $0.6271$ for
+Integrated Gradients. Beyond $K=500$ the curves flatten, with Random
+Forest peaking at $0.7664$ ($K=2000$) and $F_{ST}$ at $0.7602$
+($K=1000$), while SHAP and Integrated Gradients improve slowly and
+remain below the full-panel reference ($0.7309$ and $0.7072$ at
+$K=5000$).
 
 Under the pre-registered retention rule ($\epsilon_P=0.02$, threshold
 $0.98\,S_{\mathrm{full}}=0.7045$) the smallest qualifying panels are
@@ -387,16 +383,16 @@ $0.6790$ at $K=5000$) and only approach the $95\%$ threshold at the
 largest size, which confirms that the four rankings carry information
 beyond chance.
 
-The $F_{ST}$ panel with $200$ markers already matches the full-panel
-reference ($0.7356$ versus $0.7189$): a panel containing less than
-$0.5\%$ of the retained markers preserves the breed-discrimination
-signal under this evaluator, and the Random Forest ranking behaves
-similarly. The ordering of the methods is stable in the intermediate
-range ($F_{ST} \gtrsim$ Random Forest $>$ SHAP $>$ Integrated
-Gradients), but the margin of Integrated Gradients over the random
-baseline is small at large panels and its $P_{\min}$ is sensitive to
-the tolerance: at $K=2000$ its mean Macro-F1 ($0.7035$) lies only
-$0.0010$ below the $\epsilon_P=0.02$ threshold.
+At $K=200$ the $F_{ST}$ panel reaches $0.7356$ Macro-F1 against
+$0.7189$ for the full-panel Random Forest reference, so a panel
+containing less than $0.5\%$ of the retained markers preserves the
+breed-discrimination signal under this evaluator, and the Random Forest
+ranking behaves similarly. Across the intermediate range the ordering
+remains $F_{ST} \gtrsim$ Random Forest $>$ SHAP $>$ Integrated
+Gradients; Integrated Gradients, however, stays close to the retention
+boundary at large panels, with a mean Macro-F1 of $0.7035$ at $K=2000$,
+only $0.0010$ below the $\epsilon_P=0.02$ threshold, which makes its
+operational $P_{\min}$ sensitive to the chosen tolerance.
 
 \begin{figure}[ht]
   \centering
@@ -430,23 +426,21 @@ $5000$ & $0.7581 \pm 0.0191$ & $0.7466 \pm 0.0172$ & $0.7309 \pm 0.0115$ & $0.70
 \end{tabular}
 \end{table}
 
-\section{Comparing Marker-Selection Strategies}
+\section{Comparing marker-selection strategies}
 \label{sec:marker_ranking_comparison}
 
-RQ4 asks whether learned-model explanations identify useful markers
-relative to more classical references.
+RQ4 asks whether the rankings derived from learned models identify
+useful markers when compared with the classical references.
 
-The comparison should place all ranking methods on equal footing. Each
-method constructs a ranking from the same legitimate training
-information. The ranking is then converted into the same sequence of
-panel sizes, and the resulting panels are evaluated with the same
+All ranking methods are evaluated on the same basis. Each ranking is
+constructed from the training partition only, converted into
+the same sequence of panel sizes, and evaluated with the same
 downstream classification protocol.
 
-The purpose of this comparison is not to show that a deep attribution
-method produces larger raw importance values than $F_{ST}$ or Random
-Forest. The scores have different scales and meanings. What can be
-compared meaningfully is the predictive utility and stability of the
-reduced panels that each ranking produces.
+The raw importance values are not compared across methods because
+their scales and meanings differ. The meaningful comparison is the
+predictive utility and stability of the reduced panels produced by
+each ranking.
 
 RQ4 compares the four ranking families introduced in
 Figure~\ref{fig:ranking_families} under the same protocol: identical
@@ -471,8 +465,8 @@ Forest overlap at $K=500$ is extreme under a hypergeometric null
 ($p<10^{-180}$), whereas the single marker shared by $F_{ST}$ and SHAP
 at $K=200$ is compatible with chance ($p\approx 0.58$).
 
-The low overlap does not imply that the methods disagree about the
-underlying biology. With strong linkage disequilibrium, several
+Low overlap does not imply disagreement about the underlying
+biology. With strong linkage disequilibrium, several
 correlated markers can act as interchangeable tags of the same
 population signal, so different rankings may select distinct but
 genomically linked markers. What the experiment does show is that the
@@ -492,7 +486,7 @@ $0.99$), which explicitly discourages reliance on individual markers.
 Third, the Integrated Gradients baseline --- the zero vector in the
 four-channel one-hot space --- is not a valid genotype configuration,
 and attributions computed from out-of-distribution baselines are known
-to be unstable. Fourth, and most importantly, the attribution methods
+to be unstable. Fourth, the attribution methods
 explain their own neural models, whereas the downstream panel evaluator
 is a Random Forest; the Random Forest importance ranking benefits from
 the same inductive bias as the evaluator. The experiment therefore
@@ -502,14 +496,13 @@ could change the ranking of the methods.
 Section~\ref{sec:rq4_robustness} tests this prediction explicitly and
 confirms it.
 
-A final methodological remark concerns the difference between
-attribution and selection. The earlier notebook-based attribution
-experiment ranked markers on the complete dataset and evaluated panels
-by cross-validation on the same individuals; that protocol is
-optimistic. The results reported here construct every ranking inside
-the training partition and evaluate panels on untouched validation
-individuals, which is the only way the comparison can support claims
-about unseen animals.
+Attribution and selection are distinct stages. The earlier notebook
+experiment ranked markers on the complete dataset and evaluated the
+resulting panels by cross-validation on the same individuals, which
+produces an optimistic estimate; here every ranking is constructed
+inside the training partition and evaluated on untouched validation
+individuals, which provides the appropriate basis for claims about
+performance on unseen animals.
 
 \begin{figure}[ht]
   \centering
@@ -570,25 +563,24 @@ position, including unplaced markers on chromosome~0, are excluded.
   \label{fig:rq4_genomic_landscape}
 \end{figure}
 
-\section{Robustness of the Marker-Selection Comparison}
+\section{Robustness of the marker-selection comparison}
 \label{sec:rq4_robustness}
 
-The comparison of Section~\ref{sec:marker_ranking_comparison} keeps the
-downstream evaluator fixed: every panel is scored by the same Random
-Forest, whichever ranking family produced it. The mechanistic reading
-proposed there --- in particular the possibility that the Random Forest
-importance ranking benefits from the same inductive bias as the
-evaluator --- predicts that the ordering of the families could change
-under a different downstream model. This section tests that prediction
-with four train-only analyses on the primary caprine cohort: an
-evaluator-sensitivity study, a model-native evaluation in which the
-explained architecture is retrained on the panel, an extended
-classical baseline, and a valid-baseline study of the contrastive
-attributions, plus a cross-species replication of the
-evaluator-sensitivity and association analyses on the ovine cohort.
-All analyses reuse the frozen folds and the cached
-rankings of the frozen protocol; no held-out test record is read, and every model is
-fitted on the fold training partition only.
+The comparison in Section~\ref{sec:marker_ranking_comparison} uses a
+fixed downstream evaluator: every panel is scored by the same Random
+Forest, regardless of the ranking method that produced it. The
+mechanistic reading proposed there --- in particular the possibility
+that the Random Forest importance ranking benefits from the same
+inductive bias as the evaluator --- predicts that the ordering of the
+families could change under a different downstream model. The
+robustness analysis tests that prediction with four train-only checks
+on the primary caprine cohort: alternative downstream classifiers,
+retraining the explained architecture on the selected panel, an
+extended classical baseline, and alternative Integrated Gradients
+baselines. The evaluator-sensitivity and association analyses are also
+repeated in the ovine cohort. All analyses reuse the frozen folds and
+cached rankings; no held-out test record is read, and every fitted
+model uses only the fold training partition.
 
 \paragraph{Evaluator sensitivity.}
 Three additional downstream classifiers are applied to the same panels
@@ -599,10 +591,11 @@ $S_{\mathrm{full}} = 0.7189$ belongs to the Random Forest evaluator,
 each alternative evaluator is given its own reference on the complete
 post-QC panel: logistic regression reaches $0.9686$, the linear SVM
 $0.9656$ and gradient boosting $0.8633$, against $0.7189$ for the
-frozen Random Forest. The Random Forest is therefore by far the weakest
-of the four on the full marker space --- an expected consequence of the
-$p \gg n$ regime --- and its retention thresholds are correspondingly
-the easiest to satisfy.
+frozen Random Forest. The Random Forest has the lowest full-panel
+score of the four, which is consistent with the difficulty of the
+$p \gg n$ setting although this experiment does not isolate the source
+of that difference; its retention thresholds are correspondingly the
+easiest to satisfy.
 
 Figure~\ref{fig:rq4_evaluator_sensitivity} and
 Table~\ref{tab:rq4_evaluator_pmin} summarise the result. Under the
@@ -661,8 +654,8 @@ $F_{ST}$, $0.8769$ for Random Forest and $0.8741$ for Integrated
 Gradients), and only SHAP and $F_{ST}$ reach the $5\%$ tolerance within
 the grid. These results support the transferability reading of RQ4: the
 attributions identify markers that are genuinely informative for the
-model they explain, and the frozen Random Forest penalises them because
-it does not exploit that signal.
+model they explain, while the frozen Random Forest does not exploit
+that signal.
 
 \paragraph{Extended classical association baseline.}
 Finally, the classical family is widened with a univariate chi-square
@@ -674,16 +667,17 @@ ranking of all: with $100$ markers it reaches both tolerances
 ($\epsilon_P=0.02$ and $\epsilon_P=0.05$), whereas $F_{ST}$ and Random
 Forest importance require $200$
 (Table~\ref{tab:rq4_association}). Its top-marker lists overlap
-strongly with $F_{ST}$ ($50.1\%$ at $K=50$, $52.9\%$ at $K=200$,
+with $F_{ST}$ ($50.1\%$ at $K=50$, $52.9\%$ at $K=200$,
 $60.4\%$ at $K=500$, against a chance level of $0.05$--$0.54\%$),
 moderately with Random Forest importance ($12.5$--$20.0\%$) and
 essentially not at all with the neural attributions (at most $2.4\%$).
-The association test therefore closes the classical family ---
-label-aware univariate statistics and tree importance agree with each
-other and are the best choice under a Random Forest deployment --- and
-it reinforces the identity-level conclusion of
-Section~\ref{sec:marker_ranking_comparison}: the neural and the
-classical rankings select largely disjoint marker sets.
+The association test extends the classical family with another
+label-aware univariate ranking. Its top-marker list overlaps with
+$F_{ST}$ while remaining largely disjoint from the neural rankings, and
+under the frozen Random Forest evaluator it reaches the retention
+criterion with fewer markers than the other rankings, reinforcing the
+identity-level differences observed in
+Section~\ref{sec:marker_ranking_comparison}.
 
 \paragraph{Valid-baseline Integrated Gradients.}
 The mechanistic discussion of
@@ -732,11 +726,11 @@ supervised read-out, and their ranking is unstable in the tail.
 The evaluator-sensitivity and association analyses are repeated inside
 the ovine cohort, with its own folds, rankings and full-panel
 references (Figure~\ref{fig:rq4_evaluator_cross_species}). The ovine
-reference hierarchy mirrors the caprine one --- the frozen Random
-Forest is again the weakest evaluator on the complete panel ($0.9168$),
-logistic regression and the linear SVM reach $0.9613$ and $0.9648$
-and gradient boosting $0.9108$ --- but the ranking comparison does not
-invert. At $K=200$, where the families are still clearly separated,
+full-panel hierarchy differs slightly from the caprine one: gradient
+boosting has the lowest score ($0.9108$), followed by the Random Forest
+($0.9168$), while logistic regression and the linear SVM reach $0.9613$
+and $0.9648$. The ranking comparison, however, does not invert. At
+$K=200$, where the families are still distinguishable,
 the two classical rankings lead under all four evaluators ($F_{ST}$ or
 Random Forest first, SHAP third, Integrated Gradients last), and the
 associated $P_{\min}$ values at the $5\%$ tolerance are $200$--$500$
@@ -895,24 +889,20 @@ $K=500$ & $60.4\%$ & $20.0\%$ & $0.8\%$ & $2.4\%$ \\
 \end{tabular}
 \end{table}
 
-\section{Cross-Species Evaluation on Sheep HapMap}
+\section{Cross-species evaluation on Sheep HapMap}
 \label{sec:cross_species_evaluation}
 
-The final evaluation moves outside the primary caprine domain. An
-independent ovine Sheep HapMap dataset is processed using the same
-methodological principles but with a completely separate
-species-specific pipeline.
+The final evaluation is repeated on an independent ovine dataset.
+The Sheep HapMap cohort is processed using the same methodological
+principles but with a separate species-specific pipeline.
 
-This experiment should not compare goat and sheep raw scores as if the
-two classification problems had identical difficulty. The number of
-breeds, class balance, marker array, LD structure, and available
-sample sizes may differ substantially.
-
-The more meaningful comparison concerns the behavior of the method.
-For example, one can ask whether compact representations remain
-discriminative, whether performance responds similarly to sample
-scarcity, or whether reduced panels retain useful information in both
-species.
+Raw goat and sheep scores are not treated as directly comparable
+because the two classification problems differ in breed count, class
+balance, marker array, LD structure, and available sample sizes. The
+cross-species comparison instead focuses on the behavior of the
+methods: whether compact representations remain discriminative, whether
+performance responds similarly to sample scarcity, and whether reduced
+panels retain useful information in both species.
 
 Within the ovine domain the pipeline is repeated independently: the
 ovine split is frozen before any model is trained, every preprocessor
@@ -950,9 +940,9 @@ Contrastive emb$=3$ & $0.9320 \pm 0.0070$ & $0.9496$ & $0.9160 \pm 0.0174$ & $0.
 \end{tabular}
 \end{table}
 
-Both learned representations transfer to the ovine cohort without
-species-specific tuning: on the ovine held-out test the VMGP reaches
-$0.9555$ Macro-F1 and the contrastive model $0.9148$. The advantage
+The proposed pipeline is applied to the independent ovine cohort
+without species-specific tuning: on the ovine held-out test the VMGP
+reaches $0.9555$ Macro-F1 and the contrastive model $0.9148$. The advantage
 over the classical baseline is much smaller than in caprines, however.
 Under development cross-validation the VMGP exceeds the Random Forest
 by $26.1$ points in goats but only $4.5$ in sheep, and on the ovine
@@ -964,15 +954,14 @@ versus a development-CV Random Forest reference of $0.7189$; the goat
 Random Forest was not evaluated on the held-out test, so that
 comparison remains indicative).
 
-The cross-species evidence therefore supports the claim that compact
-genomic representations generalize across species, but qualifies the
-claim that they uniformly dominate classical baselines: the size of
-the advantage is dataset-dependent, and on the ovine cohort the
-classical full-panel classifier is a considerably stronger
-competitor. As anticipated, the two cohorts differ in breed count,
-sample sizes, marker panel and population structure, so the comparison
-concerns the behaviour of the methods rather than a ranking of the two
-datasets.
+The cross-species evidence supports applying the proposed pipeline to
+the independent ovine cohort, while also qualifying any claim that
+learned representations uniformly dominate the classical baseline. The
+size of the advantage is dataset-dependent, and the ovine full-panel
+Random Forest is a considerably stronger competitor. The two cohorts
+also differ in breed count, sample sizes, marker panel, and population
+structure, so the comparison concerns the behavior of the methods
+rather than a ranking of the datasets.
 
 \begin{figure}[ht]
   \centering
@@ -980,8 +969,7 @@ datasets.
   \caption{Cross-species comparison of RQ1. Left: development
   cross-validation Macro-F1 per method; right: held-out test Macro-F1
   where available. The gap between the learned representations and the
-  classical Random Forest shrinks dramatically from the caprine to the
-  ovine domain.}
+  classical Random Forest is much smaller in the ovine domain.}
   \label{fig:cross_species_rq1}
 \end{figure}
 
@@ -1000,16 +988,16 @@ datasets.
 
 % ---- BEGIN AUTO RQ2-MINI ----
 \paragraph{Ovine sample efficiency.}
-The bounded mini-sweep (Section~\ref{sec:minimum_requirements}) evaluates
-$N\in\{5, 10, 15\}$ individuals per breed with three subsampling seeds and
-three cross-validation folds, fitting a fresh preprocessor for every run.
-Retention is measured against the full-sample ovine VMGP baseline
+The bounded mini-sweep of Section~\ref{sec:minimum_requirements} evaluates
+$N\in\{5, 10, 15\}$ individuals per breed with three subsampling seeds
+and three cross-validation folds, refitting the preprocessor for every
+run, and measures retention against the full-sample ovine VMGP baseline
 ($S_{\mathrm{full}} = 0.9616$). Across the 9 observations per sample
-size, $N=5$: Macro-F1 $0.9273 \pm 0.0093$, retention $96.4 \pm 1.0\%$; $N=10$: Macro-F1 $0.9481 \pm 0.0075$, retention $98.6 \pm 0.8\%$; $N=15$: Macro-F1 $0.9531 \pm 0.0058$, retention $99.1 \pm 0.6\%$. At $N=10$ the ovine retention ($98.6\%$) already parallels the caprine result, where $N_{\min}=10$ retained $98.5\%$ of the reference. As in the caprine domain, most of the full-sample
-performance is already acquired with very few individuals per breed and
-the marginal gain beyond $N=10$ is small. Because the minimum
+size, $N=5$: Macro-F1 $0.9273 \pm 0.0093$, retention $96.4 \pm 1.0\%$; $N=10$: Macro-F1 $0.9481 \pm 0.0075$, retention $98.6 \pm 0.8\%$; $N=15$: Macro-F1 $0.9531 \pm 0.0058$, retention $99.1 \pm 0.6\%$. The retention at $N=10$ ($98.6\%$) already parallels the caprine
+result, where $N_{\min}=10$ retained $98.5\%$ of the reference, and the
+marginal gain beyond $N=10$ remains small. Because the minimum
 fold-training count per breed is $17$, the grid cannot be extended beyond
-$N=15$ and the internal reference is $N=15$ itself; the ovine
+$N=15$, which also serves as the internal reference; the ovine
 $N_{\min}$ is therefore bounded by construction and is interpreted
 through the shape of the retention curve rather than as an extended
 minimum.
@@ -1049,10 +1037,10 @@ $1000$. At the stricter $\epsilon_P=0.02$ the ordering is Random Forest
 $=200$, $F_{ST}=500$, SHAP $=1000$, and no IG panel qualifies: at
 $K=5000$ its mean Macro-F1 ($0.8977$) remains below the $98\%$
 threshold ($0.8985$). The family ordering of the caprine domain is
-therefore reproduced in the validation domain --- classical rankings
-and supervised attribution first, contrastive attribution last, random
-panels worst --- with SHAP catching up with $F_{ST}$ at the $5\%$
-tolerance.
+therefore reproduced in the validation domain: classical rankings
+and supervised attribution lead, followed by contrastive attribution,
+while random panels perform worst, with SHAP catching up with $F_{ST}$
+at the $5\%$ tolerance.
 
 Two quantitative differences qualify the replication. The ovine
 panels saturate at larger sizes relative to their reference: in
@@ -1077,10 +1065,10 @@ level of $0.06$--$0.62\%$; this classical agreement is even higher than
 the caprine $8.8$--$17.8\%$. All remaining pairs stay below $2.8\%$, so
 the learned attributions identify largely disjoint marker sets in both
 species. As in the caprine analysis, low overlap does not imply
-disagreement about the biology: under strong linkage disequilibrium,
-distinct rankings can select interchangeable tags of the same
-population signal. The consistent cross-species pattern is that
-downstream utility orders the ranking families in the same way, while
+disagreement about the biology: under linkage disequilibrium, distinct
+rankings can select interchangeable tags of the same signal. The
+consistent cross-species pattern is that downstream utility orders the
+ranking families in the same way, while
 score-level identity does not.
 
 \begin{table}[ht]
@@ -1118,7 +1106,7 @@ Random & --- & --- & $5000$ & $1000$ \\
 \end{figure}
 % ---- END AUTO RQ3-OVINE ----
 
-\section{Overall Discussion}
+\section{Overall discussion}
 \label{sec:overall_discussion}
 
 The experiments in this chapter address different dimensions of the
@@ -1135,30 +1123,29 @@ outperform the classical full-panel Random Forest in classification
 \ref{tab:cross_species_rq1}). The supervised VMGP is the strongest
 model in both cohorts ($0.9796$ in caprines and $0.9616$ in ovines
 under development cross-validation, $+26.1$ and $+4.5$ Macro-F1 points
-over the Random Forest), while the contrastive model is clearly above
+over the Random Forest), while the contrastive model is above
 the classical baseline in caprines ($0.9320$ versus $0.7189$) but
 marginally below it in ovines ($0.9160$ versus $0.9168$). The ordering
 between the two learned models is expected, since the variational model
 is optimized for the same objective that is later evaluated, whereas
 the contrastive model must recover breed structure without labels. The
-self-supervised space nevertheless remains strongly discriminative on
+self-supervised space nevertheless remains discriminative on
 both held-out tests ($0.9496$ and $0.9148$ Macro-F1), supporting the
 hypothesis that population structure is a dominant, recoverable signal
 in these genotype matrices.
 
-The sample-efficiency experiments show a very early plateau. In the
-caprine cohort the operational minimum was $N_{\min}=10$ with $98.5\%$
-of the reference performance, and in the ovine cohort ten individuals
-per breed already retained $98.6\%$ of the full-sample baseline. Two
-caveats bound this conclusion: the ovine grid is truncated at $N=15$
-by the minimum fold-training count of $17$ per breed, and all values
-are conditional on the same pipeline, cohort composition and
-architecture. The practical implication is nevertheless relevant for
-numerically small breeds: a few tens of animals per breed can already
-provide a useful reference panel.
+The sample-efficiency curve rises sharply from $N=5$ to $N=10$ and
+changes only modestly thereafter. In the caprine cohort the operational
+minimum is $N_{\min}=10$, retaining $98.5\%$ of the reference
+performance; in the ovine cohort ten individuals per breed retain
+$98.6\%$ of the full-sample baseline. This conclusion is bounded by the
+ovine grid, which stops at $N=15$ because the minimum fold-training
+count is $17$, and by the cohort composition and model configuration
+used in the experiments.
 
-Marker reduction is remarkably effective. With $200$ $F_{ST}$-selected
-markers the downstream classifier matches the full post-QC panel
+Reduced panels preserve most of the classification signal. With
+$200$ $F_{ST}$-selected markers, the downstream classifier remains
+within the predefined retention threshold of the full post-QC panel
 ($0.7356$ versus $0.7189$ Macro-F1), and all four ranking families
 outperform random panels beyond $K=200$. Panel sizes of this order
 agree with the ancestry-informative marker literature, where a few
@@ -1180,7 +1167,7 @@ The ranking comparison (RQ4) yields a second, methodological finding:
 under the frozen Random Forest evaluator, neural attributions are not
 competitive marker selectors for a different downstream model. $F_{ST}$
 and Random Forest importance share a modest
-but strongly above-chance fraction of their top markers ($8.8$--$17.8\%$
+but above-chance fraction of their top markers ($8.8$--$17.8\%$
 in caprines, $19.6$--$21.2\%$ in ovines), the extended chi-square
 association baseline overlaps $F_{ST}$ by $50$--$60\%$,
 while the neural rankings overlap each other and the classical ones by
@@ -1208,11 +1195,12 @@ evaluator, so the effect is cohort-dependent. The practical conclusion is
 therefore twofold: attributions should be validated through downstream
 utility rather than interpreted as feature importance per se, and the
 evaluator used for that validation should match the model that will
-actually be deployed.
+be deployed.
 
 Cross-species validation supports the generalization of the
-representation pipeline but qualifies its superiority. Both models
-transfer to the ovine cohort without species-specific tuning;
+representation pipeline but qualifies its superiority. The same
+pipeline is applied to the independent ovine cohort without
+species-specific tuning;
 however, the classical full-panel Random Forest becomes a much
 stronger competitor on sheep, and the self-supervised representation
 no longer beats it on the held-out test. This is consistent with
@@ -1220,10 +1208,10 @@ reports that classical and relationship-based methods remain
 competitive for breed assignment depending on the dataset
 \cite{wilmot2023genomic}. The main limits of the study are the
 finite cohorts ($34$ and $28$ breeds, with tens of individuals per
-breed), a single marker array per species, a single frozen evaluator
-for the primary comparison (Section~\ref{sec:rq4_robustness} performs
-evaluator-sensitivity analyses with alternative classifiers and native
-retraining, but those analyses are caprine-only and development-only),
-and reduced panels that were not validated on external cohorts. The
+breed), a single marker array per species, and reduced panels that were
+not validated on external cohorts. The primary comparison also uses a
+single frozen evaluator; Section~\ref{sec:rq4_robustness} adds
+alternative evaluators and native retraining, but those analyses remain
+caprine-only and development-only. The
 protocol, ranking definitions and evaluation rules were fixed before
 the held-out test sets were opened.

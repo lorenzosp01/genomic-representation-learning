@@ -1,7 +1,7 @@
 [project]
 name = "genomic-dataset-reduction"
 version = "0.1.0"
-description = "Add your description here"
+description = "Leakage-controlled benchmark for livestock breed classification and attribution-based SNP selection from high-density genotypes"
 readme = "README.md"
 requires-python = ">=3.12.12"
 dependencies = [
@@ -20,3 +20,6 @@ dependencies = [
     "bed-reader>=1.0.6",
     "shap>=0.52.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/lorenzosp01/genomic-dataset-reduction"

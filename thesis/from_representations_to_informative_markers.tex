@@ -1,4 +1,4 @@
-\chapter{From Genomic Representations to Informative Markers}
+\chapter{From genomic representations to informative markers}
 \label{chap:feature_importance}
 
 Learning a compact representation answers only part of the problem. A
@@ -15,7 +15,7 @@ algorithm assigns it a large score, but because a panel built from
 highly ranked markers should preserve useful breed-discriminative
 information.
 
-\section{Why Marker Importance Is a Separate Problem}
+\section{Why marker importance is a separate problem}
 \label{sec:why_marker_importance}
 
 Prediction and interpretation are related but different goals. A
@@ -38,7 +38,7 @@ re-evaluating the downstream classification task.
 Figure~\ref{fig:ranking_families} summarizes the four ranking families
 that are constructed and compared in the experimental evaluation.
 
-\section{From Local Attributions to a Global SNP Ranking}
+\section{From local attributions to a global SNP ranking}
 \label{sec:local_to_global_ranking}
 
 Neural attribution methods usually explain a particular model output
@@ -92,7 +92,7 @@ finally averaged with equal weight across breeds. Both aggregation
 rules are implemented in the shared ranking module and are not modified
 after inspecting downstream panel performance.
 
-\section{Explaining the Variational Breed Predictor}
+\section{Explaining the variational breed predictor}
 \label{sec:vmgp_marker_attribution}
 
 The VMGP-inspired model contains a supervised breed-prediction head.
@@ -129,7 +129,7 @@ absolute value and averaged across classes and evaluation samples; no
 validation or test individual contributes to the background, the
 evaluation subset or the aggregation.
 
-\section{Explaining a Self-Supervised Contrastive Space}
+\section{Explaining a self-supervised contrastive space}
 \label{sec:contrastive_marker_attribution}
 
 Attributing the contrastive model is conceptually more difficult. The
@@ -159,7 +159,7 @@ obtained as the $L_1$ sum over the four channels and aggregated as
 described above. The supervised probe path implemented in the earlier
 notebook is not used for the definitive RQ4 rankings.
 
-\section{Population-Genetics Reference: Fixation Index}
+\section{Population-genetics reference: fixation index}
 \label{sec:fst_ranking}
 
 A classical comparison is provided by locus-wise population
@@ -178,7 +178,7 @@ describes relevance under a learned multivariate prediction or
 representation. Their comparison is therefore informative precisely
 because they are based on different principles.
 
-\section{Machine-Learning Reference: Random Forest}
+\section{Machine-learning reference: Random Forest}
 \label{sec:rf_ranking}
 
 Random Forest provides a second reference \cite{breiman2001random}.
@@ -200,7 +200,7 @@ predictors, the thesis treats this ranking as a predictive
 machine-learning reference rather than as an unbiased estimate of
 biological relevance.
 
-\section{Constructing Nested Reduced Panels}
+\section{Constructing nested reduced panels}
 \label{sec:reduced_panel_construction}
 
 Once a ranking
@@ -231,7 +231,7 @@ tolerance is $\epsilon_P = 0.02$, with $\epsilon_P = 0.05$ reported as
 a secondary reference. For every ranking method, the smallest grid
 value satisfying the criterion is reported as $P_{\min}$.
 
-\section{Leakage Prevention During Marker Selection}
+\section{Leakage prevention during marker selection}
 \label{sec:marker_selection_leakage}
 
 Marker selection is itself a learning procedure. If a held-out
@@ -249,7 +249,7 @@ and neural attributions. $F_{ST}$, Random Forest importance, SHAP,
 Integrated Gradients, and any derived aggregation must obey the same
 information boundary.
 
-\section{Ranking Stability and Downstream Utility}
+\section{Ranking stability and downstream utility}
 \label{sec:ranking_stability_utility}
 
 Two complementary questions can be asked about a marker ranking.
@@ -272,7 +272,7 @@ Considering both views is especially important in genomic data, where
 LD can make multiple marker panels functionally similar even when
 their exact SNP identities differ.
 
-\section{What This Chapter Does Not Claim}
+\section{What this chapter does not claim}
 \label{sec:attribution_not_causality}
 
 The marker-ranking analysis is computational. A high attribution,

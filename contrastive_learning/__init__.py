@@ -1,7 +1,7 @@
 """Contrastive representation-learning model (Thor & Nettelblad 2025).
 
-Core implementation extracted verbatim from the contrastive notebooks. The
-Integrated Gradients / attribution code remains in the notebooks for now.
+Core implementation of the paper-faithful centroid N-pair model, together
+with the Integrated Gradients attribution utilities.
 """
 
 from .augmentation import GeneticAugmentation

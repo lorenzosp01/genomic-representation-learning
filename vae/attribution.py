@@ -1,9 +1,9 @@
 """Feature-selection / attribution helpers for the VMGP model.
 
-Extracted from ``vae/vae_training.ipynb`` (SHAP pre-selection and Random
-Forest importance sections). Behaviour is preserved exactly, including the
-current non-train-only ranking (a known methodological issue that is
-deliberately left unchanged and will be corrected in a later refactor).
+SHAP pre-selection and Random Forest importance helpers. Behaviour is
+preserved exactly, including the current non-train-only ranking (a known
+methodological issue that is deliberately left unchanged and will be
+corrected in a later refactor).
 """
 
 from __future__ import annotations
@@ -18,9 +18,9 @@ import torch.nn as nn
 class BreedWrapper(nn.Module):
     """SHAP wrapper exposing ``logits_breed`` from a ``VMGP_LightningSystem``.
 
-    This is the actively-used definition from the original notebook (the one
-    that wraps the LightningSystem and calls its ``forward``). The other,
-    dead notebook definition (wrapping ``VMGP_Network`` directly) was removed.
+    This is the actively-used definition, which wraps the
+    ``VMGP_LightningSystem`` and calls its ``forward``. An earlier variant
+    wrapping ``VMGP_Network`` directly was removed.
     """
 
     def __init__(self, lightning_system):

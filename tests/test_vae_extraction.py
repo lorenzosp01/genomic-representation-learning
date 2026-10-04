@@ -1,7 +1,7 @@
-"""Behaviour-equivalence tests for the VAE notebook extraction.
+"""Behaviour-equivalence tests for the VAE helper extraction.
 
-These verify that the helpers extracted from ``vae/vae_training.ipynb`` preserve
-the original behaviour without running full model training.
+These verify that the extracted helpers preserve the original behaviour
+without running full model training.
 """
 
 from types import SimpleNamespace
@@ -64,7 +64,7 @@ def test_aggregate_shap_to_global_raises_when_no_feature_axis():
         aggregate_shap_to_global(arr, n_features=3)
 
 
-def test_breed_wrapper_matches_active_notebook_definition():
+def test_breed_wrapper_matches_active_definition():
     import torch
 
     logits = torch.tensor([[0.1, 0.9, -0.3], [0.7, 0.2, 0.1]])
@@ -76,13 +76,13 @@ def test_breed_wrapper_matches_active_notebook_definition():
     x = torch.zeros(2, 5)
     wrapper = BreedWrapper(FakeSys())
     out = wrapper(x)
-    # The active notebook definition returned outputs['logits_breed'] verbatim.
+    # The active definition returned outputs['logits_breed'] verbatim.
     assert out is logits
     assert torch.equal(out, logits)
 
 
 # ---------------------------------------------------------------------------
-# plotting smoke tests (consume the same DataFrames as the notebook)
+# plotting smoke tests (consume the same DataFrames as the original runs)
 # ---------------------------------------------------------------------------
 def test_plot_grid_heatmaps_smoke(tmp_path):
     df = pd.DataFrame({

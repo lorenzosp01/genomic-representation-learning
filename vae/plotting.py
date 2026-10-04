@@ -1,9 +1,8 @@
 """Plotting helpers for the VMGP grid and single-experiment analyses.
 
-Extracted from ``vae/vae_training.ipynb``. Each function reproduces the
-corresponding notebook plotting code verbatim, with notebook-global state
-replaced by explicit parameters. Default save paths match the original
-notebook output paths.
+Each function reproduces the original development plotting code verbatim,
+with global state replaced by explicit parameters. Default save paths match
+the original output paths.
 """
 
 from __future__ import annotations
