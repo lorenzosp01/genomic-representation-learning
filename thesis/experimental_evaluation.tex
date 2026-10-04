@@ -569,7 +569,7 @@ position, including unplaced markers on chromosome~0, are excluded.
 The comparison in Section~\ref{sec:marker_ranking_comparison} uses a
 fixed downstream evaluator: every panel is scored by the same Random
 Forest, regardless of the ranking method that produced it. The
-mechanistic reading proposed there --- in particular the possibility
+mechanistic reading proposed there --- in particular, the possibility
 that the Random Forest importance ranking benefits from the same
 inductive bias as the evaluator --- predicts that the ordering of the
 families could change under a different downstream model. The
@@ -593,7 +593,7 @@ post-QC panel: logistic regression reaches $0.9686$, the linear SVM
 $0.9656$ and gradient boosting $0.8633$, against $0.7189$ for the
 frozen Random Forest. The Random Forest has the lowest full-panel
 score of the four, which is consistent with the difficulty of the
-$p \gg n$ setting although this experiment does not isolate the source
+$p \gg n$ setting, although this experiment does not isolate the source
 of that difference; its retention thresholds are correspondingly the
 easiest to satisfy.
 
@@ -738,7 +738,7 @@ for the classical rankings against $500$ for SHAP under logistic
 regression and gradient boosting and $2000$ under the linear SVM. At
 $K=2000$ all four families converge within about $0.5$ Macro-F1 points
 under every evaluator, so no ordering claim is meaningful at that
-depth. The caprine SHAP reversal therefore does not replicate in the
+depth. The caprine SHAP reversal, therefore, does not replicate in the
 validation domain: the evaluator dependence is cohort-dependent, and
 the most plausible reading is that the reversal appears where the
 classical rankings leave a larger margin for improvement: the frozen
@@ -787,7 +787,7 @@ at the strict tolerance under gradient boosting. The practical implication is th
 should be validated, and the marker panel chosen, against the
 classifier that will actually be deployed; universal transfer of a
 ranking across model families should not be assumed. The validation
-cohort qualifies the SHAP reversal: on sheep the classical ordering is
+cohort qualifies the SHAP reversal: on sheep, the classical ordering is
 preserved under all four evaluators, so the evaluator dependence
 observed in caprines is cohort-dependent rather than universal. These
 analyses are
@@ -904,7 +904,7 @@ methods: whether compact representations remain discriminative, whether
 performance responds similarly to sample scarcity, and whether reduced
 panels retain useful information in both species.
 
-Within the ovine domain the pipeline is repeated independently: the
+Within the ovine domain, the pipeline is repeated independently: the
 ovine split is frozen before any model is trained, every preprocessor
 is fitted on ovine training individuals only, the caprine fold-specific
 panels are never reused, and the same fractions and seeds produce a
@@ -1154,7 +1154,7 @@ and recent cattle applications report accurate assignment with
 panels of $192$ markers \cite{ahmad2024cattleassigner}. The caprine
 curve also shows that the full panel is not an upper bound: a reduced
 panel can match or slightly exceed it, consistent with noise dilution
-in the $p\gg n$ regime. In the ovine cohort the same ordering is
+in the $p\gg n$ regime. In the ovine cohort, the same ordering is
 reproduced under the $5\%$ tolerance with even smaller panels
 ($100$--$200$ markers versus $500$ for contrastive IG), although the
 classical full-array reference is a much stronger competitor there, so
@@ -1191,8 +1191,8 @@ explained model itself is retrained on the panel, the SHAP-selected
 panels become the most marker-efficient family, while the Random
 Forest evaluator favours the rankings that share its inductive bias;
 the ovine replication preserves the classical ordering under every
-evaluator, so the effect is cohort-dependent. The practical conclusion is
-therefore twofold: attributions should be validated through downstream
+evaluator, so the effect is cohort-dependent. The practical conclusion is,
+therefore, twofold: attributions should be validated through downstream
 utility rather than interpreted as feature importance per se, and the
 evaluator used for that validation should match the model that will
 be deployed.

@@ -41,7 +41,7 @@ separating different individuals.
 
 These objectives are not equivalent. Comparing them provides a way to
 investigate whether direct breed supervision is necessary to obtain a
-discriminative genomic representation or whether breed structure also
+discriminative genomic representation, or whether breed structure also
 emerges from a self-supervised organization of genotype profiles. Any
 learning procedure encodes assumptions about the structure of the data,
 i.e. an inductive bias \cite{mitchell1980need}, and the two objectives
@@ -224,7 +224,7 @@ The purpose of separating the candidate definition from its evaluation
 is to avoid rewriting the architecture around the outcome of the
 final test.
 
-Optimization uses Adam with learning rate $10^{-4}$ and a batch size
+Optimization uses Adam with a learning rate $10^{-4}$ and a batch size
 of $64$. Training uses mixed precision. The development ceiling is
 $200$ epochs, while EarlyStopping monitors validation loss with
 patience $15$. The checkpoint with minimum validation loss is restored
@@ -286,7 +286,7 @@ then sampled in the same interval and the selected positions are
 assigned to the special state $-1$.
 
 The augmentation is intentionally disabled during deterministic
-evaluation. At that point the fourth channel is zero and the embedding
+evaluation. At that point, the fourth channel is zero and the embedding
 is derived from the unperturbed post-QC genotype profile.
 
 \subsection{Encoder and hyperspherical embedding}
@@ -333,7 +333,7 @@ The final vector is normalized,
     \label{eq:hyperspherical_normalization}
 \end{equation}
 
-The resulting three-dimensional embeddings therefore lie on
+The resulting three-dimensional embeddings, therefore, lie on
 $\mathbb{S}^{2}\subset\mathbb{R}^{3}$. This extremely small
 representation is a deliberate part of the contrastive design rather
 than a value selected from the same grid used by the variational

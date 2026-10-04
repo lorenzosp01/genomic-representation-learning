@@ -21,11 +21,11 @@ information.
 Prediction and interpretation are related but different goals. A
 classifier can achieve good performance by using many correlated
 features without making it obvious which of them are individually
-important. In genomic data this issue is amplified by LD: neighboring
+important. In genomic data, this issue is amplified by LD: neighboring
 markers can contain overlapping information, so multiple plausible
 rankings may exist.
 
-The thesis therefore avoids treating any single importance method as
+The thesis, therefore, avoids treating any single importance method as
 a biological ground truth. Instead, different ranking strategies are
 viewed as hypotheses about which parts of the genotype matrix are most
 useful for population discrimination.
@@ -146,10 +146,10 @@ depending on the final attribution design.
 This distinction is important enough to make explicit. Integrated
 Gradients is an attribution \emph{mechanism}; it does not by itself
 determine what aspect of the contrastive representation should count
-as breed relevance. The chosen target therefore becomes part of the
+as breed relevance. The chosen target, therefore, becomes part of the
 scientific method.
 
-In the definitive protocol the scalar target is the cosine similarity
+In the definitive protocol, the scalar target is the cosine similarity
 between the $L_2$-normalized embedding and the breed centroid of the
 sample's own breed, where the centroid is the $L_2$-normalized mean of
 the training embeddings of that breed. The baseline is the zero vector
@@ -194,7 +194,7 @@ rather than referring generically to ``Random Forest importance''.
 
 The frozen Random Forest ranking uses impurity-based (Gini) importance
 from $200$ trees with a fixed random seed ($42$), fitted only on the
-training partition of each fold. Because impurity importance is known
+training partition of each fold. Because the impurity importance is known
 to favour markers with high minor-allele frequency and correlated
 predictors, the thesis treats this ranking as a predictive
 machine-learning reference rather than as an unbiased estimate of

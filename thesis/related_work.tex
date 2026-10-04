@@ -114,7 +114,7 @@ reference rather than as an unquestioned ground truth.
 
 A neighboring research area is genomic selection, where genome-wide
 markers are used to predict quantitative traits or breeding values
-\cite{meuwissen2001prediction}. The focus is breed classification
+\cite{meuwissen2001prediction}. The focus is on breed classification
 rather than continuous trait prediction, but genomic selection faces
 many of the same computational difficulties: many
 correlated markers, limited sample sizes, and the need to generalize
@@ -167,7 +167,7 @@ complete genotype vector into a new set of latent variables whose
 structure is learned from data \cite{bengio2013representation}.
 
 Autoencoders learn this transformation by compressing an observation
-and reconstructing it afterwards
+and reconstructing it afterward
 \cite{rumelhart1986learning, hinton2006reducing}. Variational
 Autoencoders extend the idea by learning a probabilistic latent
 variable and regularizing its distribution
@@ -213,13 +213,13 @@ output.
 SHAP \cite{lundberg2017unified} builds additive feature attributions
 from Shapley-value principles \cite{shapley1953value}. Its appeal is
 that it provides a common language for local feature contributions,
-even though exact Shapley computation becomes combinatorial as the
+even though the exact Shapley computation becomes combinatorial as the
 number of features grows.
 
 Integrated Gradients \cite{sundararajan2017axiomatic} uses the
 differentiable structure of a neural model. Given an input
 $\mathbf{x}$, a baseline $\mathbf{x}'$, and a scalar model output $F$,
-the attribution of feature $i$ is
+the attribution of the feature $i$ is
 
 \begin{equation}
     \mathrm{IG}_i(\mathbf{x})
