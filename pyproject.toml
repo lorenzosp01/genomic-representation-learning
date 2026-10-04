@@ -22,4 +22,4 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/lorenzosp01/genomic-dataset-reduction"
+Repository = "https://github.com/lorenzosp01/genomic-representation-learning"
