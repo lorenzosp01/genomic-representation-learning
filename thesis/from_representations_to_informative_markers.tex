@@ -139,9 +139,9 @@ no native breed logit to explain.
 Integrated Gradients \cite{sundararajan2017axiomatic} remains
 applicable to differentiable scalar functions of the model, but a
 meaningful scalar target must first be defined from the learned
-representation. This target may be related to a downstream
-discriminative function or to a geometric property of the embedding,
-depending on the final attribution design.
+representation. This target may be derived from a downstream
+discriminative function or from a geometric property of the embedding;
+the choice forms part of the scientific method.
 
 This distinction is important enough to make explicit. Integrated
 Gradients is an attribution \emph{mechanism}; it does not by itself
@@ -189,13 +189,13 @@ A marker ranking can be obtained from a fitted Random Forest using a
 chosen importance estimator. However, feature importance in tree
 ensembles can be affected by correlated predictors and by the
 estimator used \cite{strobl2007bias, nicodemus2010correlation}. The
-final thesis should therefore report the exact importance definition
-rather than referring generically to ``Random Forest importance''.
+exact importance definition is therefore reported below rather than
+referred to generically as ``Random Forest importance''.
 
 The frozen Random Forest ranking uses impurity-based (Gini) importance
 from $200$ trees with a fixed random seed ($42$), fitted only on the
 training partition of each fold. Because the impurity importance is known
-to favour markers with high minor-allele frequency and correlated
+to favor markers with high minor-allele frequency and correlated
 predictors, the thesis treats this ranking as a predictive
 machine-learning reference rather than as an unbiased estimate of
 biological relevance.

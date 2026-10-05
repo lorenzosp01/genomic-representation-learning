@@ -32,7 +32,8 @@ procedure.
 For the variational approach, development includes the comparison of
 the pre-specified latent dimensions. The configuration is selected
 according to mean Macro-F1 across all three folds, with Balanced
-Accuracy and Accuracy used only as tie-breakers.
+Accuracy and Accuracy used only as tie-breakers. The resulting
+development metrics are shown in Figure~\ref{fig:rq1_latentdim_selection}.
 
 \begin{figure}[ht]
   \centering
@@ -147,14 +148,17 @@ the classical full-panel Random Forest reaches $0.7189 \pm 0.0054$
 Macro-F1, so the learned representations outperform a classical
 classifier on the complete marker panel in cross-validation, by $26.1$
 and $21.3$ Macro-F1 points for the variational and contrastive models
-respectively.
+respectively. The held-out confusion matrices are reported in
+Figure~\ref{fig:rq1_confusion_locked}, and the development embeddings
+of the two final models in Figure~\ref{fig:rq1_latent_spaces}.
 
 \begin{figure}[ht]
   \centering
   \includegraphics[width=\textwidth]{fig_rq1_confusion_locked}
   \caption{Held-out test confusion matrices (row-normalized) for the two
   learned representations. Tick labels are canonical class indices in
-  the alphabetical breed order of Table~\ref{tab:adaptmap_breed_mapping};
+  the canonical class order of Table~\ref{tab:adaptmap_breed_mapping}
+  (alphabetical ADAPTmap identifiers);
   the weakest breed SEA is index $29$. For each model all but six of the
   $34$ breeds are recalled perfectly.}
   \label{fig:rq1_confusion_locked}
@@ -197,8 +201,8 @@ pruning---are refitted solely on the sampled training animals, the experiment
 evaluates end-to-end sample scarcity rather than the robustness of the
 neural network alone. Across the three cross-validation folds and the five nested
 sampling replicates ($\mathcal{R}=\{42, 43, 44, 45, 46\}$), each value of
-$N$ is evaluated through 15 empirical measurements on unchanged held-out
-validation sets.
+$N$ is evaluated through 15 empirical measurements on the unchanged
+validation partitions.
 
 Table~\ref{tab:rq2_sample_efficiency_results} reports the mean and sample
 standard deviation ($ddof=1$) of the evaluated metrics, along with the
@@ -259,7 +263,7 @@ has two main features:
 
     \item \textbf{Beyond $N=10$:}
     For sample sizes above $N=10$, additional training individuals yield
-    progressively smaller performance gains. Increasing the training set
+    only small performance gains. Increasing the training set
     from $N=10$ (150 animals) to the reference setting of $N=30$ (450 animals)
     increases mean Macro-F1 by $1.43$ percentage points ($0.9549$ to $0.9692$).
     The intermediate increments between $N=10$, $N=15$, $N=20$, $N=25$, and
@@ -543,7 +547,7 @@ position is available, and the markers of the operational panels of
 Table~\ref{tab:rq4_pmin} are highlighted. The figure is descriptive: it
 shows where the computationally most relevant markers are located, not
 why they are relevant. Two cautions apply. The two score scales are
-method-specific and not comparable across panels, and neighbouring
+method-specific and not comparable across panels, and neighboring
 markers can be correlated through linkage disequilibrium; visually
 prominent regions should therefore not be read as independent
 biological signals, and no gene-level or causal interpretation is
@@ -585,7 +589,7 @@ model uses only the fold training partition.
 \paragraph{Evaluator sensitivity.}
 Three additional downstream classifiers are applied to the same panels
 on the same cross-validation folds: logistic regression and a linear SVM on
-standardised dosages, and gradient boosting, all with hyperparameters
+standardized dosages, and gradient boosting, all with hyperparameters
 and seeds fixed before the run. Because the frozen full-panel reference
 $S_{\mathrm{full}} = 0.7189$ belongs to the Random Forest evaluator,
 each alternative evaluator is given its own reference on the complete
@@ -598,14 +602,16 @@ of that difference; its retention thresholds are correspondingly the
 easiest to satisfy.
 
 Figure~\ref{fig:rq4_evaluator_sensitivity} and
-Table~\ref{tab:rq4_evaluator_pmin} summarise the result. Under the
+Table~\ref{tab:rq4_evaluator_pmin} summarize the result. Under the
 frozen evaluator the ordering of
 Section~\ref{sec:marker_ranking_comparison} is reproduced: $F_{ST}$ and
 Random Forest importance are the most marker-efficient
 ($P_{\min}=200$ at both tolerances), followed by SHAP ($500$) and
-Integrated Gradients ($2000$/$5000$). Under the three alternative
+Integrated Gradients ($2000$/$5000$). Under the two linear
 evaluators the VMGP SHAP ranking becomes the most marker-efficient
-family. At $K=200$ it leads by $3.5$ points under logistic regression
+family, and under gradient boosting it is the joint-best at the strict
+tolerance while $F_{ST}$ remains marginally ahead at the $5\%$
+tolerance. At $K=200$ it leads by $3.5$ points under logistic regression
 ($0.8971 \pm 0.0094$ versus $0.8625 \pm 0.0302$ for $F_{ST}$) and by
 $5.0$ points under the linear SVM ($0.8324$ versus $0.7819$), and at
 $K=2000$ it is the best ranking under all three evaluators; under
@@ -645,8 +651,8 @@ and $0.9447$ at $K=500$, versus $0.8677$ and $0.9229$ for $F_{ST}$),
 and it reaches the $5\%$ tolerance with $500$ markers while the
 classical and contrastive rankings need $2000$; at the strict tolerance
 $F_{ST}$ and SHAP are the only families that qualify (at $K=2000$),
-with Random Forest importance and Integrated Gradients missing it by
-less than $0.001$. Under the contrastive evaluator the panels require
+with Random Forest importance missing it by less than $0.001$ and
+Integrated Gradients by about $0.001$. Under the contrastive evaluator the panels require
 substantially more markers --- the model approaches its $0.9320$
 full-input reference only in the thousands of markers --- but the SHAP
 panel is still the best at $K=2000$ ($0.9119$ versus $0.8981$ for
@@ -671,18 +677,14 @@ with $F_{ST}$ ($50.1\%$ at $K=50$, $52.9\%$ at $K=200$,
 $60.4\%$ at $K=500$, against a chance level of $0.05$--$0.54\%$),
 moderately with Random Forest importance ($12.5$--$20.0\%$) and
 essentially not at all with the neural attributions (at most $2.4\%$).
-The association test extends the classical family with another
-label-aware univariate ranking. Its top-marker list overlaps with
-$F_{ST}$ while remaining largely disjoint from the neural rankings, and
-under the frozen Random Forest evaluator it reaches the retention
-criterion with fewer markers than the other rankings, reinforcing the
-identity-level differences observed in
-Section~\ref{sec:marker_ranking_comparison}.
+Under the frozen Random Forest evaluator the association test is the
+most economical ranking, reinforcing the identity-level differences
+observed in Section~\ref{sec:marker_ranking_comparison}.
 
 \paragraph{Valid-baseline Integrated Gradients.}
 The mechanistic discussion of
 Section~\ref{sec:marker_ranking_comparison} suggested that the weakness
-of the contrastive attribution could be an artefact of its reference:
+of the contrastive attribution could be an artifact of its reference:
 the zero vector of the four-channel one-hot space does not correspond to
 any genotype. The hypothesis is testable directly. Recomputing the
 centroid-path IG with the settings of the frozen protocol reproduces
@@ -791,11 +793,11 @@ cohort qualifies the SHAP reversal: on sheep, the classical ordering is
 preserved under all four evaluators, so the evaluator dependence
 observed in caprines is cohort-dependent rather than universal. These
 analyses are
-extensions of the frozen protocol and carry their own limitations: they
-cover the caprine cohort only, use a coarse panel grid, fix the
-alternative classifiers to standard untuned hyperparameters, and
-evaluate panels on the cross-validation folds without a held-out test
-confirmation.
+extensions of the frozen protocol and carry their own limitations: the
+native-retraining and valid-baseline IG analyses are caprine-only,
+while the evaluator-sensitivity and association analyses are repeated
+on the ovine cohort; the alternative classifiers use standard untuned
+hyperparameters, and no panel is confirmed on a held-out test set.
 
 \begin{table}[ht]
 \centering
@@ -863,7 +865,7 @@ $S_{\mathrm{full}}$ (full input) & $0.9796$ & $0.9320$ \\
   \includegraphics[width=\textwidth]{fig_rq4_native_retraining}
   \caption{Model-native panel evaluation: the explained architecture
   (VMGP breed head, left; contrastive embeddings with $k=3$ nearest
-  neighbours, right) is retrained from scratch on the panel markers
+  neighbors, right) is retrained from scratch on the panel markers
   only, with frozen RQ1 hyperparameters. The dashed line is the same
   model trained on the full post-QC panel. SHAP-selected panels are the
   most marker-efficient under both architectures.}
@@ -952,7 +954,8 @@ shift: it does not outperform the classical baseline in ovines
 ($0.9148$ versus $0.9330$), whereas in caprines it did ($0.9496$
 versus a development-CV Random Forest reference of $0.7189$; the goat
 Random Forest was not evaluated on the held-out test, so that
-comparison remains indicative).
+comparison remains indicative). The ovine contrastive embedding space is
+shown in Figure~\ref{fig:sheep_embedding_space}.
 
 The cross-species evidence supports applying the proposed pipeline to
 the independent ovine cohort, while also qualifying any claim that
@@ -997,10 +1000,11 @@ size, $N=5$: Macro-F1 $0.9273 \pm 0.0093$, retention $96.4 \pm 1.0\%$; $N=10$: M
 result, where $N_{\min}=10$ retained $98.5\%$ of the reference, and the
 marginal gain beyond $N=10$ remains small. Because the minimum
 fold-training count per breed is $17$, the grid cannot be extended beyond
-$N=15$, which also serves as the internal reference; the ovine
-$N_{\min}$ is therefore bounded by construction and is interpreted
+$N=15$, the largest evaluated sample size; the ovine
+$N_{\min}$ is therefore bounded by the grid and is interpreted
 through the shape of the retention curve rather than as an extended
-minimum.
+minimum. Figure~\ref{fig:sheep_retention} reports the resulting
+retention and absolute curves.
 
 \begin{figure}[ht]
   \centering
@@ -1025,7 +1029,7 @@ ovine Random Forest, $S_{\mathrm{full}} = 0.9168 \pm 0.0163$, a much
 stronger baseline than the caprine $0.7189 \pm 0.0054$.
 Table~\ref{tab:cross_species_pmin} compares the operational minimum
 panel sizes of the two domains; Figure~\ref{fig:cross_species_panels}
-compares the retention curves, each normalised by its own
+compares the retention curves, each normalized by its own
 $S_{\mathrm{full}}$, so that the comparison concerns the shapes of the
 curves and not the absolute scores of two different classification
 problems.
@@ -1097,7 +1101,7 @@ Random & --- & --- & $5000$ & $1000$ \\
   \centering
   \includegraphics[width=\textwidth]{fig_cross_species_panels}
   \caption{Marker efficiency in the two domains: mean Macro-F1 across
-  the three cross-validation folds, normalised by each domain's own
+  the three cross-validation folds, normalized by each domain's own
   full-array reference $S_{\mathrm{full}}$; stars mark $P_{\min}$ at
   $\epsilon_P=0.05$ and the dotted line is the $95\%$ retention
   threshold. The ordering of the ranking families is preserved, while
@@ -1189,7 +1193,7 @@ consequential on the caprine cohort: when the panels are scored by
 logistic regression, a linear SVM or gradient boosting, or when the
 explained model itself is retrained on the panel, the SHAP-selected
 panels become the most marker-efficient family, while the Random
-Forest evaluator favours the rankings that share its inductive bias;
+Forest evaluator favors the rankings that share its inductive bias;
 the ovine replication preserves the classical ordering under every
 evaluator, so the effect is cohort-dependent. The practical conclusion is,
 therefore, twofold: attributions should be validated through downstream
@@ -1211,7 +1215,10 @@ finite cohorts ($34$ and $28$ breeds, with tens of individuals per
 breed), a single marker array per species, and reduced panels that were
 not validated on external cohorts. The primary comparison also uses a
 single frozen evaluator; Section~\ref{sec:rq4_robustness} adds
-alternative evaluators and native retraining, but those analyses remain
-caprine-only and development-only. The
+alternative evaluators, native retraining and an association baseline;
+native retraining and the valid-baseline attribution check remain
+caprine-only, while the evaluator-sensitivity and association analyses
+are also repeated on the ovine cohort; all robustness analyses remain
+development-only. The
 protocol, ranking definitions and evaluation rules were fixed before
 the held-out test sets were opened.

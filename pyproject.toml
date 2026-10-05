@@ -1,5 +1,5 @@
 [project]
-name = "genomic-dataset-reduction"
+name = "genomic-representation-learning"
 version = "0.1.0"
 description = "Leakage-controlled benchmark for livestock breed classification and attribution-based SNP selection from high-density genotypes"
 readme = "README.md"

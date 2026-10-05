@@ -19,7 +19,8 @@ rather than as a final implementation detail.
 \section{Genomic datasets}
 \label{sec:genomic_datasets_preprocessing}
 
-The thesis considers two independent livestock genomic domains.
+The thesis considers two independent livestock genomic domains
+(Figure~\ref{fig:dataset_cohort}).
 
 The primary domain is the caprine ADAPTmap dataset. It is used to
 develop and evaluate the main experimental pipeline, including breed
@@ -40,8 +41,8 @@ ADAPTmap was developed to characterize worldwide goat genetic
 diversity and population structure
 \cite{stella2018adaptmap, colli2018genome}. The source used by the
 current implementation is provided in PLINK format and contains
-$4653$ sample rows before individual-level eligibility filtering and
-$53347$ raw SNP markers.
+$4{,}653$ sample rows before individual-level eligibility filtering and
+$53{,}347$ raw SNP markers.
 
 Breed identity is obtained from the source sample metadata. The
 original row identity of each animal is retained throughout the
@@ -194,7 +195,7 @@ such a global construction would mix information across training
 partitions.
 
 In the frozen primary protocol, the three fold-specific post-QC
-panels contain $46442$, $46402$, and $46444$ SNPs. These values are
+panels contain $46{,}442$, $46{,}402$, and $46{,}444$ SNPs. These values are
 properties of the fold-specific preprocessing fit, not fixed
 dimensions imposed on the raw data.
 
@@ -361,7 +362,7 @@ population considered in the experiment.
 
 Applying this requirement yields a fixed cohort of 15 breeds:
 Abergelle, Alpine, Angora, Boer, Barki, Burundi goat, Creole,
-Landrace goat, Nubian, Oasis, Rangeland, Saanen, Small East African,
+Landrace, Nubian, Oasis, Rangeland, Saanen, Small East African,
 Saidi, and West African Dwarf. Their corresponding ADAPTmap
 identifiers are reported in
 Table~\ref{tab:adaptmap_breed_mapping}.
@@ -637,7 +638,8 @@ interpreted. In the frozen protocol they are
 The marker-efficiency grid is
 $K\in\{50,100,200,500,1000,2000,5000\}$. For the ovine
 sample-efficiency mini-sweep, where the minimum fold-training count per
-breed is $17$, the grid is truncated to $N\in\{5,10,15\}$ with $N=15$
-as the internal reference; the ovine $N_{\min}$ is therefore bounded
-above by the reference value and is interpreted through the shape of
-the retention curve, not as an extended minimum.
+breed is $17$, the grid is truncated to $N\in\{5,10,15\}$, with $N=15$
+as the largest evaluated sample size; retention is measured against
+the full-sample ovine baseline, so the ovine $N_{\min}$ is bounded by
+the grid and is interpreted through the shape of the retention curve,
+not as an extended minimum.

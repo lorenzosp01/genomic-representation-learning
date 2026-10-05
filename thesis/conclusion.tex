@@ -23,28 +23,29 @@ next: the number of training individuals for sample efficiency and the
 number of markers for panel reduction.
 
 The final evidence can be summarized in four points. RQ1 (breed
-classification). Compact genomic representations classify livestock
+classification): compact genomic representations classify livestock
 breeds very accurately without species-specific tuning: Macro-F1
 $0.9703$ and $0.9496$ on the caprine held-out test and $0.9555$ and
 $0.9148$ on the independent ovine held-out test for the supervised and
-self-supervised models respectively. RQ2 (sample efficiency). A
+self-supervised models respectively. RQ2 (sample efficiency): a
 small training population suffices: in the caprine cohort
 $N_{\min}=10$ individuals per breed retained $98.5\%$ of the reference
 performance, and in the ovine cohort the same sample size retained
-$98.6\%$. RQ3 (marker efficiency). The marker panel can be reduced by
+$98.6\%$. RQ3 (marker efficiency): the marker panel can be reduced by
 two orders of magnitude under the frozen Random Forest evaluator: $100$
 markers selected by a chi-square association test, or $200$ selected by
 $F_{ST}$, match the full post-QC panel, while neural attributions
 require larger panels ($500$ markers for SHAP and $2000$--$5000$ for
-Integrated Gradients). RQ4 (marker-selection strategy). Neural
+Integrated Gradients). RQ4 (marker-selection strategy): neural
 attribution is not a substitute for feature selection under that
 evaluator: the
 top-marker lists of the four families overlap little (mostly close to
 chance for the neural methods), and their downstream utility differs
 accordingly. The robustness analyses qualify this conclusion: on the caprine
-cohort, when the panels are evaluated by a linear or boosting
-classifier, or by retraining the explained model on the panel itself,
-SHAP-selected panels become the most marker-efficient family, whereas
+cohort, when the panels are evaluated by a linear classifier, by
+retraining the explained model on the panel itself, or at the strict
+tolerance under gradient boosting, SHAP-selected panels become the
+most marker-efficient family, whereas
 in the ovine cohort, the classical ordering is preserved under every
 evaluator.
 Cross-species validation supports the representation pipeline but
